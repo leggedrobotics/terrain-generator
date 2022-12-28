@@ -3,7 +3,7 @@ from threading import local
 import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Tuple
 import itertools
 
 
@@ -58,9 +58,9 @@ class WFC:
     def _update_validity(self, new_idx: np.ndarray, tile_id: int):
         neighbours, directions = self._get_neighbours(new_idx)
         possible_tiles = self._get_possible_tiles(tile_id, directions)
-        for neighbor, tiles in zip(neighbours, possible_tiles):
-            self.valid[(slice(None),) + tuple(neighbor)] = False
-            self.valid[(tiles,) + tuple(neighbor)] = True
+        non_possible_tiles = [np.setdiff1d(np.arange(self.n_tiles), pt) for pt in possible_tiles]
+        for neighbor, tiles in zip(neighbours, non_possible_tiles):
+            self.valid[(tiles,) + tuple(neighbor)] = False
 
     def _random_collapse(self, entropy):
         """Choose the indices of the tiles to be observed."""
@@ -91,6 +91,7 @@ class WFC:
             entropy = np.sum(self.valid, axis=0)
             entropy[self.is_collapsed] = self.n_tiles + 1
             # print("entropy\n", entropy)
+            # print("wave\n", self.wave)
             idx = self.collapse(entropy)
             # idx = np.unravel_index(np.argmin(entropy), entropy.shape)
             if entropy[tuple(idx)] == self.n_tiles + 1:
@@ -98,7 +99,7 @@ class WFC:
             if entropy[tuple(idx)] == 0:
                 raise ValueError("No valid tiles for the given constraints.")
             self.observe(idx)
-            self.history.append(self.wave)
+            self.history.append(self.wave.copy())
 
         return self.wave
         # print("wave ", self.wave)
@@ -113,7 +114,36 @@ class ConnectionManager:
         down: tuple = (1, 0)
         left: tuple = (0, -1)
         right: tuple = (0, 1)
-        directions: tuple = ("up", "down", "left", "right")
+        # up: tuple = (0, -1)
+        # down: tuple = (0, 1)
+        # left: tuple = (-1, 0)
+        # right: tuple = (1, 0)
+        directions: tuple = ("up", "left", "down", "right")
+
+        def rotate(self, direction, deg):
+            if deg == 90:
+                new_directions = np.roll(np.array(self.directions), -1)
+            elif deg == 180:
+                new_directions = np.roll(np.array(self.directions), -2)
+            elif deg == 270:
+                new_directions = np.roll(np.array(self.directions), -3)
+            else:
+                raise ValueError("deg must be 90, 180 or 270.")
+            return new_directions[self.directions.index(direction)]
+
+        def flip(self, direction, axis):
+            if axis == "x":
+                new_directions = np.array(self.directions)[[2, 1, 0, 3]]
+            elif axis == "y":
+                new_directions = np.array(self.directions)[[0, 3, 2, 1]]
+            else:
+                raise ValueError("axis must be x or y.")
+            return new_directions[self.directions.index(direction)]
+
+        def get_name(self, direction):
+            for k, v in self.__dict__.items():
+                if v == direction:
+                    return k
 
     direction_2d = Direction2D()
 
@@ -127,14 +157,41 @@ class ConnectionManager:
         back: tuple = (1, 0, 0)
         directions: tuple = ("up", "down", "left", "right", "front", "back")
 
+        def rotate(self, direction, deg):
+            if deg == 90:
+                new_directions = self.directions[:2] + tuple(np.roll(np.array(self.directions[2:]), -1))
+            elif deg == 180:
+                new_directions = self.directions[:2] + tuple(np.roll(np.array(self.directions[2:]), -2))
+            elif deg == 270:
+                new_directions = self.directions[:2] + tuple(np.roll(np.array(self.directions[2:]), -3))
+            else:
+                raise ValueError("deg must be 90, 180 or 270.")
+            return new_directions[self.directions.index(direction)]
+
+        def flip(self, direction, axis):
+            if axis == "x":
+                new_directions = np.array(self.directions)[[0, 1, 2, 3, 5, 4]]
+            elif axis == "y":
+                new_directions = np.array(self.directions)[[0, 1, 3, 2, 4, 5]]
+            elif axis == "z":
+                new_directions = np.array(self.directions)[[1, 0, 2, 3, 4, 5]]
+            else:
+                raise ValueError("axis must be x or y or z.")
+            return new_directions[self.directions.index(direction)]
+
+        def get_name(self, direction):
+            for k, v in self.__dict__.items():
+                if v == direction:
+                    return k
+
     direction_3d = Direction3D()
 
     def __init__(self, dimensions=2):
         self.connections = {}
         self.names = []
         self.connection_types = {}
-        self.edge_types = {}
-        self.edges = {}
+        self.edge_types = {}  # dict of edges. key: tile_name, value: dict of edges
+        self.edges = {}  # dict of edges for each tile key: edge_type, value: (direction, tile_name)
         if dimensions == 2:
             self.directions = self.direction_2d
         elif dimensions == 3:
@@ -142,7 +199,23 @@ class ConnectionManager:
         else:
             raise ValueError("Only 2D and 3D are supported.")
 
-    def register_tile(self, name: str, edge_types: dict, allow_rotation: bool = True, reflection_dir: tuple = None):
+    def register_tile(
+        self,
+        name: str,
+        edge_types: dict,
+        allow_rotation_deg: Tuple[int, ...] = (90, 180, 270),
+        reflection_dir: Tuple[str, ...] = ("x", "y"),
+    ):
+
+        self._register_tile(name, edge_types)
+
+        if len(allow_rotation_deg) > 0:
+            self._register_rotations(name, edge_types, allow_rotation_deg)
+
+        if len(reflection_dir) > 0:
+            self._register_reflection(name, edge_types, reflection_dir)
+
+    def _register_tile(self, name: str, edge_types: dict):
         self.names.append(name)
         edge_types_tuple = {}
         for direction, edge in edge_types.items():
@@ -153,40 +226,62 @@ class ConnectionManager:
             edge_types_tuple[d] = edge
         self.edge_types[name] = edge_types_tuple
 
-        if allow_rotation:
-            self._register_rotations(name, edge_types)
+    def _register_rotations(self, name: str, edge_types: dict, allow_rotation_deg: Tuple[int, ...]):
+        # print("name ", name)
+        # print("edge_types ", edge_types)
+        # 90 degree rotation
+        # allow_rotation_deg = [90, 180, 270]
+        for deg in allow_rotation_deg:
+            rotated_edge_types = {}
+            rotated_name = f"{name}_{deg}"
+            for direction, edge in edge_types.items():
+                # print("direction ", direction)
+                d = self.directions.rotate(direction, deg)
+                # print("new direction", d)
+                rotated_edge_types[d] = edge
 
-        if reflection_dir is not None:
-            self._register_reflection(name, edge_types, reflection_dir)
+            # print("rotated_name ", rotated_name)
+            # print("rotated_edge_types ", rotated_edge_types)
+            self._register_tile(rotated_name, rotated_edge_types)
 
-    def _register_rotations(self, name: str, edge_types: dict):
-        pass
-
-    def _register_reflection(self, name: str, edge_types: dict, reflection_dir: tuple):
-        pass
+    def _register_reflection(self, name: str, edge_types: dict, reflection_dir: Tuple[str, ...]):
+        for axis in reflection_dir:
+            # print("axis ", axis)
+            reflected_edge_types = {}
+            reflected_name = f"{name}_{axis}"
+            for direction, edge in edge_types.items():
+                d = self.directions.flip(direction, axis)
+                # print("new direction", d)
+                reflected_edge_types[d] = edge
+                # reflected_edge_types[d] = edge[::-1]
+            self._register_tile(reflected_name, reflected_edge_types)
 
     def compute_connection_dict(self):
         connections = {}
+        readable_connections = {}
         for name in self.names:
             # print("name ", name)
             edge_types = self.edge_types[name]
-            print("edge_types ", edge_types)
+            # print("edge_types ", edge_types)
             local_connections = {}
+            local_readable_connections = {}
             # print("edges ", self.edges)
             for direction_1, edge_type in edge_types.items():
                 local_connections[direction_1] = set()
-                print("direction ", direction_1)
+                local_readable_connections[self.directions.get_name(direction_1)] = set()
+                # print("direction ", direction_1)
                 # print("edge_type ", edge_type)
                 for direction_2, name_2 in self.edges[edge_type]:
-                    # print("direction 2", direction_2)
                     # print("opponent ", name_2)
-                    if (np.array(direction_1) + np.array(direction_2)).all() == 0:
-                        # print("connection found")
+                    if (np.array(direction_1) + np.array(direction_2) == 0).all():
                         local_connections[direction_1].add(name_2)
+                        local_readable_connections[self.directions.get_name(direction_1)].add(name_2)
             # print("local_connections", local_connections)
             connections[name] = local_connections
+            readable_connections[name] = local_readable_connections
         # print("connection ", connections)
-        self.connections = connections
+        # self.connections = connections
+        self.readable_connections = readable_connections
         return self._replace_name_with_number(connections)
 
     def _to_tuple(self, direction):
@@ -198,61 +293,123 @@ class ConnectionManager:
     def _replace_name_with_number(self, d: dict):
         """Replace the names of the tiles with numbers. Recursively."""
         # if there are string which is in self.names, replace it with the index of self.names
+        new_d = {}
         for key, value in d.items():
             if isinstance(key, str) and key in self.names:
-                d[self.names.index(key)] = d.pop(key)
+                new_d[self.names.index(key)] = value
+            else:
+                new_d[key] = value
+        d = new_d
+        for key, value in d.items():
             if isinstance(value, dict):
-                self._replace_name_with_number(value)
+                d[key] = self._replace_name_with_number(value)
             elif isinstance(value, str):
                 if value in self.names:
                     d[key] = self.names.index(value)
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    if isinstance(item, dict):
-                        self._replace_name_with_number(item)
-                    elif isinstance(item, str):
-                        if item in self.names:
-                            value[i] = self.names.index(item)
-                d[key] = tuple(sorted(value))
-            elif isinstance(value, set):
+            elif isinstance(value, list) or isinstance(value, tuple) or isinstance(value, set):
                 value = list(value)
                 for i, item in enumerate(value):
-                    if isinstance(item, dict):
-                        self._replace_name_with_number(item)
-                    elif isinstance(item, str):
+                    if isinstance(item, str):
                         if item in self.names:
                             value[i] = self.names.index(item)
                 d[key] = tuple(sorted(value))
             else:
+                print("type of value ", type(value))
                 raise ValueError("Unknown type in the connection dict.")
         return d
 
 
 if __name__ == "__main__":
 
-    cm = ConnectionManager()
-    cm.register_tile("A", {"up": "a", "down": "a", "left": "a", "right": "a"})
-    cm.register_tile("B", {"up": "a", "down": "a", "left": "b", "right": "b"})
-    cm.register_tile("C", {"up": "a", "down": "a", "left": "c", "right": "c"})
+    cm = ConnectionManager(dimensions=2)
+    cm.register_tile(
+        "A", {"up": "a", "down": "a", "left": "b", "right": "b"}, allow_rotation_deg=(90,), reflection_dir=()
+    )
+    cm.register_tile(
+        "B",
+        {"up": "a", "down": "b", "left": "b", "right": "a"},
+        allow_rotation_deg=(90, 180, 270),
+        reflection_dir=("x", "y"),
+    )
+    cm.register_tile("C", {"up": "a", "down": "a", "left": "a", "right": "a"}, allow_rotation_deg=(), reflection_dir=())
+    # cm.register_tile("A", {"up": "a", "down": "a", "left": "a", "right": "a", "front": "a", "back": "a"})
+    # cm.register_tile("B", {"up": "a", "down": "a", "left": "b", "right": "b", "front": "b", "back": "b"})
+    # cm.register_tile("C", {"up": "a", "down": "a", "left": "c", "right": "c", "front": "c", "back": "c"})
     # cm.register_connection_rule("a", "b", True)
     connections = cm.compute_connection_dict()
     print("connections ", connections)
+    print("readable_connections ", cm.readable_connections)
+    print("names ", cm.names)
 
     # connections = {
     #     0: {(-1, 0): (0, 1), (0, -1): (0), (1, 0): (0, 1), (0, 1): (0, 1)},  # Mountain
     #     1: {(-1, 0): (0, 1, 2), (0, -1): (0, 1), (1, 0): (0, 1, 2), (0, 1): (0, 1, 2)},  # Sand
     #     2: {(-1, 0): (1, 2), (0, -1): (2), (1, 0): (2), (0, 1): (2)},  # Water
     # }
-    # wfc = WFC(3, connections, (20, 20))
+    wfc = WFC(len(cm.names), connections, [40, 40])
     # n, d = wfc._get_neighbours((9, 9))
     # print("Neighbours:", n, n.dtype, d, d.dtype)
-    # wfc.init_randomly()
-    # wave = wfc.solve()
+    wfc.init_randomly()
+    wave = wfc.solve()
+
+    print("wave ", wave)
+    # for w in wfc.history:
+    #     print(w)
     #
-    # import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
+
     # from matplotlib.colors import LinearSegmentedColormap
-    #
-    # # Define the colors and values for the custom colormap
+
+    def rotate(tile, angle):
+        a = angle // 90
+        return np.rot90(tile, a)
+
+    def flip(tile, axis):
+        if axis == "x":
+            a = 0
+        elif axis == "y":
+            a = 1
+        return np.flip(tile, a)
+
+    tiles = {}
+    tiles["A"] = np.array([[0, 0, 0], [1, 1, 1], [0, 0, 0]])
+    tiles["B"] = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0]])
+    tiles["C"] = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+    print("A", tiles["A"])
+    print("A_90", rotate(tiles["A"], 90))
+    print("A_180", rotate(tiles["A"], 180))
+    print("A_270", rotate(tiles["A"], 270))
+    print("A_x", flip(tiles["A"], "x"))
+    print("A_y", flip(tiles["A"], "y"))
+
+    rotations = [90, 180, 270]
+    flips = ["x", "y"]
+
+    names = list(tiles.keys())
+
+    for name in names:
+        for r in rotations:
+            tiles[f"{name}_{r}"] = rotate(tiles[name], r)
+        for f in flips:
+            tiles[f"{name}_{f}"] = flip(tiles[name], f)
+
+    # print("A", tiles["A"])
+    # print("A_90", rotate(tiles["A"], 90))
+    # print("tiles", tiles)
+    img = np.zeros((wfc.shape[0] * 3, wfc.shape[1] * 3))
+    print("img ", img.shape)
+    for y in range(wave.shape[0]):
+        for x in range(wave.shape[1]):
+            tile = tiles[cm.names[wave[y, x]]]
+            # print("name ", cm.names[wave[y, x]])
+            # print("tile ", tile)
+            img[y * 3 : (y + 1) * 3, x * 3 : (x + 1) * 3] = tile
+    print("img \n", img[0:9, 0:9])
+
+    plt.imshow(img)
+    plt.show()
+
+    # Define the colors and values for the custom colormap
     # colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
     # values = [0, 1, 2]
     #
@@ -261,8 +418,8 @@ if __name__ == "__main__":
     #
     # # Use imshow to display the array with the custom colormap
     # plt.imshow(wave, cmap=cmap)
-    #
-    # # Show the plot
+
+    # Show the plot
     # plt.show()
     #
     # directions = [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
