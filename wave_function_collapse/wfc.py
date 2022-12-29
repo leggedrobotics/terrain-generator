@@ -53,9 +53,6 @@ class WFC:
         self.back_track_cnt = 0
         self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
         self.total_back_track_cnt = 0
-        # self.prev_wave = copy.deepcopy(self.wave)
-        # self.prev_valid = copy.deepcopy(self.valid)
-        # self.prev_is_collapsed = copy.deepcopy(self.is_collapsed)
 
     def _get_neighbours(self, idx):
         """Get the neighbours of a given tile."""
@@ -89,16 +86,6 @@ class WFC:
         non_possible_tiles = [np.setdiff1d(np.arange(self.n_tiles), pt) for pt in possible_tiles]
         for neighbor, tiles in zip(neighbours, non_possible_tiles):
             self.wave.valid[(tiles,) + tuple(neighbor)] = False
-
-    # def _update_prev(self):
-    #     self.prev_wave = copy.deepcopy(self.wave)
-    #     self.prev_valid = copy.deepcopy(self.valid)
-    #     self.prev_is_collapsed = copy.deepcopy(self.is_collapsed)
-    #
-    # def _revert_prev(self):
-    #     self.wave = copy.deepcopy(self.prev_wave)
-    #     self.valid = copy.deepcopy(self.prev_valid)
-    #     self.is_collapsed = copy.deepcopy(self.prev_is_collapsed)
 
     def _random_collapse(self, entropy):
         """Choose the indices of the tiles to be observed."""
@@ -134,19 +121,14 @@ class WFC:
             if entropy[tuple(idx)] == self.n_tiles + 1:
                 break
             if entropy[tuple(idx)] == 0:
-                # self._revert_prev()
                 self._back_track()
                 continue
-                # print("prev wave\n", self.prev_wave)
-                # raise ValueError("No valid tiles for the given constraints.")
             else:
-                # self._update_prev()
                 if np.sum(self.wave.is_collapsed == False) < self.prev_remaining_grid_num:
                     self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
                     self.back_track_cnt = 0
                 self.update_history()
                 self.observe(idx)
-                # self.history.append(copy.deepcopy(self.wave.wave))
 
         return self.wave.wave
 
@@ -155,8 +137,6 @@ class WFC:
 
     def _back_track(self):
         """Backtrack the wave."""
-        # print("backtracking", self.back_track_cnt)
-        # print("remaining grid num ", np.sum(self.wave.is_collapsed == False))
         self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
         self.back_track_cnt += 1
         self.total_back_track_cnt += 1
@@ -458,6 +438,7 @@ if __name__ == "__main__":
     tiles.append(tiles[-1].get_flipped_tile("x"))
     tiles.append(tiles[-2].get_flipped_tile("y"))
     tiles.append(ArrayTile(name="C", array=np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]]), rotations=()))
+    tiles.append(ArrayTile(name="I", array=np.array([[0, 0, 0], [1, 0, 1], [0, 0, 0]]), rotations=(90,)))
     tiles.append(ArrayTile(name="D", array=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]), rotations=()))
     tiles.append(ArrayTile(name="E", array=np.array([[0, 1, 1], [1, 1, 1], [0, 1, 1]]), rotations=(90, 180, 270)))
     tiles.append(tiles[-1].get_flipped_tile("x"))
