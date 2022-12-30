@@ -104,6 +104,11 @@ class WFCCore:
         self._update_wave(idx, tile_id)
         self.new_idx = idx
 
+    def init(self, idx, tile_id):
+        self._update_wave(idx, tile_id)
+        self.new_idx = idx
+        print("wave ", self.wave.wave)
+
     def observe(self, idx):
         """Observe a tile."""
         tile_id = np.random.choice(np.arange(self.n_tiles)[self.wave.valid[(slice(None),) + tuple(idx)]])
@@ -111,7 +116,7 @@ class WFCCore:
 
     def solve(self):
         """Solve the WFC problem."""
-        self.update_history()
+        # self.update_history()
         while True:
             # Find a tile with lowest entropy
             entropy = np.sum(self.wave.valid, axis=0)
@@ -154,16 +159,16 @@ class WFCCore:
         look_back = min(self.back_track_cnt // 10, len(self.history) - 1)
         # if self.total_back_track_cnt > 1000:
         #     look_back += min(self.total_back_track_cnt // 1000, len(self.history))
-        print("look_back:", self.total_back_track_cnt, look_back, self.prev_remaining_grid_num, len(self.history))
+        # print("look_back:", self.total_back_track_cnt, look_back, self.prev_remaining_grid_num, len(self.history))
         # if self.back_track_cnt > len(self.history) * 10:
         #     raise ValueError("Too many backtracks.", self.back_track_cnt, len(self.history))
         if self.total_back_track_cnt > 100000:
             raise ValueError("Too many total backtracks.", self.total_back_track_cnt)
         self.wave = self.history[-1 - look_back].copy()
         if look_back == len(self.history) - 1:
-            print("wave ", self.wave.is_collapsed)
+            # print("wave ", self.wave.is_collapsed)
             entropy = np.sum(self.wave.valid, axis=0)
-            print("Entropy:\n", entropy)
+            # print("Entropy:\n", entropy)
 
 
 @dataclass
@@ -377,10 +382,17 @@ class WFCSolver(object):
     def register_tile(self, name, edge_types, allow_rotation_deg=(90, 180, 270)):
         self.cm.register_tile(name, edge_types, allow_rotation_deg)
 
-    def run(self):
+    def run(self, init_args={}):
         connections = self.cm.compute_connection_dict()
         wfc = WFCCore(len(self.cm.names), connections, self.shape, self.dimensions)
-        wfc.init_randomly()
+        print("Start solving...")
+        if len(init_args) > 0:
+            print("init ", init_args)
+            idx = self.cm.names.index(init_args["tile_name"])
+            print("idx ", idx)
+            wfc.init(init_args["idx"], idx)
+        else:
+            wfc.init_randomly()
         wave = wfc.solve()
         return wave
 
