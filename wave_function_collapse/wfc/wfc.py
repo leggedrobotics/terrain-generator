@@ -31,7 +31,7 @@ class Wave:
         return new_wave
 
 
-class WFC:
+class WFCCore:
     """Wave Function Collapse algorithm implementation."""
 
     def __init__(self, n_tiles: int, connections: dict, shape: list, dimensions: int = 2):
@@ -111,6 +111,7 @@ class WFC:
 
     def solve(self):
         """Solve the WFC problem."""
+        self.update_history()
         while True:
             # Find a tile with lowest entropy
             entropy = np.sum(self.wave.valid, axis=0)
@@ -124,11 +125,21 @@ class WFC:
                 self._back_track()
                 continue
             else:
-                if np.sum(self.wave.is_collapsed == False) < self.prev_remaining_grid_num:
+                if (
+                    np.sum(self.wave.is_collapsed == False) < self.prev_remaining_grid_num
+                    or np.sum(self.wave.is_collapsed == False) == 1
+                ):
+                    # print("prev_remaining_grid_num: ", self.prev_remaining_grid_num)
+                    # self.prev_remaining_grid_num = min(
+                    #     self.prev_remaining_grid_num, np.sum(self.wave.is_collapsed == False)
+                    # )
                     self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
                     self.back_track_cnt = 0
-                self.update_history()
+                    self.update_history()
                 self.observe(idx)
+
+            # print("wave ", self.history[0].is_collapsed)
+            # break
 
         return self.wave.wave
 
@@ -137,14 +148,22 @@ class WFC:
 
     def _back_track(self):
         """Backtrack the wave."""
-        self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
+        # self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
         self.back_track_cnt += 1
         self.total_back_track_cnt += 1
-        self.wave = self.history[-1 - self.back_track_cnt // 10]
-        if self.back_track_cnt > len(self.history) * 10:
-            raise ValueError("Too many backtracks.", self.back_track_cnt, len(self.history))
+        look_back = min(self.back_track_cnt // 10, len(self.history) - 1)
+        # if self.total_back_track_cnt > 1000:
+        #     look_back += min(self.total_back_track_cnt // 1000, len(self.history))
+        print("look_back:", self.total_back_track_cnt, look_back, self.prev_remaining_grid_num, len(self.history))
+        # if self.back_track_cnt > len(self.history) * 10:
+        #     raise ValueError("Too many backtracks.", self.back_track_cnt, len(self.history))
         if self.total_back_track_cnt > 100000:
             raise ValueError("Too many total backtracks.", self.total_back_track_cnt)
+        self.wave = self.history[-1 - look_back].copy()
+        if look_back == len(self.history) - 1:
+            print("wave ", self.wave.is_collapsed)
+            entropy = np.sum(self.wave.valid, axis=0)
+            print("Entropy:\n", entropy)
 
 
 @dataclass
@@ -344,248 +363,27 @@ class ConnectionManager:
         return d
 
 
-class Tile:
-    """Class to manage the tiles."""
+class WFCSolver(object):
+    """Class to solve the WFC problem."""
 
-    def __init__(self, name, edges={}, rotations=(), dimension=2):
-        self.name = name
-        self.dimension = dimension
-        self.rotations = rotations
-        self.edges = edges
-        self.directions = Direction2D() if dimension == 2 else Direction3D()
+    def __init__(self, shape, dimensions, seed=None):
+        if seed is not None:
+            np.random.seed(seed)
+            random.seed(seed)
+        self.cm = ConnectionManager(dimension=dimensions)
+        self.shape = shape
+        self.dimensions = dimensions
 
-    def get_tile(self):
-        return self.name, self.edges, self.rotations
+    def register_tile(self, name, edge_types, allow_rotation_deg=(90, 180, 270)):
+        self.cm.register_tile(name, edge_types, allow_rotation_deg)
 
-    def get_flipped_tile(self, direction):
-        # if direction == "x":
-        if direction not in ["x", "y", "z"]:
-            raise ValueError(f"Direction {direction} is not defined.")
-        new_name = f"{self.name}_{direction}"
-        new_edges = {}
-        for key, value in self.edges.items():
-            new_key = self.directions.flipped_directions[direction][self.directions.base_directions.index(key)]
-            if key in self.directions.is_edge_flipped[direction]:
-                new_edges[new_key] = value[::-1]
-            else:
-                new_edges[new_key] = value
-        return Tile(name=new_name, edges=new_edges, dimension=self.dimension)
+    def run(self):
+        connections = self.cm.compute_connection_dict()
+        wfc = WFCCore(len(self.cm.names), connections, self.shape, self.dimensions)
+        wfc.init_randomly()
+        wave = wfc.solve()
+        return wave
 
-
-class ArrayTile(Tile):
-    """Class to manage the tiles."""
-
-    def __init__(self, name, array, edges={}, rotations=(), dimension=2):
-        self.array = array
-        self.directions = Direction2D()
-        if len(edges) == 0:
-            edges = self.create_edges_from_array(array)
-        super().__init__(name, edges, rotations, dimension)
-
-    def get_tile(self):
-        return self.name, self.edges
-
-    def get_array(self, name=None):
-        if name is None:
-            return self.array
-        for deg in (90, 180, 270):
-            if name == f"{self.name}_{deg}":
-                a = deg // 90
-                return np.rot90(self.array, a)
-
-    def get_flipped_tile(self, direction):
-        # flip array
-        if direction == "x":
-            array = np.flip(self.array, 0)
-        elif direction == "y":
-            array = np.flip(self.array, 1)
-        tile = super().get_flipped_tile(direction)
-        return ArrayTile(
-            name=tile.name, array=array, edges=tile.edges, rotations=self.rotations, dimension=self.dimension
-        )
-
-    def create_edges_from_array(self, array):
-        """Create a hash for each edge of the tile."""
-        edges = {}
-        for direction in self.directions.base_directions:
-            if direction == "up":
-                edges[direction] = tuple(array[0, :])
-            elif direction == "down":
-                edges[direction] = tuple(array[-1, :][::-1])
-            elif direction == "left":
-                edges[direction] = tuple(array[:, 0][::-1])
-            elif direction == "right":
-                edges[direction] = tuple(array[:, -1])
-            else:
-                raise ValueError(f"Direction {direction} is not defined.")
-        return edges
-
-
-if __name__ == "__main__":
-
-    # tiles = {}
-    # tiles["A"] = np.array([[0, 0, 0], [1, 1, 1], [0, 0, 0]])
-    # tiles["B"] = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0]])
-    # tiles["C"] = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-    # tiles["D"] = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
-    # tiles["E"] = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
-    # tiles["F"] = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
-    # tiles["G"] = np.array([[0, 0, 0], [0, 0, 0], [0, 1, 0]])
-
-    tiles = []
-    tiles.append(ArrayTile(name="A", array=np.array([[0, 0, 0], [1, 1, 1], [0, 0, 0]]), rotations=(90,)))
-    tiles.append(ArrayTile(name="B", array=np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0]]), rotations=(90, 180, 270)))
-    tiles.append(tiles[-1].get_flipped_tile("x"))
-    tiles.append(tiles[-2].get_flipped_tile("y"))
-    tiles.append(ArrayTile(name="C", array=np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]]), rotations=()))
-    tiles.append(ArrayTile(name="I", array=np.array([[0, 0, 0], [1, 0, 1], [0, 0, 0]]), rotations=(90,)))
-    tiles.append(ArrayTile(name="D", array=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]), rotations=()))
-    tiles.append(ArrayTile(name="E", array=np.array([[0, 1, 1], [1, 1, 1], [0, 1, 1]]), rotations=(90, 180, 270)))
-    tiles.append(tiles[-1].get_flipped_tile("x"))
-    tiles.append(tiles[-2].get_flipped_tile("y"))
-    tiles.append(ArrayTile(name="F", array=np.array([[0, 1, 1], [0, 1, 1], [0, 1, 1]]), rotations=(90, 180, 270)))
-    tiles.append(tiles[-1].get_flipped_tile("x"))
-    tiles.append(tiles[-2].get_flipped_tile("y"))
-    tiles.append(ArrayTile(name="G", array=np.array([[0, 1, 1], [0, 1, 1], [0, 0, 0]]), rotations=(90, 180, 270)))
-    tiles.append(tiles[-1].get_flipped_tile("x"))
-    tiles.append(tiles[-2].get_flipped_tile("y"))
-    tiles.append(ArrayTile(name="H", array=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 1]]), rotations=(90, 180, 270)))
-    tiles.append(tiles[-1].get_flipped_tile("x"))
-    tiles.append(tiles[-2].get_flipped_tile("y"))
-
-    # A = Tile(
-    #     "A", edges={"up": [[0, 0, 0], [1, 1, 1], [0, 1, 0]], "down": "000", "left": "010", "right": "010"}, dimension=2
-    # )
-    # print(A.get_tile())
-    # print(A.get_flipped_tile("x").get_tile())
-    # print(A.get_flipped_tile("y").get_tile())
-    # B = Tile("B", edges={"up": "000", "down": "110", "left": "011", "right": "000"}, dimension=2)
-    # print(B.get_tile())
-    # print(B.get_flipped_tile("x").get_tile())
-    # print(B.get_flipped_tile("y").get_tile())
-
-    # exit(0)
-
-    cm = ConnectionManager(dimension=2)
-    for tile in tiles:
-        # print("Tile:", tile.get_tile())
-        cm.register_tile(*tile.get_tile())
-    # cm.register_tile("A", {"up": "a", "down": "a", "left": "b", "right": "b"}, (90,))
-    # cm.register_tile("B", {"up": "a", "down": "b", "left": "b", "right": "a"}, (90, 180, 270))
-    # cm.register_tile("C", {"up": "a", "down": "a", "left": "a", "right": "a"}, ())
-    # # cm.register_tile("D", {"up": "a", "down": "a", "left": "a", "right": "a"}, (), ())
-    # cm.register_tile("E", {"up": "b", "down": "b", "left": "b", "right": "b"}, ())
-    # cm.register_tile("F", {"up": "a", "down": "b", "left": "b", "right": "a"}, (90, 180, 270), ("x", "y"))
-    # cm.register_tile("F", {"up": "a", "down": "b", "left": "a", "right": "a"}, (90, 180, 270), ("x", "y"))
-
-    # cm.register_tile("A", {"up": "a", "down": "a", "left": "a", "right": "a", "front": "a", "back": "a"})
-    # cm.register_tile("B", {"up": "a", "down": "a", "left": "b", "right": "b", "front": "b", "back": "b"})
-    # cm.register_tile("C", {"up": "a", "down": "a", "left": "c", "right": "c", "front": "c", "back": "c"})
-    # cm.register_connection_rule("a", "b", True)
-    connections = cm.compute_connection_dict()
-    # for k, v in cm.readable_connections.items():
-    #     print(k)
-    #     for k2, v2 in v.items():
-    #         print(f"\t{k2}: {v2}")
-    # print("names ", cm.names)
-
-    wfc = WFC(len(cm.names), connections, [30, 30])
-    # n, d = wfc._get_neighbours((9, 9))
-    # print("Neighbours:", n, n.dtype, d, d.dtype)
-    wfc.init_randomly()
-    wave = wfc.solve()
-
-    # print("wave ", wave)
-    # for w in wfc.history:
-    #     print(w)
-    #
-    import matplotlib.pyplot as plt
-
-    # from matplotlib.colors import LinearSegmentedColormap
-
-    # def rotate(tile, angle):
-    #     a = angle // 90
-    #     return np.rot90(tile, a)
-    #
-    # def flip(tile, axis):
-    #     if axis == "x":
-    #         a = 0
-    #     elif axis == "y":
-    #         a = 1
-    #     return np.flip(tile, a)
-
-    rotations = [90, 180, 270]
-    # flips = ["x", "y"]
-
-    # names = list(tiles.keys())
-    names = [tile.name for tile in tiles]
-
-    tile_arrays = {}
-
-    for tile in tiles:
-        tile_arrays[tile.name] = tile.get_array()
-        for r in rotations:
-            name = f"{tile.name}_{r}"
-            tile_arrays[name] = tile.get_array(name)
-    #     for f in flips:
-    #         tiles[f"{name}_{f}"] = flip(tiles[name], f)
-
-    # print("A", tiles["A"])
-    # print("A_90", rotate(tiles["A"], 90))
-    # print("tiles", tiles)
-    img = np.zeros((wfc.shape[0] * 3, wfc.shape[1] * 3))
-    print("img ", img.shape)
-    for y in range(wave.shape[0]):
-        for x in range(wave.shape[1]):
-            # tile = tiles[cm.names[wave[y, x]]]
-            # idx = names.index(cm.names[wave[y, x]])
-            # tile = tiles[idx].get_array()
-            tile = tile_arrays[cm.names[wave[y, x]]]
-            # print("name ", wave[y, x], cm.names[wave[y, x]])
-            # print("tile ", tile)
-            img[y * 3 : (y + 1) * 3, x * 3 : (x + 1) * 3] = tile
-    print("img \n", img[0:9, 0:9])
-
-    plt.imshow(img)
-    plt.show()
-
-    # Define the colors and values for the custom colormap
-    # colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-    # values = [0, 1, 2]
-    #
-    # # Create the custom colormap
-    # cmap = LinearSegmentedColormap.from_list("custom", colors, N=len(values))
-    #
-    # # Use imshow to display the array with the custom colormap
-    # plt.imshow(wave, cmap=cmap)
-
-    # Show the plot
-    # plt.show()
-    #
-    # directions = [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
-    # connections = {
-    #     0: {directions[i]: (0, 1, 2) for i in range(6)},
-    #     1: {directions[i]: (0, 1, 2) for i in range(6)},
-    #     2: {directions[i]: (0, 2) for i in range(6)},
-    # }
-    # wfc = WFC(3, connections, (10, 10, 3), dimensions=3)
-    # n, d = wfc._get_neighbours((9, 9, 1))
-    # print("Neighbours:", n, n.dtype, d, d.dtype)
-    # wfc.init_randomly()
-    # wave = wfc.solve()
-    #
-    # import matplotlib.pyplot as plt
-    # from matplotlib.colors import LinearSegmentedColormap
-    #
-    # # Define the colors and values for the custom colormap
-    # colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-    # values = [0, 1, 2]
-    #
-    # # Create the custom colormap
-    # cmap = LinearSegmentedColormap.from_list("custom", colors, N=len(values))
-    #
-    # # Use imshow to display the array with the custom colormap
-    # plt.imshow(wave, cmap=cmap)
-    #
-    # # Show the plot
-    # plt.show()
+    @property
+    def names(self):
+        return self.cm.names

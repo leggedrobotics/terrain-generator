@@ -1,4 +1,4 @@
-from wfc import WFC
+from wfc import WFCCore
 
 
 def test_get_neighbours():
@@ -9,7 +9,7 @@ def test_get_neighbours():
         1: {(-1, 0): (0, 1, 2), (0, -1): (0, 1), (1, 0): (0, 1, 2), (0, 1): (0, 1, 2)},  # Sand
         2: {(-1, 0): (1, 2), (0, -1): (2), (1, 0): (2), (0, 1): (2)},  # Water
     }
-    wfc = WFC(3, connections, (10, 10))
+    wfc = WFCCore(3, connections, (10, 10))
     n, d = wfc._get_neighbours((2, 2))
     assert n.dtype == int
     assert n.shape == (4, 2)
@@ -22,7 +22,7 @@ def test_get_neighbours():
         1: {directions[i]: (i) for i in range(6)},
         2: {directions[i]: (i) for i in range(6)},
     }
-    wfc = WFC(3, connections, (10, 10, 10), dimensions=3)
+    wfc = WFCCore(3, connections, (10, 10, 10), dimensions=3)
     n, d = wfc._get_neighbours((2, 2, 2))
     assert n.dtype == int
     assert n.shape == (6, 3)
@@ -35,7 +35,7 @@ def test_2d_case():
         1: {(-1, 0): (0, 1, 2), (0, -1): (0, 1), (1, 0): (0, 1, 2), (0, 1): (0, 1, 2)},  # Sand
         2: {(-1, 0): (1, 2), (0, -1): (2), (1, 0): (2), (0, 1): (2)},  # Water
     }
-    wfc = WFC(3, connections, (20, 20))
+    wfc = WFCCore(3, connections, (20, 20))
     n, d = wfc._get_neighbours((9, 9))
     print("Neighbours:", n, n.dtype, d, d.dtype)
     wfc.init_randomly()
@@ -66,7 +66,7 @@ def test_3d_case():
         1: {directions[i]: (0, 1, 2) for i in range(6)},
         2: {directions[i]: (0, 2) for i in range(6)},
     }
-    wfc = WFC(3, connections, (10, 10, 3), dimensions=3)
+    wfc = WFCCore(3, connections, (10, 10, 3), dimensions=3)
     n, d = wfc._get_neighbours((9, 9, 1))
     print("Neighbours:", n, n.dtype, d, d.dtype)
     wfc.init_randomly()
