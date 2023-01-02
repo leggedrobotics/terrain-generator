@@ -125,11 +125,8 @@ class WFCCore:
     def weighted_random_observe(self, idx):
         """Observe a random tile."""
         valid_tiles = np.arange(self.n_tiles)[self.wave.valid[(slice(None),) + tuple(idx)]].astype(int)
-        print("valid tile number", valid_tiles)
         valid_tile_weights = self.tile_weights[valid_tiles]
-        print("valid tile weights", valid_tile_weights)
         tile_id = np.random.choice(valid_tiles, p=valid_tile_weights/np.sum(valid_tile_weights))
-        print("tile id", tile_id)
         return tile_id
 
     def observe(self, idx):
@@ -413,7 +410,6 @@ class WFCSolver(object):
     def run(self, init_args={}):
         connections = self.cm.compute_connection_dict()
         tile_weights = [self.tile_weights[name] for name in self.cm.names]
-        print("tile_weights", tile_weights)
         wfc = WFCCore(len(self.cm.names), connections, self.shape, tile_weights=tile_weights, dimensions=self.dimensions, observation_mode=self.observation_mode)
         print("Start solving...")
         if len(init_args) > 0:
@@ -424,6 +420,7 @@ class WFCSolver(object):
         else:
             wfc.init_randomly()
         wave = wfc.solve()
+        print("Finished solving.")
         return wave
 
     @property
