@@ -182,17 +182,17 @@ class Direction2D:
     base_directions: tuple = ("up", "left", "down", "right")
 
     def __post_init__(self):
-        self.directions: dict = {
+        self.directions: Dict[int, str] = {
             0: self.base_directions,
             90: tuple(np.roll(np.array(self.base_directions), -1)),
             180: tuple(np.roll(np.array(self.base_directions), -2)),
             270: tuple(np.roll(np.array(self.base_directions), -3)),
         }
-        self.flipped_directions: dict = {
+        self.flipped_directions: Dict[str, tuple] = {
             "x": tuple(np.array(self.base_directions)[[2, 1, 0, 3]]),
             "y": tuple(np.array(self.base_directions)[[0, 3, 2, 1]]),
         }
-        self.is_edge_flipped: dict = {
+        self.is_edge_flipped: Dict[str, tuple] = {
             "x": ("left", "right"),
             "y": ("up", "down"),
             # "y": ("left", "right"),
@@ -268,12 +268,12 @@ class Edge(object):
             if key not in edge_types:
                 raise ValueError(f"Edge type {key} is not defined.")
 
-    def get_rotated_edge(self, deg):
-        if deg not in self.directions.directions:
-            raise ValueError(f"Rotation degree {deg} is not defined.")
-        basic_directions = self.directions.directions[0]
-        new_directions = self.directions.directions[deg]
-        return {new_key: self.edge_types[key] for new_key, key in zip(new_directions, basic_directions)}
+    # def get_rotated_edge(self, deg):
+    #     if deg not in self.directions.directions:
+    #         raise ValueError(f"Rotation degree {deg} is not defined.")
+    #     basic_directions = self.directions.directions[0]
+    #     new_directions = self.directions.directions[deg]
+    #     return {new_key: self.edge_types[key] for new_key, key in zip(new_directions, basic_directions)}
 
     def get_tuple_edge_types(self):
         return {self._direction_to_tuple(key): value for key, value in self.edge_types.items()}
@@ -297,14 +297,11 @@ class ConnectionManager:
         self,
         name: str,
         edge_types: dict,
-        allow_rotation_deg: Tuple[int, ...] = (90, 180, 270),
     ):
 
         edges = Edge(edge_types=edge_types, dimension=self.dimension)
 
         self._register_tile(name, edges.get_tuple_edge_types())
-        for deg in allow_rotation_deg:
-            self._register_tile(f"{name}_{deg}", edges.to_tuple(edges.get_rotated_edge(deg)))
 
     def _register_tile(self, name: str, edge_types: Dict[tuple, str]):
         """Register a tile with the connection manager.
@@ -379,8 +376,8 @@ class WFCSolver(object):
         self.shape = shape
         self.dimensions = dimensions
 
-    def register_tile(self, name, edge_types, allow_rotation_deg=(90, 180, 270)):
-        self.cm.register_tile(name, edge_types, allow_rotation_deg)
+    def register_tile(self, name, edge_types):
+        self.cm.register_tile(name, edge_types)
 
     def run(self, init_args={}):
         connections = self.cm.compute_connection_dict()

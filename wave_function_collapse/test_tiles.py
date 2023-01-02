@@ -61,8 +61,12 @@ def test_wall_array():
 
     tiles = []
     # 0: empty, 1: floor, 2: wall
-    tiles.append(ArrayTile(name="F", array=np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]]), rotations=()))
-    tiles.append(ArrayTile(name="FA", array=np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]), rotations=()))
+    tiles += ArrayTile(name="F", array=np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])).get_all_tiles()
+    tiles += ArrayTile(name="FA", array=np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])).get_all_tiles()
+    tiles += ArrayTile(name="WH", array=np.array([[1, 2, 1], [1, 2, 1], [1, 2, 1]])).get_all_tiles(rotations=(90, 180, 270), flips=("x", "y"))
+    tiles += ArrayTile(name="WI", array=np.array([[1, 1, 1], [2, 2, 1], [1, 2, 1]])).get_all_tiles(rotations=(90, 180, 270), flips=("x", "y"))
+    for tile in tiles:
+        print(tile, tile.name, tile.get_dict_tile())
     # tiles.append(tiles[-1].get_flipped_tile("x"))
     # tiles.append(tiles[-2].get_flipped_tile("y"))
     # tiles.append(ArrayTile(name="FB", array=np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0]]), rotations=(90, 180, 270)))
@@ -102,11 +106,6 @@ def test_wall_array():
     # tiles.append(ArrayTile(name="WG", array=np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]]), rotations=(90, 180, 270)))
     # tiles.append(tiles[-1].get_flipped_tile("x"))
     # tiles.append(tiles[-2].get_flipped_tile("y"))
-    tiles.append(ArrayTile(name="WH", array=np.array([[1, 2, 1], [1, 2, 1], [1, 2, 1]]), rotations=(90, 180, 270)))
-    # tiles.append(tiles[-1].get_flipped_tile("x"))
-    # tiles.append(tiles[-2].get_flipped_tile("y"))
-
-    tiles.append(ArrayTile(name="WI", array=np.array([[1, 1, 1], [2, 2, 1], [1, 2, 1]]), rotations=(90, 180, 270)))
     # tiles.append(tiles[-1].get_flipped_tile("x"))
     # tiles.append(tiles[-2].get_flipped_tile("y"))
 
@@ -123,7 +122,7 @@ def test_wall_array():
     wfc_solver = WFCSolver(shape=[13, 13], dimensions=2, seed=None)
 
     for tile in tiles:
-        wfc_solver.register_tile(*tile.get_tile())
+        wfc_solver.register_tile(*tile.get_dict_tile())
 
     init_args = {"idx": (3, 3), "tile_name": "FA"}
     # wave = wfc_solver.run(init_args=init_args)
@@ -135,16 +134,16 @@ def test_wall_array():
     print("names ", np.array(wave_names))
     np.save("names.npy", np.array(wave_names))
 
-    rotations = [90, 180, 270]
-    names = [tile.name for tile in tiles]
+    # rotations = [90, 180, 270]
+    # names = [tile.name for tile in tiles]
 
     tile_arrays = {}
 
     for tile in tiles:
         tile_arrays[tile.name] = tile.get_array()
-        for r in rotations:
-            name = f"{tile.name}_{r}"
-            tile_arrays[name] = tile.get_array(name)
+        # for r in rotations:
+        #     name = f"{tile.name}_{r}"
+        #     tile_arrays[name] = tile.get_array(name)
 
     img = np.zeros((wave.shape[0] * 3, wave.shape[1] * 3))
     print("img ", img.shape)

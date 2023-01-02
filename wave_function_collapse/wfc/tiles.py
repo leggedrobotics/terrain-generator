@@ -1,23 +1,28 @@
 import numpy as np
+from typing import Dict
 
 from .wfc import Direction2D, Direction3D
 
 
 class Tile:
     """Class to manage the tiles."""
-
-    def __init__(self, name, edges={}, rotations=(), dimension=2):
+    def __init__(self, name, edges=Dict[str, str], dimension=2):
+        """ Tile definition for the WFC algorithm.
+        Args:
+            name (str): Name of the tile.
+            edges (Dict[str, str]): Dictionary of the edges of the tile. The keys are the directions and the values are the name of the edge.
+        Example:
+            tile = Tile(name="tile1", edges={"up": "edge1", "right": "edge2", "bottom": "edge3", "left": "edge4"})
+        """
         self.name = name
         self.dimension = dimension
-        self.rotations = rotations
         self.edges = edges
         self.directions = Direction2D() if dimension == 2 else Direction3D()
 
-    def get_tile(self):
-        return self.name, self.edges, self.rotations
+    def get_dict_tile(self):
+        return self.name, self.edges
 
     def get_flipped_tile(self, direction):
-        # if direction == "x":
         if direction not in ["x", "y", "z"]:
             raise ValueError(f"Direction {direction} is not defined.")
         new_name = f"{self.name}_{direction}"
@@ -30,19 +35,33 @@ class Tile:
                 new_edges[new_key] = value
         return Tile(name=new_name, edges=new_edges, dimension=self.dimension)
 
+    def get_rotated_tile(self, deg):
+        if deg not in self.directions.directions:
+            raise ValueError(f"Rotation degree {deg} is not defined.")
+        new_name = f"{self.name}_{deg}"
+        basic_directions = self.directions.directions[0]
+        new_directions = self.directions.directions[deg]
+        new_edges = {new_key: self.edges[key] for new_key, key in zip(new_directions, basic_directions)}
+        return Tile(name=new_name, edges=new_edges, dimension=self.dimension)
+
+    def get_all_tiles(self, rotations=(), flips=()):
+        tiles = [self]
+        for flip_direction in flips:
+            tiles.append(self.get_flipped_tile(flip_direction))
+            for rotation in rotations:
+                tiles.append(self.get_flipped_tile(flip_direction).get_rotated_tile(rotation))
+        return tiles
+
 
 class ArrayTile(Tile):
     """Class to manage the tiles."""
 
-    def __init__(self, name, array, edges={}, rotations=(), dimension=2):
+    def __init__(self, name, array, edges={}, dimension=2):
         self.array = array
         self.directions = Direction2D()
         if len(edges) == 0:
             edges = self.create_edges_from_array(array)
-        super().__init__(name, edges, rotations, dimension)
-
-    def get_tile(self):
-        return self.name, self.edges
+        super().__init__(name, edges, dimension)
 
     def get_array(self, name=None):
         if name is None:
@@ -58,10 +77,30 @@ class ArrayTile(Tile):
             array = np.flip(self.array, 0)
         elif direction == "y":
             array = np.flip(self.array, 1)
+        else:
+            raise ValueError(f"Direction {direction} is not defined.")
         tile = super().get_flipped_tile(direction)
         return ArrayTile(
-            name=tile.name, array=array, edges=tile.edges, rotations=self.rotations, dimension=self.dimension
+            name=tile.name, array=array, edges=tile.edges, dimension=self.dimension
         )
+
+    def get_rotated_tile(self, deg):
+        if deg not in self.directions.directions:
+            raise ValueError(f"Rotation degree {deg} is not defined.")
+        a = deg // 90
+        array = np.rot90(self.array, a)
+        tile = super().get_rotated_tile(deg)
+        return ArrayTile(
+            name=tile.name, array=array, edges=tile.edges, dimension=self.dimension
+        )
+
+    def get_all_tiles(self, rotations=(), flips=()):
+        tiles = [self]
+        for flip_direction in flips:
+            tiles.append(self.get_flipped_tile(flip_direction))
+            for rotation in rotations:
+                tiles.append(self.get_flipped_tile(flip_direction).get_rotated_tile(rotation))
+        return tiles
 
     def create_edges_from_array(self, array):
         """Create a hash for each edge of the tile."""
