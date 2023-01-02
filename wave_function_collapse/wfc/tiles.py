@@ -1,13 +1,13 @@
 import numpy as np
 import trimesh
-from typing import Dict
+from typing import Dict, Optional
 
 from .wfc import Direction2D, Direction3D
 
 
 class Tile:
     """Class to manage the tiles."""
-    def __init__(self, name, edges=Dict[str, str], dimension=2):
+    def __init__(self, name:str, edges=Dict[str, str], dimension:int=2, weight:float=1.0):
         """ Tile definition for the WFC algorithm.
         Args:
             name (str): Name of the tile.
@@ -18,10 +18,11 @@ class Tile:
         self.name = name
         self.dimension = dimension
         self.edges = edges
+        self.weight = weight
         self.directions = Direction2D() if dimension == 2 else Direction3D()
 
     def get_dict_tile(self):
-        return self.name, self.edges
+        return self.name, self.edges, self.weight
 
     def get_flipped_tile(self, direction):
         if direction not in ["x", "y", "z"]:
@@ -56,19 +57,18 @@ class Tile:
         return tiles
 
     def __str__(self):
-        return f"Tile {self.name} with edges {self.edges}"
+        return f"Tile {self.name} with edges {self.edges}, weight {self.weight}"
 
 
 class ArrayTile(Tile):
     """Class to manage the tiles."""
 
-    def __init__(self, name, array, edges={}, dimension=2):
+    def __init__(self, name:str, array:np.ndarray, edges:Optional[Dict[str, str]]=None, dimension:int=2, weight:float=1.0):
         self.array = array
         self.directions = Direction2D()
-        if len(edges) == 0:
+        if edges is None:
             edges = self.create_edges_from_array(array)
-        super().__init__(name, edges, dimension)
-
+        super().__init__(name, edges, dimension, weight)
     def get_array(self, name=None):
         if name is None:
             return self.array
@@ -127,13 +127,13 @@ class ArrayTile(Tile):
         return edges
 
     def __str__(self):
-        return f"Tile {self.name} with edges {self.edges}\n {self.array}"
+        return super().__str__() + f"\n {self.array}"
 
 
 class MeshTile(ArrayTile):
-    def __init__(self, name, array, mesh, edges={}, dimension=2):
+    def __init__(self, name:str, array:np.ndarray, mesh:trimesh.Trimesh, edges:Optional[Dict[str, str]]=None, dimension:int=2, weight:float=1.0):
         self.mesh = mesh
-        super().__init__(name, array, edges, dimension)
+        super().__init__(name, array, edges, dimension, weight=weight)
 
     def get_flipped_tile(self, direction):
         # flip array
@@ -177,4 +177,4 @@ class MeshTile(ArrayTile):
         return self.mesh
 
     def __str__(self):
-        return f"Tile: {self.name}\nEdges: {self.edges}\n {self.array}"
+        return super().__str__()

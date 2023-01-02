@@ -5,12 +5,15 @@ import trimesh
 from wfc.wfc import WFCSolver
 from wfc.tiles import Tile, ArrayTile
 
-from create_indoor_mesh import create_wall_tiles
+from create_indoor_mesh import create_mesh_pattern
+from mesh_parts.mesh_parts_cfg import FloorPattern
 
 def test_wall_mesh():
 
     dim = (2.0, 2.0, 2.0)
-    tiles = create_wall_tiles(dim=dim)
+    cfg = FloorPattern(name="floor", dim=dim)
+    print("cfg ", cfg)
+    tiles = create_mesh_pattern(cfg)
 
     for tile in tiles.values():
         print(tile)
@@ -18,6 +21,7 @@ def test_wall_mesh():
     wfc_solver = WFCSolver(shape=[30, 30], dimensions=2, seed=None)
 
     for tile in tiles.values():
+        print("tile ", tile)
         wfc_solver.register_tile(*tile.get_dict_tile())
 
     # init_args = {"idx": (3, 3), "tile_name": "FA"}

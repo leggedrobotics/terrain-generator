@@ -34,7 +34,7 @@ class Wave:
 class WFCCore:
     """Wave Function Collapse algorithm implementation."""
 
-    def __init__(self, n_tiles: int, connections: dict, shape: list, dimensions: int = 2):
+    def __init__(self, n_tiles: int, connections: dict, shape: list, tile_weights: list=[], dimensions: int = 2, observation_mode: str="random"):
         """Initialize the WFC algorithm.
         Args:
             n_tiles: number of tiles
@@ -50,9 +50,14 @@ class WFCCore:
         self.new_idx = None
         self.wave = Wave(n_tiles, shape, dimensions)
         self.history = []
+        if len(tile_weights) > 0:
+            self.tile_weights = np.array(tile_weights)
+        else:
+            self.tile_weights = np.ones(n_tiles)
         self.back_track_cnt = 0
         self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
         self.total_back_track_cnt = 0
+        self.observation_mode = observation_mode
 
     def _get_neighbours(self, idx):
         """Get the neighbours of a given tile."""
@@ -104,14 +109,37 @@ class WFCCore:
         self._update_wave(idx, tile_id)
         self.new_idx = idx
 
-    def init(self, idx, tile_id):
-        self._update_wave(idx, tile_id)
-        self.new_idx = idx
-        print("wave ", self.wave.wave)
+    def init(self, idx=None, tile_id=None):
+        if idx is None or tile_id is None:
+            self.init_randomly()
+        else:
+            self._update_wave(idx, tile_id)
+            self.new_idx = idx
+            print("Init wave with idx and tile number", self.wave.wave)
+
+    def random_observe(self, idx):
+        """Observe a random tile."""
+        tile_id = np.random.choice(np.arange(self.n_tiles)[self.wave.valid[(slice(None),) + tuple(idx)]])
+        return tile_id
+
+    def weighted_random_observe(self, idx):
+        """Observe a random tile."""
+        valid_tiles = np.arange(self.n_tiles)[self.wave.valid[(slice(None),) + tuple(idx)]].astype(int)
+        print("valid tile number", valid_tiles)
+        valid_tile_weights = self.tile_weights[valid_tiles]
+        print("valid tile weights", valid_tile_weights)
+        tile_id = np.random.choice(valid_tiles, p=valid_tile_weights/np.sum(valid_tile_weights))
+        print("tile id", tile_id)
+        return tile_id
 
     def observe(self, idx):
         """Observe a tile."""
-        tile_id = np.random.choice(np.arange(self.n_tiles)[self.wave.valid[(slice(None),) + tuple(idx)]])
+        if self.observation_mode == "random":
+            tile_id = self.random_observe(idx)
+        elif self.observation_mode == "weighted":
+            tile_id = self.weighted_random_observe(idx)
+        else:
+            raise NotImplementedError
         self._update_wave(idx, tile_id)
 
     def solve(self):
@@ -368,20 +396,25 @@ class ConnectionManager:
 class WFCSolver(object):
     """Class to solve the WFC problem."""
 
-    def __init__(self, shape, dimensions, seed=None):
+    def __init__(self, shape, dimensions, seed=None, observation_mode="weighted"):
         if seed is not None:
             np.random.seed(seed)
             random.seed(seed)
         self.cm = ConnectionManager(dimension=dimensions)
         self.shape = shape
         self.dimensions = dimensions
+        self.observation_mode = observation_mode
+        self.tile_weights = {}
 
-    def register_tile(self, name, edge_types):
+    def register_tile(self, name, edge_types, weight=1):
         self.cm.register_tile(name, edge_types)
+        self.tile_weights[name] = weight
 
     def run(self, init_args={}):
         connections = self.cm.compute_connection_dict()
-        wfc = WFCCore(len(self.cm.names), connections, self.shape, self.dimensions)
+        tile_weights = [self.tile_weights[name] for name in self.cm.names]
+        print("tile_weights", tile_weights)
+        wfc = WFCCore(len(self.cm.names), connections, self.shape, tile_weights=tile_weights, dimensions=self.dimensions, observation_mode=self.observation_mode)
         print("Start solving...")
         if len(init_args) > 0:
             print("init ", init_args)
