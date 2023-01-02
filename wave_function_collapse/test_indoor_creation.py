@@ -50,6 +50,7 @@ def test_wall_mesh():
         for x in range(wave.shape[1]):
             # print("name ", names[wave[y, x]], x, y)
             # mesh = meshes.get_mesh(names[wave[y, x]])
+            # print("mesh ", tiles[names[wave[y, x]]])
             mesh = tiles[names[wave[y, x]]].get_mesh().copy()
             # print("array ", tiles[names[wave[y, x]]].get_array())
             # mesh.show()

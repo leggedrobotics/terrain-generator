@@ -1,15 +1,15 @@
 import numpy as np
 from typing import Tuple
+import functools
 
-from wfc.tiles import Tile, ArrayTile, MeshTile
+from wfc.tiles import Tile, ArrayTile, MeshTile, MeshGeneratorTile
 from mesh_parts.indoor_parts import create_wall_mesh
 from mesh_parts.mesh_parts_cfg import MeshPartsCfg, WallMeshPartsCfg, MeshPattern
 
 
 def create_wall_meshtile(cfg: WallMeshPartsCfg):
-    mesh = create_wall_mesh(cfg)
     array = np.zeros((3, 3))
-    name = "wall"
+    name = cfg.name
     for edge in cfg.wall_edges:
         if edge == "bottom":
             array[-1, :] = 1
@@ -30,7 +30,12 @@ def create_wall_meshtile(cfg: WallMeshPartsCfg):
         else:
             raise ValueError(f"Edge {edge} is not defined.")
         name += f"_{edge}"
-    return MeshTile(name, array, mesh, weight=cfg.weight)
+    if cfg.use_generator:
+        mesh_gen = functools.partial(create_wall_mesh, cfg)
+        return MeshGeneratorTile(name, array, mesh_gen, weight=cfg.weight)
+    else:
+        mesh = create_wall_mesh(cfg)
+        return MeshTile(name, array, mesh, weight=cfg.weight)
 
 
 def create_mesh_pattern(cfg: MeshPattern):
