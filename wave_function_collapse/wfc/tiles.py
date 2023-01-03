@@ -117,13 +117,13 @@ class ArrayTile(Tile):
         edges = {}
         for direction in self.directions.base_directions:
             if direction == "up":
-                edges[direction] = tuple(array[0, :])
+                edges[direction] = tuple(np.round(array[0, :], 1))
             elif direction == "down":
-                edges[direction] = tuple(array[-1, :][::-1])
+                edges[direction] = tuple(np.round(array[-1, :][::-1], 1))
             elif direction == "left":
-                edges[direction] = tuple(array[:, 0][::-1])
+                edges[direction] = tuple(np.round(array[:, 0][::-1], 1))
             elif direction == "right":
-                edges[direction] = tuple(array[:, -1])
+                edges[direction] = tuple(np.round(array[:, -1], 1))
             else:
                 raise ValueError(f"Direction {direction} is not defined.")
         return edges

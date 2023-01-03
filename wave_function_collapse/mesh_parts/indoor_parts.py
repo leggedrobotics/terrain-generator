@@ -1,7 +1,7 @@
 import trimesh
 import numpy as np
 from mesh_parts.mesh_parts_cfg import MeshPartsCfg, WallMeshPartsCfg, StairMeshPartsCfg
-from mesh_parts.mesh_utils import merge_meshes, rotate_mesh, flip_mesh, ENGINE
+from mesh_parts.mesh_utils import merge_meshes, rotate_mesh, flip_mesh, ENGINE, get_height_array_of_mesh
 
 
 def create_floor(cfg: MeshPartsCfg):
@@ -18,56 +18,56 @@ def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
         pos = [
             0,
             -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "up":
         dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
         pos = [
             0,
             cfg.dim[1] / 2.0 - cfg.wall_thickness / 2.0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "left":
         dim = [cfg.wall_thickness, cfg.dim[1], cfg.wall_height]
         pos = [
             -cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0,
             0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "right":
         dim = [cfg.wall_thickness, cfg.dim[1], cfg.wall_height]
         pos = [
             cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
             0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "middle_bottom":
         dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
         pos = [
             0,
             -cfg.dim[1] / 4.0 + cfg.wall_thickness / 4.0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "middle_up":
         dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
         pos = [
             0,
             cfg.dim[1] / 4.0 - cfg.wall_thickness / 4.0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "middle_left":
         dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
         pos = [
             -cfg.dim[0] / 4.0 + cfg.wall_thickness / 4.0,
             0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "middle_right":
         dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
         pos = [
             cfg.dim[0] / 4.0 - cfg.wall_thickness / 4.0,
             0,
-            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     else:
         raise ValueError(f"Edge {edge} is not defined.")
@@ -253,7 +253,7 @@ def create_standard_stairs_bk(cfg: StairMeshPartsCfg.Stair):
     if "right" in cfg.attach_side:
         mesh.apply_translation([cfg.dim[0] / 2.0 - dim[0] / 2.0, 0, 0])
     if "front" in cfg.attach_side:
-        mesh.apply_translation([0, +cfg.dim[1] / 2.0 - dim[1] / 2.0, 0])
+        mesh.apply_translation([0, cfg.dim[1] / 2.0 - dim[1] / 2.0, 0])
     if "back" in cfg.attach_side:
         mesh.apply_translation([0, -cfg.dim[1] / 2.0 + dim[1] / 2.0, 0])
     if "up" in cfg.attach_side:
@@ -286,11 +286,11 @@ def create_stairs(cfg: StairMeshPartsCfg.Stair):
         dim = dim[np.array([1, 0, 2])]
 
     if "left" in cfg.attach_side:
-        mesh.apply_translation([-cfg.dim[0] / 2.0 + dim[1] / 2.0, 0, 0])
+        mesh.apply_translation([-cfg.dim[0] / 2.0 + dim[0] / 2.0, 0, 0])
     if "right" in cfg.attach_side:
-        mesh.apply_translation([cfg.dim[0] / 2.0 - dim[1] / 2.0, 0, 0])
+        mesh.apply_translation([cfg.dim[0] / 2.0 - dim[0] / 2.0, 0, 0])
     if "front" in cfg.attach_side:
-        mesh.apply_translation([0, +cfg.dim[1] / 2.0 - dim[1] / 2.0, 0])
+        mesh.apply_translation([0, cfg.dim[1] / 2.0 - dim[1] / 2.0, 0])
     if "back" in cfg.attach_side:
         mesh.apply_translation([0, -cfg.dim[1] / 2.0 + dim[1] / 2.0, 0])
     return mesh
@@ -300,8 +300,12 @@ def create_stairs_mesh(cfg: StairMeshPartsCfg):
     mesh = create_floor(cfg)
     for stair in cfg.stairs:
         stairs = create_stairs(stair)
-        stairs.show()
         mesh = merge_meshes([mesh, stairs], cfg.minimal_triangles)
+    if cfg.wall is not None:
+        for wall_edges in cfg.wall.wall_edges:
+            wall = create_standard_wall(cfg.wall, wall_edges)
+            # wall = get_wall_with_door(cfg, wall_edges)
+            mesh = merge_meshes([mesh, wall], cfg.minimal_triangles)
 
     return mesh
 
@@ -356,61 +360,66 @@ if __name__ == "__main__":
                 fill_bottom=False,
             ),
         ),
+        wall=WallMeshPartsCfg(
+            name="wall",
+            wall_edges=("middle_left", "middle_right"),
+            )
     )
     # from mesh_parts.mesh_parts_cfg import StairPattern
     # pattern = StairPattern(name="stairs")
     mesh = create_stairs_mesh(stair_straight)
     mesh.show()
+    get_height_array_of_mesh(mesh, stair_straight.dim, 5)
 
-    stair_straight = StairMeshPartsCfg(
-        name="stair_s",
-        rotations=(90, 180, 270),
-        flips=(),
-        weight=0.1,
-        stairs=(
-            StairMeshPartsCfg.Stair(
-                step_width=1.0,
-                # step_height=0.15,
-                step_depth=0.3,
-                total_height=1.0,
-                stair_type="standard",
-                direction="up",
-                gap_direction="down",
-                add_residual_side_up=False,
-                attach_side="front_right",
-                add_rail=False,
-                fill_bottom=True,
-            ),
-        ),
-    )
-    # from mesh_parts.mesh_parts_cfg import StairPattern
-    # pattern = StairPattern(name="stairs")
-    mesh = create_stairs_mesh(stair_straight)
-    mesh.show()
-
-    stair_straight = StairMeshPartsCfg(
-        name="stair_s",
-        rotations=(90, 180, 270),
-        flips=(),
-        weight=0.1,
-        stairs=(
-            StairMeshPartsCfg.Stair(
-                step_width=1.0,
-                # step_height=0.15,
-                step_depth=0.3,
-                total_height=1.0,
-                stair_type="standard",
-                direction="up",
-                gap_direction="up",
-                add_residual_side_up=False,
-                height_offset=1.0,
-                attach_side="front_right",
-                add_rail=False,
-                fill_bottom=True,
-            ),
-        ),
-    )
-    # from mesh_parts.mesh_parts_cfg import StairPattern
-    # pattern = StairPattern(name="stairs")
-    mesh = create_stairs_mesh(stair_straight)
-    mesh.show()
+    # stair_straight = StairMeshPartsCfg(
+    #     name="stair_s",
+    #     rotations=(90, 180, 270),
+    #     flips=(),
+    #     weight=0.1,
+    #     stairs=(
+    #         StairMeshPartsCfg.Stair(
+    #             step_width=1.0,
+    #             # step_height=0.15,
+    #             step_depth=0.3,
+    #             total_height=1.0,
+    #             stair_type="standard",
+    #             direction="up",
+    #             gap_direction="down",
+    #             add_residual_side_up=False,
+    #             attach_side="front_right",
+    #             add_rail=False,
+    #             fill_bottom=True,
+    #         ),
+    #     ),
+    # )
+    # # from mesh_parts.mesh_parts_cfg import StairPattern
+    # # pattern = StairPattern(name="stairs")
+    # mesh = create_stairs_mesh(stair_straight)
+    # mesh.show()
+    # 
+    # stair_straight = StairMeshPartsCfg(
+    #     name="stair_s",
+    #     rotations=(90, 180, 270),
+    #     flips=(),
+    #     weight=0.1,
+    #     stairs=(
+    #         StairMeshPartsCfg.Stair(
+    #             step_width=1.0,
+    #             # step_height=0.15,
+    #             step_depth=0.3,
+    #             total_height=1.0,
+    #             stair_type="standard",
+    #             direction="up",
+    #             gap_direction="up",
+    #             add_residual_side_up=True,
+    #             height_offset=1.0,
+    #             attach_side="front_right",
+    #             add_rail=False,
+    #             fill_bottom=True,
+    #         ),
+    #     ),
+    # )
+    # # from mesh_parts.mesh_parts_cfg import StairPattern
+    # # pattern = StairPattern(name="stairs")
+    # mesh = create_stairs_mesh(stair_straight)
+    # mesh.show()

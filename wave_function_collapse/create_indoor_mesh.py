@@ -5,36 +5,22 @@ import functools
 from wfc.tiles import Tile, ArrayTile, MeshTile, MeshGeneratorTile
 from mesh_parts.indoor_parts import create_wall_mesh
 from mesh_parts.mesh_parts_cfg import MeshPartsCfg, WallMeshPartsCfg, MeshPattern
+from mesh_parts.mesh_utils import get_height_array_of_mesh
 
 
 def create_wall_meshtile(cfg: WallMeshPartsCfg):
-    array = np.zeros((3, 3))
+    # array = np.zeros((3, 3))
     name = cfg.name
     for edge in cfg.wall_edges:
-        if edge == "bottom":
-            array[-1, :] = 1
-        elif edge == "up":
-            array[0, :] = 1
-        elif edge == "left":
-            array[:, 0] = 1
-        elif edge == "right":
-            array[:, -1] = 1
-        elif edge == "middle_left":
-            array[:, 0] = np.array([0, 1, 0])
-        elif edge == "middle_right":
-            array[:, -1] = np.array([0, 1, 0])
-        elif edge == "middle_up":
-            array[0, 0] = np.array([0, 1, 0])
-        elif edge == "middle_bottom":
-            array[-1, :] = np.array([0, 1, 0])
-        else:
-            raise ValueError(f"Edge {edge} is not defined.")
         name += f"_{edge}"
     if cfg.use_generator:
         mesh_gen = functools.partial(create_wall_mesh, cfg)
+        mesh = mesh_gen()
+        array = get_height_array_of_mesh(mesh, cfg.dim, 5)
         return MeshGeneratorTile(name, array, mesh_gen, weight=cfg.weight)
     else:
         mesh = create_wall_mesh(cfg)
+        array = get_height_array_of_mesh(mesh, cfg.dim, 5)
         return MeshTile(name, array, mesh, weight=cfg.weight)
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Optional
 from dataclasses import dataclass
 
 
@@ -50,7 +50,7 @@ class StairMeshPartsCfg(MeshPartsCfg):
         attach_side: str = "left"
 
     stairs: Tuple[Stair, ...] = (Stair(),)
-    wall: WallMeshPartsCfg = WallMeshPartsCfg()
+    wall: Optional[WallMeshPartsCfg] = None
 
 
 @dataclass

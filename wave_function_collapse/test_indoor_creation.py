@@ -31,12 +31,14 @@ def test_wall_mesh():
     # for tile in tiles.values():
     #     tile_arrays[tile.name] = tile.get_array()
 
-    img = np.zeros((wave.shape[0] * 3, wave.shape[1] * 3))
+    tile_array = tiles["floor"].get_array()
+    array_shape = tile_array.shape
+    img = np.zeros((wave.shape[0] * array_shape[0], wave.shape[1] * array_shape[1]))
     for y in range(wave.shape[0]):
         for x in range(wave.shape[1]):
             # tile = tile_arrays[wfc_solver.names[wave[y, x]]]
             tile = tiles[wfc_solver.names[wave[y, x]]].get_array()
-            img[y * 3 : (y + 1) * 3, x * 3 : (x + 1) * 3] = tile
+            img[y * array_shape[0] : (y + 1) * array_shape[0], x * array_shape[1] : (x + 1) * array_shape[1]] = tile
 
     plt.imshow(img)
     plt.colorbar()

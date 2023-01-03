@@ -42,3 +42,22 @@ def rotate_mesh(mesh, deg):
         raise ValueError(f"Rotation degree {deg} is not defined.")
     new_mesh.apply_transform(transform)
     return new_mesh
+
+
+def get_height_array_of_mesh(mesh, dim, num_points):
+    # intersects_location requires origins to be the same shape as vectors
+    x = np.linspace(-dim[0] / 2.0, dim[0] / 2.0, num_points)
+    y = np.linspace(dim[1] / 2.0, -dim[1] / 2.0, num_points)
+    xv, yv = np.meshgrid(x, y)
+    xv = xv.flatten()
+    yv = yv.flatten()
+    origins = np.stack([xv, yv, np.ones_like(xv) * dim[2] * 2], axis=-1)
+    vectors = np.stack([np.zeros_like(xv), np.zeros_like(yv), -np.ones_like(xv)], axis=-1)
+    # # do the actual ray- mesh queries
+    points, index_ray, index_tri = mesh.ray.intersects_location(
+        origins, vectors, multiple_hits=False)
+    array = np.zeros((num_points * num_points))
+    array[index_ray] = points[:, 2]
+    array = np.round(array, 1) + dim[2] / 2.0
+    array = array.reshape(num_points, num_points)
+    return array
