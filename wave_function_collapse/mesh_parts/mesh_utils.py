@@ -2,9 +2,13 @@ import numpy as np
 import trimesh
 
 
+ENGINE = "blender"
+# ENGINE = "scad"
+
+
 def merge_meshes(meshes, minimal_triangles=False):
     if minimal_triangles:
-        meshes = trimesh.boolean.union(meshes, engine="blender")
+        meshes = trimesh.boolean.union(meshes, engine=ENGINE)
     else:
         meshes = trimesh.util.concatenate(meshes)
     return meshes
@@ -38,5 +42,3 @@ def rotate_mesh(mesh, deg):
         raise ValueError(f"Rotation degree {deg} is not defined.")
     new_mesh.apply_transform(transform)
     return new_mesh
-
-
