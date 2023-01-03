@@ -4,6 +4,7 @@ import functools
 from typing import Dict, Optional, Any, Callable, Tuple
 
 from .wfc import Direction2D, Direction3D
+from mesh_parts.mesh_utils import flip_mesh, rotate_mesh
 
 
 class Tile:
@@ -131,34 +132,34 @@ class ArrayTile(Tile):
         return super().__str__() + f"\n {self.array}"
 
 
-def flip_mesh(mesh, direction):
-    """Flip a mesh in a given direction."""
-    new_mesh = mesh.copy()
-    if direction == "x":
-        # Create the transformation matrix for inverting the mesh in the x-axis
-        transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [1, 0, 0])
-    elif direction == "y":
-        transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [0, 1, 0])
-    else:
-        raise ValueError(f"Direction {direction} is not defined.")
-    # Apply the transformation to the mesh
-    new_mesh.apply_transform(transform)
-    return new_mesh
-
-
-def rotate_mesh(mesh, deg):
-    """Rotate a mesh in a given degree."""
-    new_mesh = mesh.copy()
-    if deg == 90:
-        transform = trimesh.transformations.rotation_matrix(np.pi / 2, [0, 0, 1])
-    elif deg == 180:
-        transform = trimesh.transformations.rotation_matrix(np.pi, [0, 0, 1])
-    elif deg == 270:
-        transform = trimesh.transformations.rotation_matrix(-np.pi / 2, [0, 0, 1])
-    else:
-        raise ValueError(f"Rotation degree {deg} is not defined.")
-    new_mesh.apply_transform(transform)
-    return new_mesh
+# def flip_mesh(mesh, direction):
+#     """Flip a mesh in a given direction."""
+#     new_mesh = mesh.copy()
+#     if direction == "x":
+#         # Create the transformation matrix for inverting the mesh in the x-axis
+#         transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [1, 0, 0])
+#     elif direction == "y":
+#         transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [0, 1, 0])
+#     else:
+#         raise ValueError(f"Direction {direction} is not defined.")
+#     # Apply the transformation to the mesh
+#     new_mesh.apply_transform(transform)
+#     return new_mesh
+# 
+# 
+# def rotate_mesh(mesh, deg):
+#     """Rotate a mesh in a given degree."""
+#     new_mesh = mesh.copy()
+#     if deg == 90:
+#         transform = trimesh.transformations.rotation_matrix(np.pi / 2, [0, 0, 1])
+#     elif deg == 180:
+#         transform = trimesh.transformations.rotation_matrix(np.pi, [0, 0, 1])
+#     elif deg == 270:
+#         transform = trimesh.transformations.rotation_matrix(-np.pi / 2, [0, 0, 1])
+#     else:
+#         raise ValueError(f"Rotation degree {deg} is not defined.")
+#     new_mesh.apply_transform(transform)
+#     return new_mesh
 
 
 class MeshTile(ArrayTile):
@@ -167,17 +168,6 @@ class MeshTile(ArrayTile):
         super().__init__(name, array, edges, dimension, weight=weight)
 
     def get_flipped_tile(self, direction):
-        # flip array
-        # mesh = self.mesh.copy()
-        # if direction == "x":
-        #     # Create the transformation matrix for inverting the mesh in the x-axis
-        #     transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [1, 0, 0])
-        # elif direction == "y":
-        #     transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [0, 1, 0])
-        # else:
-        #     raise ValueError(f"Direction {direction} is not defined.")
-        # # Apply the transformation to the mesh
-        # mesh.apply_transform(transform)
         mesh = flip_mesh(self.mesh, direction)
         tile = super().get_flipped_tile(direction)
         return MeshTile(
@@ -185,11 +175,6 @@ class MeshTile(ArrayTile):
         )
 
     def get_rotated_tile(self, deg):
-        # if deg not in self.directions.directions:
-        #     raise ValueError(f"Rotation degree {deg} is not defined.")
-        # transform = trimesh.transformations.rotation_matrix(deg * np.pi / 180, [0, 0, 1])
-        # mesh = self.mesh.copy()
-        # mesh = mesh.apply_transform(transform)
         mesh = rotate_mesh(self.mesh, deg)
         tile = super().get_rotated_tile(deg)
         return MeshTile(
