@@ -9,13 +9,14 @@ from mesh_parts.mesh_utils import flip_mesh, rotate_mesh
 
 class Tile:
     """Class to manage the tiles."""
-    def __init__(self, name:str, edges:Dict[str, str], dimension:int=2, weight:float=1.0):
-        """ Tile definition for the WFC algorithm.
+
+    def __init__(self, name: str, edges: Dict[str, str], dimension: int = 2, weight: float = 1.0):
+        """Tile definition for the WFC algorithm.
         Args:
             name (str): Name of the tile.
             edges (Dict[str, str]): Dictionary of the edges of the tile. The keys are the directions and the values are the name of the edge.
         Example:
-            tile = Tile(name="tile1", edges={"up": "edge1", "right": "edge2", "bottom": "edge3", "left": "edge4"})
+            tile = Tile(name="tile1", edges={"up": "edge1", "right": "edge2", "down": "edge3", "left": "edge4"})
         """
         self.name = name
         self.dimension = dimension
@@ -63,14 +64,29 @@ class Tile:
 
 
 class ArrayTile(Tile):
-    """Class to manage the tiles."""
+    """Class to manage the tiles.
+    Args:
+        name (str): Name of the tile.
+        array (np.ndarray): Array of the tile.
+        edges (Optional[Dict[str, str]]): Dictionary of the edges of the tile. The keys are the directions and the values are the name of the edge.
+    Example:
+        tile = ArrayTile(name="tile", array=np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]))
+    """
 
-    def __init__(self, name:str, array:np.ndarray, edges:Optional[Dict[str, str]]=None, dimension:int=2, weight:float=1.0):
+    def __init__(
+        self,
+        name: str,
+        array: np.ndarray,
+        edges: Optional[Dict[str, str]] = None,
+        dimension: int = 2,
+        weight: float = 1.0,
+    ):
         self.array = array
         self.directions = Direction2D()
         if edges is None:
             edges = self.create_edges_from_array(array)
         super().__init__(name, edges, dimension, weight)
+
     def get_array(self, name=None):
         if name is None:
             return self.array
@@ -82,15 +98,13 @@ class ArrayTile(Tile):
     def get_flipped_tile(self, direction):
         # flip array
         if direction == "x":
-            array = np.flip(self.array, 0)
-        elif direction == "y":
             array = np.flip(self.array, 1)
+        elif direction == "y":
+            array = np.flip(self.array, 0)
         else:
             raise ValueError(f"Direction {direction} is not defined.")
         tile = super().get_flipped_tile(direction)
-        return ArrayTile(
-            name=tile.name, array=array, edges=tile.edges, dimension=self.dimension, weight=tile.weight
-        )
+        return ArrayTile(name=tile.name, array=array, edges=tile.edges, dimension=self.dimension, weight=tile.weight)
 
     def get_rotated_tile(self, deg):
         if deg not in self.directions.directions:
@@ -98,9 +112,7 @@ class ArrayTile(Tile):
         a = deg // 90
         array = np.rot90(self.array, a)
         tile = super().get_rotated_tile(deg)
-        return ArrayTile(
-            name=tile.name, array=array, edges=tile.edges, dimension=self.dimension, weight=tile.weight
-        )
+        return ArrayTile(name=tile.name, array=array, edges=tile.edges, dimension=self.dimension, weight=tile.weight)
 
     def get_all_tiles(self, rotations=(), flips=()):
         tiles = [self]
@@ -145,8 +157,8 @@ class ArrayTile(Tile):
 #     # Apply the transformation to the mesh
 #     new_mesh.apply_transform(transform)
 #     return new_mesh
-# 
-# 
+#
+#
 # def rotate_mesh(mesh, deg):
 #     """Rotate a mesh in a given degree."""
 #     new_mesh = mesh.copy()
@@ -163,7 +175,15 @@ class ArrayTile(Tile):
 
 
 class MeshTile(ArrayTile):
-    def __init__(self, name:str, array:np.ndarray, mesh:trimesh.Trimesh, edges:Optional[Dict[str, str]]=None, dimension:int=2, weight:float=1.0):
+    def __init__(
+        self,
+        name: str,
+        array: np.ndarray,
+        mesh: trimesh.Trimesh,
+        edges: Optional[Dict[str, str]] = None,
+        dimension: int = 2,
+        weight: float = 1.0,
+    ):
         self.mesh = mesh
         super().__init__(name, array, edges, dimension, weight=weight)
 
@@ -171,7 +191,12 @@ class MeshTile(ArrayTile):
         mesh = flip_mesh(self.mesh, direction)
         tile = super().get_flipped_tile(direction)
         return MeshTile(
-            name=tile.name, array=tile.array, mesh=mesh, edges=tile.edges, dimension=self.dimension, weight=tile.weight,
+            name=tile.name,
+            array=tile.array,
+            mesh=mesh,
+            edges=tile.edges,
+            dimension=self.dimension,
+            weight=tile.weight,
         )
 
     def get_rotated_tile(self, deg):
@@ -199,8 +224,16 @@ class MeshTile(ArrayTile):
 
 
 class MeshGeneratorTile(ArrayTile):
-    def __init__(self, name:str, array:np.ndarray, mesh_gen:Callable[[], trimesh.Trimesh], edges:Optional[Dict[str, str]]=None, dimension:int=2, weight:float=1.0):
-        """ Class to manage the tiles.
+    def __init__(
+        self,
+        name: str,
+        array: np.ndarray,
+        mesh_gen: Callable[[], trimesh.Trimesh],
+        edges: Optional[Dict[str, str]] = None,
+        dimension: int = 2,
+        weight: float = 1.0,
+    ):
+        """Class to manage the tiles.
         Args:
             name: Name of the tile
             array: Array of the tile

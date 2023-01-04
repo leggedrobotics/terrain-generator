@@ -34,7 +34,15 @@ class Wave:
 class WFCCore:
     """Wave Function Collapse algorithm implementation."""
 
-    def __init__(self, n_tiles: int, connections: dict, shape: list, tile_weights: list=[], dimensions: int = 2, observation_mode: str="random"):
+    def __init__(
+        self,
+        n_tiles: int,
+        connections: dict,
+        shape: list,
+        tile_weights: list = [],
+        dimensions: int = 2,
+        observation_mode: str = "random",
+    ):
         """Initialize the WFC algorithm.
         Args:
             n_tiles: number of tiles
@@ -126,7 +134,7 @@ class WFCCore:
         """Observe a random tile."""
         valid_tiles = np.arange(self.n_tiles)[self.wave.valid[(slice(None),) + tuple(idx)]].astype(int)
         valid_tile_weights = self.tile_weights[valid_tiles]
-        tile_id = np.random.choice(valid_tiles, p=valid_tile_weights/np.sum(valid_tile_weights))
+        tile_id = np.random.choice(valid_tiles, p=valid_tile_weights / np.sum(valid_tile_weights))
         return tile_id
 
     def observe(self, idx):
@@ -214,12 +222,12 @@ class Direction2D:
             270: tuple(np.roll(np.array(self.base_directions), -3)),
         }
         self.flipped_directions: Dict[str, tuple] = {
-            "x": tuple(np.array(self.base_directions)[[2, 1, 0, 3]]),
-            "y": tuple(np.array(self.base_directions)[[0, 3, 2, 1]]),
+            "x": tuple(np.array(self.base_directions)[[0, 3, 2, 1]]),
+            "y": tuple(np.array(self.base_directions)[[2, 1, 0, 3]]),
         }
         self.is_edge_flipped: Dict[str, tuple] = {
-            "x": ("left", "right"),
-            "y": ("up", "down"),
+            "x": ("up", "down", "left", "right"),
+            "y": ("left", "right", "up", "down"),
             # "y": ("left", "right"),
             # "x": ("up", "down"),
         }
@@ -410,7 +418,14 @@ class WFCSolver(object):
     def run(self, init_args={}):
         connections = self.cm.compute_connection_dict()
         tile_weights = [self.tile_weights[name] for name in self.cm.names]
-        wfc = WFCCore(len(self.cm.names), connections, self.shape, tile_weights=tile_weights, dimensions=self.dimensions, observation_mode=self.observation_mode)
+        wfc = WFCCore(
+            len(self.cm.names),
+            connections,
+            self.shape,
+            tile_weights=tile_weights,
+            dimensions=self.dimensions,
+            observation_mode=self.observation_mode,
+        )
         print("Start solving...")
         if len(init_args) > 0:
             print("init ", init_args)
