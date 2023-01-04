@@ -242,23 +242,29 @@ def create_stairs_mesh(cfg: StairMeshPartsCfg):
 
 def create_platform_mesh(cfg: PlatformMeshPartsCfg):
     meshes = []
+    min_h = 0.0
     if cfg.add_floor:
         meshes.append(create_floor(cfg))
+        min_h = cfg.floor_thickness
+    dim_xy = [cfg.dim[0] / cfg.array.shape[0], cfg.dim[1] / cfg.array.shape[1]]
     for y in range(cfg.array.shape[1]):
         for x in range(cfg.array.shape[0]):
-            if cfg.array[y, x] > 0.0:
-                dim = [cfg.dim[0] / cfg.array.shape[0], cfg.dim[1] / cfg.array.shape[1], cfg.array[y, x]]
-                box_mesh = trimesh.creation.box(dim, np.eye(4))
+            if cfg.array[y, x] > min_h:
+                h = cfg.array[y, x]
+                dim = [dim_xy[0], dim_xy[1], h]
+                if cfg.use_z_dim_array:
+                    z = cfg.z_dim_array[y, x]
+                    if z > 0.0 and z < h:
+                        dim = np.array([dim_xy[0], dim_xy[1], cfg.z_dim_array[y, x]])
                 pos = np.array(
                     [
                         x * dim[0] - cfg.dim[0] / 2.0 + dim[0] / 2.0,
                         -y * dim[1] + cfg.dim[1] / 2.0 - dim[1] / 2.0,
-                        dim[2] / 2.0 - cfg.dim[2] / 2.0,
+                        h - dim[2] / 2.0 - cfg.dim[2] / 2.0,
                     ]
                 )
-                b = box_mesh.copy()
-                b.apply_translation(pos)
-                meshes.append(b)
+                box_mesh = trimesh.creation.box(dim, trimesh.transformations.translation_matrix(pos))
+                meshes.append(box_mesh)
     mesh = merge_meshes(meshes, cfg.minimal_triangles)
     return mesh
 
@@ -368,6 +374,13 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
 
 
 if __name__ == "__main__":
+    cfg = PlatformMeshPartsCfg(
+        array=np.array([[1, 0], [0, 0]]), z_dim_array=np.array([[0.5, 0], [0, 0]]), use_z_dim_array=True
+    )
+    mesh = create_platform_mesh(cfg)
+    print(get_height_array_of_mesh(mesh, cfg.dim, 5))
+    mesh.show()
+
     cfg = PlatformMeshPartsCfg(
         name="platform_T",
         array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),

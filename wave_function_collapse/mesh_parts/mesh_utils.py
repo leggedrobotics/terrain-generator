@@ -3,6 +3,7 @@ import numpy as np
 import trimesh
 from typing import Callable, Any
 from dataclasses import asdict, is_dataclass
+import open3d as o3d
 
 
 ENGINE = "blender"
@@ -119,3 +120,21 @@ def get_cached_mesh_gen(
         return mesh
 
     return mesh_gen
+
+
+def visualize_mesh(mesh, save_path=None):
+    """Visualize a mesh."""
+    # o3d_mesh = o3d.geometry.TriangleMesh()
+    if isinstance(mesh, trimesh.Trimesh):
+        o3d_mesh = mesh.as_open3d
+        # mesh.vertices = o3d.utility.Vector3dVector(mesh.vertices)
+        # mesh.triangles = o3d.utility.Vector3iVector(mesh.faces)
+    elif isinstance(mesh, o3d.geometry.TriangleMesh):
+        o3d_mesh = mesh
+    # Visualize meshes one by one with Open3D
+    o3d_mesh.compute_vertex_normals()
+    R = o3d.geometry.get_rotation_matrix_from_xyz([-1.0, 0.0, 0.2])
+    print("R ", R)
+    o3d_mesh.rotate(R, center=[0, 0, 0])
+    o3d.visualization.draw_geometries([o3d_mesh])
+    # vis.capture_screen_image(f"image_{i}.jpg")

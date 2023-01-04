@@ -171,17 +171,31 @@ class MeshTile(ArrayTile):
             raise ValueError(f"Direction {direction} is not defined.")
         # Apply the transformation to the mesh
         tile = super().get_flipped_tile(direction)
-        return MeshTile(name=tile.name, array=tile.array, mesh=mesh_gen, edges=tile.edges, dimension=self.dimension)
+        return MeshTile(
+            name=tile.name,
+            array=tile.array,
+            mesh=mesh_gen,
+            edges=tile.edges,
+            dimension=self.dimension,
+            weight=self.weight,
+        )
 
     def get_rotated_tile(self, deg):
         if deg not in self.directions.directions:
             raise ValueError(f"Rotation degree {deg} is not defined.")
         mesh_gen = lambda: rotate_mesh(self.mesh_gen(), deg)
         tile = super().get_rotated_tile(deg)
-        return MeshTile(name=tile.name, array=tile.array, mesh=mesh_gen, edges=tile.edges, dimension=self.dimension)
+        return MeshTile(
+            name=tile.name,
+            array=tile.array,
+            mesh=mesh_gen,
+            edges=tile.edges,
+            dimension=self.dimension,
+            weight=self.weight,
+        )
 
     def get_mesh(self):
         return self.mesh_gen()
 
     def __str__(self):
-        return "MeshGeneratorTile: " + super().__str__()
+        return "MeshTile: " + super().__str__()

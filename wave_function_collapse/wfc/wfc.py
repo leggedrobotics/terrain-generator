@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Literal, Tuple, Dict
 import itertools
 import copy
+from alive_progress import alive_bar
 
 
 class Wave:
@@ -42,6 +43,7 @@ class WFCCore:
         tile_weights: list = [],
         dimensions: int = 2,
         observation_mode: str = "random",
+        max_backtracking: int = 10000,
     ):
         """Initialize the WFC algorithm.
         Args:
@@ -66,6 +68,7 @@ class WFCCore:
         self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
         self.total_back_track_cnt = 0
         self.observation_mode = observation_mode
+        self.max_backtracking = max_backtracking
 
     def _get_neighbours(self, idx):
         """Get the neighbours of a given tile."""
@@ -150,31 +153,33 @@ class WFCCore:
     def solve(self):
         """Solve the WFC problem."""
         # self.update_history()
-        while True:
-            # Find a tile with lowest entropy
-            entropy = np.sum(self.wave.valid, axis=0)
-            entropy[self.wave.is_collapsed] = self.n_tiles + 1
-            idx = self.collapse(entropy)
-            # print("Entropy:\n", entropy)
-            # print("wave:\n", self.wave.wave)
-            if entropy[tuple(idx)] == self.n_tiles + 1:
-                break
-            if entropy[tuple(idx)] == 0:
-                self._back_track()
-                continue
-            else:
-                if (
-                    np.sum(self.wave.is_collapsed == False) < self.prev_remaining_grid_num
-                    or np.sum(self.wave.is_collapsed == False) == 1
-                ):
-                    # print("prev_remaining_grid_num: ", self.prev_remaining_grid_num)
-                    # self.prev_remaining_grid_num = min(
-                    #     self.prev_remaining_grid_num, np.sum(self.wave.is_collapsed == False)
-                    # )
-                    self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
-                    self.back_track_cnt = 0
-                    self.update_history()
-                self.observe(idx)
+        with alive_bar(manual=True) as bar:
+            while True:
+                # Find a tile with lowest entropy
+                entropy = np.sum(self.wave.valid, axis=0)
+                entropy[self.wave.is_collapsed] = self.n_tiles + 1
+                idx = self.collapse(entropy)
+                # print("Entropy:\n", entropy)
+                # print("wave:\n", self.wave.wave)
+                if entropy[tuple(idx)] == self.n_tiles + 1:
+                    break
+                if entropy[tuple(idx)] == 0:
+                    self._back_track()
+                    continue
+                else:
+                    if (
+                        np.sum(self.wave.is_collapsed == False) < self.prev_remaining_grid_num
+                        or np.sum(self.wave.is_collapsed == False) == 1
+                    ):
+                        # print("prev_remaining_grid_num: ", self.prev_remaining_grid_num)
+                        # self.prev_remaining_grid_num = min(
+                        #     self.prev_remaining_grid_num, np.sum(self.wave.is_collapsed == False)
+                        # )
+                        self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
+                        self.back_track_cnt = 0
+                        self.update_history()
+                    self.observe(idx)
+                bar(np.sum(self.wave.is_collapsed) / (self.wave.shape[0] * self.wave.shape[1]))
 
             # print("wave ", self.history[0].is_collapsed)
             # break
@@ -195,7 +200,7 @@ class WFCCore:
         # print("look_back:", self.total_back_track_cnt, look_back, self.prev_remaining_grid_num, len(self.history))
         # if self.back_track_cnt > len(self.history) * 10:
         #     raise ValueError("Too many backtracks.", self.back_track_cnt, len(self.history))
-        if self.total_back_track_cnt > 100000:
+        if self.total_back_track_cnt > self.max_backtracking:
             raise ValueError("Too many total backtracks.", self.total_back_track_cnt)
         self.wave = self.history[-1 - look_back].copy()
         if look_back == len(self.history) - 1:

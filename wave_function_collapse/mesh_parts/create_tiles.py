@@ -23,7 +23,7 @@ def create_mesh_tile(cfg: MeshPartsCfg):
         mesh_gen = create_platform_mesh
     else:
         return
-    cached_mesh_gen_verbose = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
+    cached_mesh_gen_verbose = get_cached_mesh_gen(mesh_gen, cfg, verbose=True)
     cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
     name = cfg.name
     mesh = cached_mesh_gen_verbose()

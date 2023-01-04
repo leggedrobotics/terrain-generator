@@ -3,32 +3,36 @@ import matplotlib.pyplot as plt
 import trimesh
 
 from wfc.wfc import WFCSolver
-from wfc.tiles import Tile, ArrayTile
 
-from create_indoor_mesh import create_mesh_pattern
+# from wfc.tiles import Tile, ArrayTile
+
+# from create_indoor_mesh import create_mesh_pattern
+from mesh_parts.create_tiles import create_mesh_pattern
+from mesh_parts.mesh_utils import visualize_mesh
 
 # from mesh_parts.mesh_parts_cfg import FloorPattern, StairsPattern
 from pattern_cfg import FloorPattern
 
 
-def test_wall_mesh():
+def test_wall_mesh(mesh_name="result_mesh.stl"):
 
     dim = (2.0, 2.0, 2.0)
     cfg = FloorPattern(dim=dim)
-    print("cfg ", cfg)
     tiles = create_mesh_pattern(cfg)
+
+    wfc_solver = WFCSolver(shape=[20, 20], dimensions=2, seed=None)
 
     for tile in tiles.values():
         print(tile)
-
-    wfc_solver = WFCSolver(shape=[30, 30], dimensions=2, seed=None)
-
-    for tile in tiles.values():
-        print("tile ", tile)
         wfc_solver.register_tile(*tile.get_dict_tile())
 
     init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "floor"}
-    wave = wfc_solver.run(init_args=init_args)
+    # init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "platform_2222"}
+    try:
+        wave = wfc_solver.run(init_args=init_args)
+    except Exception as e:
+        print("Exception ", e)
+        return
     # wave = wfc_solver.run()
     # tile_arrays = {}
     # for tile in tiles.values():
@@ -43,9 +47,9 @@ def test_wall_mesh():
             tile = tiles[wfc_solver.names[wave[y, x]]].get_array()
             img[y * array_shape[0] : (y + 1) * array_shape[0], x * array_shape[1] : (x + 1) * array_shape[1]] = tile
 
-    plt.imshow(img)
-    plt.colorbar()
-    plt.show()
+    # plt.imshow(img)
+    # plt.colorbar()
+    # plt.show()
 
     names = wfc_solver.names
 
@@ -62,9 +66,12 @@ def test_wall_mesh():
             mesh.apply_translation(xy_offset)
             result_mesh += mesh
 
-    # result_mesh.export("result_mesh.stl")
-    result_mesh.show()
+    result_mesh.export(mesh_name)
+    visualize_mesh(result_mesh)
+    # result_mesh.show()
 
 
 if __name__ == "__main__":
-    test_wall_mesh()
+    for i in range(10):
+        name = f"results/result_mesh_{i}.stl"
+        test_wall_mesh(name)

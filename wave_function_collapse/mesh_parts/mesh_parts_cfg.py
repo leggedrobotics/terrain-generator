@@ -13,7 +13,7 @@ class MeshPartsCfg:
     rotations: Tuple[int, ...] = ()  # (90, 180, 270)
     flips: Tuple[str, ...] = ()  # ("x", "y")
     height_offset: float = 0.0
-    use_generator: bool = False
+    use_generator: bool = True
 
 
 @dataclass
@@ -52,7 +52,9 @@ class StairMeshPartsCfg(MeshPartsCfg):
 @dataclass
 class PlatformMeshPartsCfg(MeshPartsCfg):
     array: np.ndarray = np.zeros((2, 2))
+    z_dim_array: np.ndarray = np.zeros((2, 2))
     add_floor: bool = True
+    use_z_dim_array: bool = False  # If true, the box height is determined by the z_dim_array.
 
 
 @dataclass
