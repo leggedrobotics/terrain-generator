@@ -57,8 +57,9 @@ class PlatformMeshPartsCfg(MeshPartsCfg):
 
 @dataclass
 class MeshPattern:
-    name: str
+    # name: str
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
+    mesh_parts: Tuple[MeshPartsCfg, ...] = (MeshPartsCfg(),)
 
 
 @dataclass
