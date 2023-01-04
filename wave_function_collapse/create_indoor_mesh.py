@@ -2,7 +2,7 @@ import numpy as np
 from typing import Tuple
 import functools
 
-from wfc.tiles import Tile, ArrayTile, MeshTile, MeshGeneratorTile
+from wfc.tiles import Tile, ArrayTile, MeshTile
 from mesh_parts.indoor_parts import create_wall_mesh, create_stairs_mesh, create_platform_mesh
 from mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
@@ -11,23 +11,27 @@ from mesh_parts.mesh_parts_cfg import (
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
 )
-from mesh_parts.mesh_utils import get_height_array_of_mesh
+from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
 
 
 def create_mesh_tile(cfg: MeshPartsCfg):
     if isinstance(cfg, WallMeshPartsCfg):
-        mesh_gen = functools.partial(create_wall_mesh, cfg)
+        mesh_gen = create_wall_mesh
+        # mesh_gen = functools.partial(create_wall_mesh, cfg)
     elif isinstance(cfg, StairMeshPartsCfg):
-        mesh_gen = functools.partial(create_stairs_mesh, cfg)
+        mesh_gen = create_stairs_mesh
+        # mesh_gen = functools.partial(create_stairs_mesh, cfg)
     elif isinstance(cfg, PlatformMeshPartsCfg):
-        mesh_gen = functools.partial(create_platform_mesh, cfg)
+        mesh_gen = create_platform_mesh
+        # mesh_gen = functools.partial(create_platform_mesh, cfg)
     else:
         return
+    cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=True)
     name = cfg.name
-    mesh = mesh_gen()
+    mesh = cached_mesh_gen()
     if cfg.use_generator:
         array = get_height_array_of_mesh(mesh, cfg.dim, 5)
-        return MeshGeneratorTile(name, array, mesh_gen, weight=cfg.weight)
+        return MeshTile(name, array, cached_mesh_gen, weight=cfg.weight)
     else:
         array = get_height_array_of_mesh(mesh, cfg.dim, 5)
         return MeshTile(name, array, mesh, weight=cfg.weight)
