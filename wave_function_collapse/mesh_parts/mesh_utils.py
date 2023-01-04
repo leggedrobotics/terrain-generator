@@ -17,10 +17,10 @@ def merge_meshes(meshes, minimal_triangles=False):
 def flip_mesh(mesh, direction):
     """Flip a mesh in a given direction."""
     new_mesh = mesh.copy()
-    if direction == "x":
+    if direction == "y":
         # Create the transformation matrix for inverting the mesh in the x-axis
         transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [1, 0, 0])
-    elif direction == "y":
+    elif direction == "x":
         transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [0, 1, 0])
     else:
         raise ValueError(f"Direction {direction} is not defined.")
@@ -47,7 +47,8 @@ def rotate_mesh(mesh, deg):
 def get_height_array_of_mesh(mesh, dim, num_points):
     # intersects_location requires origins to be the same shape as vectors
     x = np.linspace(-dim[0] / 2.0, dim[0] / 2.0, num_points)
-    y = np.linspace(dim[1] / 2.0, -dim[1] / 2.0, num_points)
+    y = np.linspace(-dim[1] / 2.0, dim[1] / 2.0, num_points)
+    # y = np.linspace(dim[1] / 2.0, -dim[1] / 2.0, num_points)
     xv, yv = np.meshgrid(x, y)
     xv = xv.flatten()
     yv = yv.flatten()
