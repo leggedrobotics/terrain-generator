@@ -20,16 +20,23 @@ def test_wall_mesh(mesh_name="result_mesh.stl"):
     cfg = FloorPattern(dim=dim)
     tiles = create_mesh_pattern(cfg)
 
-    wfc_solver = WFCSolver(shape=[20, 20], dimensions=2, seed=None)
+    wfc_solver = WFCSolver(shape=[24, 24], dimensions=2, seed=None)
 
     for tile in tiles.values():
         print(tile)
         wfc_solver.register_tile(*tile.get_dict_tile())
 
-    init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "floor"}
+    # init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "floor"}
+    init_tiles = [
+        ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("floor", [wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
+        # ("floor", [wfc_solver.shape[0] // 4, 3 * wfc_solver.shape[1] // 4]),
+        # ("platform_1111_f", [3 * wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
+        # ("platform_2222_f", [3 * wfc_solver.shape[0] // 4, 3 * wfc_solver.shape[1] // 4]),
+    ]
     # init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "platform_2222"}
     try:
-        wave = wfc_solver.run(init_args=init_args)
+        wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
     except Exception as e:
         print("Exception ", e)
         return
@@ -72,6 +79,6 @@ def test_wall_mesh(mesh_name="result_mesh.stl"):
 
 
 if __name__ == "__main__":
-    for i in range(10):
+    for i in range(1):
         name = f"results/result_mesh_{i}.stl"
         test_wall_mesh(name)

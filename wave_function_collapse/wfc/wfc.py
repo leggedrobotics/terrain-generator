@@ -4,7 +4,7 @@ from threading import local
 import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
-from typing import Literal, Tuple, Dict
+from typing import Literal, Tuple, Dict, List
 import itertools
 import copy
 from alive_progress import alive_bar
@@ -420,7 +420,11 @@ class WFCSolver(object):
         self.cm.register_tile(name, edge_types)
         self.tile_weights[name] = weight
 
-    def run(self, init_args={}):
+    def run(self, init_tiles: List[Tuple[str, Tuple[int, ...]]] = [], max_steps=1000):
+        """Run the WFC Solver.
+        Args:
+            init_tiles: List of tuples. Each tuple contains the name of the tile and the position index of the tile.
+        """
         connections = self.cm.compute_connection_dict()
         tile_weights = [self.tile_weights[name] for name in self.cm.names]
         wfc = WFCCore(
@@ -430,13 +434,15 @@ class WFCSolver(object):
             tile_weights=tile_weights,
             dimensions=self.dimensions,
             observation_mode=self.observation_mode,
+            max_backtracking=max_steps,
         )
         print("Start solving...")
-        if len(init_args) > 0:
-            print("init ", init_args)
-            idx = self.cm.names.index(init_args["tile_name"])
-            print("idx ", idx)
-            wfc.init(init_args["idx"], idx)
+        if len(init_tiles) > 0:
+            # print("init ", init_args)
+            for (name, index) in init_tiles:
+                tile_id = self.cm.names.index(name)
+                # print("idx ", idx)
+                wfc.init(index, tile_id)
         else:
             wfc.init_randomly()
         wave = wfc.solve()
