@@ -66,25 +66,26 @@ def test_3d_case():
         1: {directions[i]: (0, 1, 2) for i in range(6)},
         2: {directions[i]: (0, 2) for i in range(6)},
     }
-    wfc = WFCCore(3, connections, (10, 10, 3), dimensions=3)
+    wfc = WFCCore(3, connections, [10, 10, 3], dimensions=3)
     n, d = wfc._get_neighbours((9, 9, 1))
     print("Neighbours:", n, n.dtype, d, d.dtype)
     wfc.init_randomly()
     wfc.solve()
     wave = wfc.wave.wave
+    print("wave ", wave)
 
-    import matplotlib.pyplot as plt
-    from matplotlib.colors import LinearSegmentedColormap
-
-    # Define the colors and values for the custom colormap
-    colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-    values = [0, 1, 2]
-
-    # Create the custom colormap
-    cmap = LinearSegmentedColormap.from_list("custom", colors, N=len(values))
-
-    # Use imshow to display the array with the custom colormap
-    plt.imshow(wave, cmap=cmap)
-
-    # Show the plot
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # from matplotlib.colors import LinearSegmentedColormap
+    #
+    # # Define the colors and values for the custom colormap
+    # colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+    # values = [0, 1, 2]
+    #
+    # # Create the custom colormap
+    # cmap = LinearSegmentedColormap.from_list("custom", colors, N=len(values))
+    #
+    # # Use imshow to display the array with the custom colormap
+    # plt.imshow(wave, cmap=cmap)
+    #
+    # # Show the plot
+    # plt.show()

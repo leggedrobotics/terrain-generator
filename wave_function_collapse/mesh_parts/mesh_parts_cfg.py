@@ -12,6 +12,7 @@ class MeshPartsCfg:
     weight: float = 1.0
     rotations: Tuple[int, ...] = ()  # (90, 180, 270)
     flips: Tuple[str, ...] = ()  # ("x", "y")
+    height_offset: float = 0.0
     use_generator: bool = False
 
 
@@ -34,23 +35,24 @@ class StairMeshPartsCfg(MeshPartsCfg):
     @dataclass
     class Stair(MeshPartsCfg):
         step_width: float = 1.0
-        # step_height: float = 0.2
         step_depth: float = 0.3
         n_steps: int = 5
         total_height: float = 1.0
         height_offset: float = 0.0
-        # stair_direction: str = ""
         stair_type: str = "standard"  # stair, open, ramp
         add_residual_side_up: bool = True  # If false, add to bottom.
         add_rail: bool = False
-        # fill_bottom: bool = False
         direction: str = "up"
-        # gap_direction: str = "up"
-        # start_offset: float = 0.0
         attach_side: str = "left"
 
     stairs: Tuple[Stair, ...] = (Stair(),)
     wall: Optional[WallMeshPartsCfg] = None
+
+
+@dataclass
+class PlatformMeshPartsCfg(MeshPartsCfg):
+    array: np.ndarray = np.zeros((2, 2))
+    add_floor: bool = True
 
 
 @dataclass
@@ -100,24 +102,96 @@ class FloorPattern(MeshPattern):
         weight=0.1,
         door_direction="",
     )
-    wall_turn_edge: MeshPartsCfg = WallMeshPartsCfg(
-        name="wall_t_e",
+
+    # platform0: MeshPartsCfg = PlatformMeshPartsCfg(
+    #     name="platform_1000",
+    #     dim=dim,
+    #     array=np.array([[1, 0], [0, 0]]),
+    #     rotations=(90, 180, 270),
+    #     flips=(),
+    #     weight=0.1,
+    # )
+
+    platform1: MeshPartsCfg = PlatformMeshPartsCfg(
+        name="platform_1100",
         dim=dim,
-        wall_edges=("bottom_right",),
+        array=np.array([[1, 1], [0, 0]]),
         rotations=(90, 180, 270),
-        flips=("x", "y"),
+        flips=(),
         weight=0.1,
-        door_direction="",
     )
-    wall_turn_T: MeshPartsCfg = WallMeshPartsCfg(
-        name="wall_T_e",
+
+    platform2: MeshPartsCfg = PlatformMeshPartsCfg(
+        name="platform_1110",
         dim=dim,
-        wall_edges=("bottom_right", "right_bottom"),
+        array=np.array([[1, 1], [1, 0]]),
         rotations=(90, 180, 270),
-        flips=("x", "y"),
-        weight=0.1,
-        door_direction="",
+        flips=(),
+        weight=0.10,
     )
+
+    platform3: MeshPartsCfg = PlatformMeshPartsCfg(
+        name="platform_1111",
+        dim=dim,
+        array=np.array([[1, 1], [1, 1]]),
+        rotations=(90, 180, 270),
+        flips=(),
+        weight=0.1,
+    )
+
+    # platform4: MeshPartsCfg = PlatformMeshPartsCfg(
+    #     name="platform_2000",
+    #     dim=dim,
+    #     array=np.array([[2, 0], [0, 0]]),
+    #     rotations=(90, 180, 270),
+    #     flips=(),
+    #     weight=0.1,
+    # )
+
+    platform5: MeshPartsCfg = PlatformMeshPartsCfg(
+        name="platform_2200",
+        dim=dim,
+        array=np.array([[2, 2], [0, 0]]),
+        rotations=(90, 180, 270),
+        flips=(),
+        weight=0.1,
+    )
+
+    platform6: MeshPartsCfg = PlatformMeshPartsCfg(
+        name="platform_2220",
+        dim=dim,
+        array=np.array([[2, 2], [2, 0]]),
+        rotations=(90, 180, 270),
+        flips=(),
+        weight=0.10,
+    )
+
+    platform7: MeshPartsCfg = PlatformMeshPartsCfg(
+        name="platform_2222",
+        dim=dim,
+        array=np.array([[2, 2], [2, 2]]),
+        rotations=(90, 180, 270),
+        flips=(),
+        weight=0.1,
+    )
+    # wall_turn_edge: MeshPartsCfg = WallMeshPartsCfg(
+    #     name="wall_t_e",
+    #     dim=dim,
+    #     wall_edges=("bottom_right",),
+    #     rotations=(90, 180, 270),
+    #     flips=("x", "y"),
+    #     weight=0.1,
+    #     door_direction="",
+    # )
+    # wall_turn_T: MeshPartsCfg = WallMeshPartsCfg(
+    #     name="wall_T_e",
+    #     dim=dim,
+    #     wall_edges=("bottom_right", "right_bottom"),
+    #     rotations=(90, 180, 270),
+    #     flips=("x", "y"),
+    #     weight=0.1,
+    #     door_direction="",
+    # )
     # wall_straight: MeshPartsCfg = WallMeshPartsCfg(name="wall_s", dim=dim, wall_edges=("up",), rotations=(90, 180, 270), flips=(), weight=2.0)
     # wall_turn: MeshPartsCfg = WallMeshPartsCfg(name="wall_t", dim=dim, wall_edges=("up", "right"), rotations=(90, 180, 270), flips=(), weight=1.0)
     # wall_straight_door: MeshPartsCfg = WallMeshPartsCfg(name="door_s", dim=dim, wall_edges=("up",), rotations=(90, 180, 270), flips=(), weight=0.2, door_direction="up", create_door=True)
@@ -126,14 +200,17 @@ class FloorPattern(MeshPattern):
 @dataclass
 class StairsPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
-    # floor: MeshPartsCfg = WallMeshPartsCfg(name="floor", dim=dim, wall_edges=(), weight=10.0)
-
+    # floor_middle: MeshPartsCfg = WallMeshPartsCfg(
+    #     name="floor_middle", dim=dim, wall_edges=(), weight=0.1, height_offset=1.0
+    # )
+    # floor_top: MeshPartsCfg = WallMeshPartsCfg(name="floor_top", dim=dim, wall_edges=(), weight=0.1, height_offset=2.0)
+    #
     stair_straight: MeshPartsCfg = StairMeshPartsCfg(
         name="stair_s",
         dim=dim,
         rotations=(90, 180, 270),
         flips=("x", "y"),
-        weight=0.1,
+        weight=1.0,
         stairs=(
             StairMeshPartsCfg.Stair(
                 step_width=1.0,
@@ -151,7 +228,7 @@ class StairsPattern(MeshPattern):
         dim=dim,
         rotations=(90, 180, 270),
         flips=("x", "y"),
-        weight=0.1,
+        weight=1.0,
         stairs=(
             StairMeshPartsCfg.Stair(
                 step_width=1.0,
@@ -211,11 +288,11 @@ class StairsPattern(MeshPattern):
     #             )
     #         )
 
-    stair_wide = StairMeshPartsCfg(
+    stair_wide: MeshPartsCfg = StairMeshPartsCfg(
         name="stair_w",
         rotations=(90, 180, 270),
         flips=(),
-        weight=0.1,
+        weight=1.0,
         stairs=(
             StairMeshPartsCfg.Stair(
                 step_width=2.0,
@@ -223,7 +300,7 @@ class StairsPattern(MeshPattern):
                 total_height=1.0,
                 stair_type="standard",
                 direction="up",
-                add_residual_side_up=True,
+                add_residual_side_up=False,
                 attach_side="front",
                 add_rail=False,
             ),

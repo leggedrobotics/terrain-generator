@@ -8,6 +8,7 @@ from wfc.tiles import Tile, ArrayTile
 from create_indoor_mesh import create_mesh_pattern
 from mesh_parts.mesh_parts_cfg import FloorPattern, StairsPattern
 
+
 def test_wall_mesh():
 
     dim = (2.0, 2.0, 2.0)
@@ -15,23 +16,22 @@ def test_wall_mesh():
     print("cfg ", cfg)
     tiles = create_mesh_pattern(cfg)
 
-    cfg_s = StairsPattern(name="floor", dim=dim)
+    cfg_s = StairsPattern(name="stairs", dim=dim)
     print("cfg s", cfg_s)
     tiles.update(create_mesh_pattern(cfg_s))
-    
 
     for tile in tiles.values():
         print(tile)
 
-    wfc_solver = WFCSolver(shape=[10, 10], dimensions=2, seed=None)
+    wfc_solver = WFCSolver(shape=[30, 30], dimensions=2, seed=None)
 
     for tile in tiles.values():
         print("tile ", tile)
         wfc_solver.register_tile(*tile.get_dict_tile())
 
-    # init_args = {"idx": (3, 3), "tile_name": "FA"}
-    # wave = wfc_solver.run(init_args=init_args)
-    wave = wfc_solver.run()
+    init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "floor"}
+    wave = wfc_solver.run(init_args=init_args)
+    # wave = wfc_solver.run()
     # tile_arrays = {}
     # for tile in tiles.values():
     #     tile_arrays[tile.name] = tile.get_array()
@@ -51,7 +51,6 @@ def test_wall_mesh():
 
     names = wfc_solver.names
 
-
     result_mesh = trimesh.Trimesh()
     for y in range(wave.shape[0]):
         for x in range(wave.shape[1]):
