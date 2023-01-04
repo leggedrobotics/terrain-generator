@@ -31,10 +31,10 @@ def create_mesh_tile(cfg: MeshPartsCfg):
     mesh = cached_mesh_gen()
     if cfg.use_generator:
         array = get_height_array_of_mesh(mesh, cfg.dim, 5)
-        return MeshTile(name, array, cached_mesh_gen, weight=cfg.weight)
+        return MeshTile(name, array, cached_mesh_gen, mesh_dim=cfg.dim, weight=cfg.weight)
     else:
         array = get_height_array_of_mesh(mesh, cfg.dim, 5)
-        return MeshTile(name, array, mesh, weight=cfg.weight)
+        return MeshTile(name, array, mesh, mesh_dim=cfg.dim, weight=cfg.weight)
 
 
 def create_mesh_pattern(cfg: MeshPattern):
