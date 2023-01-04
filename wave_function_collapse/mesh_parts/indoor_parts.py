@@ -70,31 +70,31 @@ def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "bottom_left":
-        dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
+        dim = [cfg.dim[0] / 2.0, cfg.wall_thickness, cfg.wall_height]
         pos = [
-            -cfg.dim[0] / 4.0 + cfg.wall_thickness / 4.0,
-            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 4.0,
+            -cfg.dim[0] / 4.0, # + cfg.wall_thickness / 2.0,
+            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "bottom_right":
-        dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
+        dim = [cfg.dim[0] / 2.0, cfg.wall_thickness, cfg.wall_height]
         pos = [
-            cfg.dim[0] / 4.0 - cfg.wall_thickness / 4.0,
-            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 4.0,
+            cfg.dim[0] / 4.0, # - cfg.wall_thickness / 2.0,
+            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "right_bottom":
-        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
+        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0, cfg.wall_height]
         pos = [
-            cfg.dim[0] / 2.0 - cfg.wall_thickness / 4.0,
-            -cfg.dim[1] / 4.0 + cfg.wall_thickness / 4.0,
+            cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
+            -cfg.dim[1] / 4.0, # + cfg.wall_thickness / 2.0,
             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     elif edge == "right_up":
-        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
+        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0, cfg.wall_height]
         pos = [
-            cfg.dim[0] / 2.0 - cfg.wall_thickness / 4.0,
-            cfg.dim[1] / 4.0 - cfg.wall_thickness / 4.0,
+            cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
+            cfg.dim[1] / 4.0, # - cfg.wall_thickness / 2.0,
             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
         ]
     else:
@@ -374,29 +374,27 @@ if __name__ == "__main__":
         weight=0.1,
         stairs=(
             StairMeshPartsCfg.Stair(
-                step_width=1.0,
+                step_width=2.0,
                 # step_height=0.15,
                 step_depth=0.3,
                 total_height=1.0,
                 stair_type="standard",
-                direction="left",
+                direction="up",
                 add_residual_side_up=True,
-                gap_direction="up",
-                attach_side="front_right",
+                attach_side="front",
                 add_rail=False,
-                fill_bottom=False,
             ),
         ),
-        wall=WallMeshPartsCfg(
-            name="wall",
-            wall_edges=("middle_left", "middle_right"),
-            )
+        # wall=WallMeshPartsCfg(
+        #     name="wall",
+        #     wall_edges=("middle_left", "middle_right"),
+        #     )
     )
     # from mesh_parts.mesh_parts_cfg import StairPattern
     # pattern = StairPattern(name="stairs")
     mesh = create_stairs_mesh(stair_straight)
     mesh.show()
-    get_height_array_of_mesh(mesh, stair_straight.dim, 5)
+    print(get_height_array_of_mesh(mesh, stair_straight.dim, 5))
 
     # stair_straight = StairMeshPartsCfg(
     #     name="stair_s",

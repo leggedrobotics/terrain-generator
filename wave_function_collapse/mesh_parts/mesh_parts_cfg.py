@@ -165,50 +165,69 @@ class StairsPattern(MeshPattern):
             ),
         ),
     )
-    stair_straight_wall: MeshPartsCfg = StairMeshPartsCfg(
-        name="stair_s_w",
-        dim=dim,
+    # stair_straight_wall: MeshPartsCfg = StairMeshPartsCfg(
+    #         name="stair_s_w",
+    #         dim=dim,
+    #         rotations=(90, 180, 270),
+    #         flips=("x", "y"),
+    #         weight=0.1,
+    #         stairs=(
+    #             StairMeshPartsCfg.Stair(
+    #                 step_width=1.0,
+    #                 step_depth=0.3,
+    #                 total_height=1.0,
+    #                 direction="up",
+    #                 add_residual_side_up=True,
+    #                 attach_side="front_right",
+    #                 add_rail=False,
+    #                 ),
+    #             ),
+    #         wall=WallMeshPartsCfg(
+    #             name="wall",
+    #             wall_edges=("right",),
+    #             )
+    #         )
+    # stair_straight_up_wall: MeshPartsCfg = StairMeshPartsCfg(
+    #         name="stair_s_u_w",
+    #         dim=dim,
+    #         rotations=(90, 180, 270),
+    #         flips=("x", "y"),
+    #         weight=0.1,
+    #         stairs=(
+    #             StairMeshPartsCfg.Stair(
+    #                 step_width=1.0,
+    #                 step_depth=0.3,
+    #                 total_height=1.0,
+    #                 height_offset=1.0,
+    #                 direction="up",
+    #                 add_residual_side_up=True,
+    #                 attach_side="front_right",
+    #                 add_rail=False,
+    #                 ),
+    #             ),
+    #         wall=WallMeshPartsCfg(
+    #             name="wall",
+    #             wall_edges=("right",),
+    #             )
+    #         )
+
+    stair_wide = StairMeshPartsCfg(
+        name="stair_w",
         rotations=(90, 180, 270),
-        flips=("x", "y"),
+        flips=(),
         weight=0.1,
         stairs=(
             StairMeshPartsCfg.Stair(
-                step_width=1.0,
+                step_width=2.0,
                 step_depth=0.3,
                 total_height=1.0,
+                stair_type="standard",
                 direction="up",
                 add_residual_side_up=True,
-                attach_side="front_right",
+                attach_side="front",
                 add_rail=False,
             ),
         ),
-        wall=WallMeshPartsCfg(
-            name="wall",
-            wall_edges=("right",),
-            )
-    )
-    stair_straight_up_wall: MeshPartsCfg = StairMeshPartsCfg(
-        name="stair_s_u_w",
-        dim=dim,
-        rotations=(90, 180, 270),
-        flips=("x", "y"),
-        weight=0.1,
-        stairs=(
-            StairMeshPartsCfg.Stair(
-                step_width=1.0,
-                step_depth=0.3,
-                total_height=1.0,
-                height_offset=1.0,
-                direction="up",
-                add_residual_side_up=True,
-                attach_side="front_right",
-                add_rail=False,
-            ),
-        ),
-        wall=WallMeshPartsCfg(
-            name="wall",
-            wall_edges=("right",),
-            )
     )
     # stair_turn: MeshPartsCfg = StairMeshPartsCfg(
     #         name="stair_t",

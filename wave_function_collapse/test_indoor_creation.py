@@ -6,7 +6,7 @@ from wfc.wfc import WFCSolver
 from wfc.tiles import Tile, ArrayTile
 
 from create_indoor_mesh import create_mesh_pattern
-from mesh_parts.mesh_parts_cfg import FloorPattern
+from mesh_parts.mesh_parts_cfg import FloorPattern, StairsPattern
 
 def test_wall_mesh():
 
@@ -15,10 +15,15 @@ def test_wall_mesh():
     print("cfg ", cfg)
     tiles = create_mesh_pattern(cfg)
 
+    cfg_s = StairsPattern(name="floor", dim=dim)
+    print("cfg s", cfg_s)
+    tiles.update(create_mesh_pattern(cfg_s))
+    
+
     for tile in tiles.values():
         print(tile)
 
-    wfc_solver = WFCSolver(shape=[30, 30], dimensions=2, seed=None)
+    wfc_solver = WFCSolver(shape=[10, 10], dimensions=2, seed=None)
 
     for tile in tiles.values():
         print("tile ", tile)
