@@ -114,16 +114,6 @@ class ArrayTile(Tile):
         tile = super().get_rotated_tile(deg)
         return ArrayTile(name=tile.name, array=array, edges=tile.edges, dimension=self.dimension, weight=tile.weight)
 
-    # def get_all_tiles(self, rotations=(), flips=()):
-    #     tiles = [self]
-    #     for rotation in rotations:
-    #         tiles.append(self.get_rotated_tile(rotation))
-    #     for flip_direction in flips:
-    #         tiles.append(self.get_flipped_tile(flip_direction))
-    #         for rotation in rotations:
-    #             tiles.append(self.get_flipped_tile(flip_direction).get_rotated_tile(rotation))
-    #     return tiles
-
     def create_edges_from_array(self, array):
         """Create a hash for each edge of the tile."""
         edges = {}
@@ -142,89 +132,6 @@ class ArrayTile(Tile):
 
     def __str__(self):
         return super().__str__() + f"\n {self.array}"
-
-
-# def flip_mesh(mesh, direction):
-#     """Flip a mesh in a given direction."""
-#     new_mesh = mesh.copy()
-#     if direction == "x":
-#         # Create the transformation matrix for inverting the mesh in the x-axis
-#         transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [1, 0, 0])
-#     elif direction == "y":
-#         transform = trimesh.transformations.scale_matrix(-1, [0, 0, 0], [0, 1, 0])
-#     else:
-#         raise ValueError(f"Direction {direction} is not defined.")
-#     # Apply the transformation to the mesh
-#     new_mesh.apply_transform(transform)
-#     return new_mesh
-#
-#
-# def rotate_mesh(mesh, deg):
-#     """Rotate a mesh in a given degree."""
-#     new_mesh = mesh.copy()
-#     if deg == 90:
-#         transform = trimesh.transformations.rotation_matrix(np.pi / 2, [0, 0, 1])
-#     elif deg == 180:
-#         transform = trimesh.transformations.rotation_matrix(np.pi, [0, 0, 1])
-#     elif deg == 270:
-#         transform = trimesh.transformations.rotation_matrix(-np.pi / 2, [0, 0, 1])
-#     else:
-#         raise ValueError(f"Rotation degree {deg} is not defined.")
-#     new_mesh.apply_transform(transform)
-#     return new_mesh
-
-
-# class MeshTile(ArrayTile):
-#     def __init__(
-#         self,
-#         name: str,
-#         mesh: Union[trimesh.Trimesh, Callable[[], trimesh.Trimesh]],
-#         array: Optional[np.ndarray] = None,
-#         edges: Optional[Dict[str, str]] = None,
-#         dimension: int = 2,
-#         mesh_dim: Tuple[float, float, float] = (2.0, 2.0, 2.0),
-#         array_sample_size: int = 5,
-#         weight: float = 1.0,
-#     ):
-#         self.mesh = lambda: mesh() if callable(mesh) else mesh
-#         if array is None:
-#             array = get_height_array_of_mesh(mesh, mesh_dim, array_sample_size)
-#         super().__init__(name, array, edges, dimension, weight=weight)
-#
-#     def get_flipped_tile(self, direction):
-#         mesh = flip_mesh(self.mesh(), direction)
-#         tile = super().get_flipped_tile(direction)
-#         return MeshTile(
-#             name=tile.name,
-#             array=tile.array,
-#             mesh=mesh,
-#             edges=tile.edges,
-#             dimension=self.dimension,
-#             weight=tile.weight,
-#         )
-#
-#     def get_rotated_tile(self, deg):
-#         mesh = rotate_mesh(self.mesh(), deg)
-#         tile = super().get_rotated_tile(deg)
-#         return MeshTile(
-#             name=tile.name, array=tile.array, mesh=mesh, edges=tile.edges, dimension=self.dimension, weight=tile.weight
-#         )
-#
-#     def get_all_tiles(self, rotations=(), flips=()):
-#         tiles = [self]
-#         for rotation in rotations:
-#             tiles.append(self.get_rotated_tile(rotation))
-#         for flip_direction in flips:
-#             tiles.append(self.get_flipped_tile(flip_direction))
-#             for rotation in rotations:
-#                 tiles.append(self.get_flipped_tile(flip_direction).get_rotated_tile(rotation))
-#         return tiles
-#
-#     def get_mesh(self):
-#         return self.mesh()
-#
-#     def __str__(self):
-#         return super().__str__()
 
 
 class MeshTile(ArrayTile):
@@ -272,16 +179,6 @@ class MeshTile(ArrayTile):
         mesh_gen = lambda: rotate_mesh(self.mesh_gen(), deg)
         tile = super().get_rotated_tile(deg)
         return MeshTile(name=tile.name, array=tile.array, mesh=mesh_gen, edges=tile.edges, dimension=self.dimension)
-
-    # def get_all_tiles(self, rotations=(), flips=()):
-    #     tiles = [self]
-    #     for rotation in rotations:
-    #         tiles.append(self.get_rotated_tile(rotation))
-    #     for flip_direction in flips:
-    #         tiles.append(self.get_flipped_tile(flip_direction))
-    #         for rotation in rotations:
-    #             tiles.append(self.get_flipped_tile(flip_direction).get_rotated_tile(rotation))
-    #     return tiles
 
     def get_mesh(self):
         return self.mesh_gen()
