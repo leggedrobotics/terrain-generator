@@ -244,11 +244,9 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
     meshes = []
     if cfg.add_floor:
         meshes.append(create_floor(cfg))
-    # else:
-    #     mesh = trimesh.Trimesh()
     for y in range(cfg.array.shape[1]):
         for x in range(cfg.array.shape[0]):
-            if cfg.array[x, y] > 0.0:
+            if cfg.array[y, x] > 0.0:
                 dim = [cfg.dim[0] / cfg.array.shape[0], cfg.dim[1] / cfg.array.shape[1], cfg.array[y, x]]
                 box_mesh = trimesh.creation.box(dim, np.eye(4))
                 pos = np.array(
@@ -370,6 +368,16 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
 
 
 if __name__ == "__main__":
+    cfg = PlatformMeshPartsCfg(
+        name="platform_T",
+        array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
+        rotations=(90, 180, 270),
+        flips=(),
+        weight=0.1,
+    )
+    mesh = create_platform_mesh(cfg)
+    print(get_height_array_of_mesh(mesh, cfg.dim, 5))
+    mesh.show()
 
     cfg = PlatformMeshPartsCfg(array=np.array([[1, 0], [0, 0]]))
     mesh = create_platform_mesh(cfg)
@@ -379,6 +387,7 @@ if __name__ == "__main__":
     mesh = create_platform_mesh(cfg)
     print(get_height_array_of_mesh(mesh, cfg.dim, 5))
     mesh.show()
+
     # cfg = WallMeshPartsCfg(wall_edges=("left", ))
     # mesh = create_wall_mesh(cfg)
     # mesh.show()

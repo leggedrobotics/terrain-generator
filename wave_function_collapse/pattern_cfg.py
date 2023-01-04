@@ -114,6 +114,60 @@ class FloorPattern(MeshPattern):
             flips=(),
             weight=0.1,
         ),
+        PlatformMeshPartsCfg(
+            name="platform_T",
+            dim=dim,
+            array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="platform_stepping",
+            dim=dim,
+            array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="platform_stepping",
+            dim=dim,
+            array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [1, 0, 1, 0, 0], [1, 1, 0, 0, 0], [1, 1, 1, 0, 0]]),
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="platform_stepping_rand",
+            dim=dim,
+            array=np.array(
+                [[0, 0, 1, 0, 0], [0, 0.8, 0, 0.6, 0], [1, 0, 0.7, 0, 0], [1, 0.9, 0, 0, 0], [1, 1, 1, 0, 0]]
+            ),
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="platform_stepping_rand_2",
+            dim=dim,
+            array=np.array(
+                [[0, 0, 1, 1, 1], [0, 0.0, 0.7, 0.6, 0], [0, 0.4, 0.5, 0, 0], [0, 0.2, 0.1, 0.3, 0], [0, 0, 0, 0, 0]]
+            ),
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="platform_stepping_rand_3",
+            dim=dim,
+            array=np.array(
+                [[1, 1, 1, 0, 0], [0, 0.0, 0.7, 0.6, 0], [0, 0.4, 0.5, 0, 0], [0, 0.2, 0.1, 0.3, 0], [0, 0, 0, 0, 0]]
+            ),
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
         StairMeshPartsCfg(
             name="stair_w",
             rotations=(90, 180, 270),
