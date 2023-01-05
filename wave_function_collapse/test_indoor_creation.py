@@ -14,7 +14,7 @@ from mesh_parts.mesh_utils import visualize_mesh
 from pattern_cfg import FloorPattern
 
 
-def test_wall_mesh(mesh_name="result_mesh.stl"):
+def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
 
     dim = (2.0, 2.0, 2.0)
     cfg = FloorPattern(dim=dim)
@@ -23,12 +23,13 @@ def test_wall_mesh(mesh_name="result_mesh.stl"):
     wfc_solver = WFCSolver(shape=[24, 24], dimensions=2, seed=None)
 
     for tile in tiles.values():
-        print(tile)
+        # print(tile)
         wfc_solver.register_tile(*tile.get_dict_tile())
 
     # init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "floor"}
     init_tiles = [
-        ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        ("platform_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("floor", [wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
         # ("floor", [wfc_solver.shape[0] // 4, 3 * wfc_solver.shape[1] // 4]),
         # ("platform_1111_f", [3 * wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
@@ -36,7 +37,7 @@ def test_wall_mesh(mesh_name="result_mesh.stl"):
     ]
     # init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "platform_2222"}
     try:
-        wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+        wave = wfc_solver.run(init_tiles=init_tiles, max_steps=2000)
     except Exception as e:
         print("Exception ", e)
         return
@@ -74,11 +75,12 @@ def test_wall_mesh(mesh_name="result_mesh.stl"):
             result_mesh += mesh
 
     result_mesh.export(mesh_name)
-    visualize_mesh(result_mesh)
+    if visualize:
+        visualize_mesh(result_mesh)
     # result_mesh.show()
 
 
 if __name__ == "__main__":
-    for i in range(1):
+    for i in range(10):
         name = f"results/result_mesh_{i}.stl"
-        test_wall_mesh(name)
+        test_wall_mesh(name, visualize=False)

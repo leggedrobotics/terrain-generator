@@ -1,7 +1,20 @@
 import trimesh
 import numpy as np
-from mesh_parts.mesh_parts_cfg import MeshPartsCfg, WallMeshPartsCfg, StairMeshPartsCfg, PlatformMeshPartsCfg
-from mesh_parts.mesh_utils import merge_meshes, rotate_mesh, flip_mesh, ENGINE, get_height_array_of_mesh
+from mesh_parts.mesh_parts_cfg import (
+    MeshPartsCfg,
+    WallMeshPartsCfg,
+    StairMeshPartsCfg,
+    PlatformMeshPartsCfg,
+    HeightMapMeshPartsCfg,
+)
+from mesh_parts.mesh_utils import (
+    merge_meshes,
+    rotate_mesh,
+    flip_mesh,
+    ENGINE,
+    get_height_array_of_mesh,
+    convert_heightfield_to_trimesh,
+)
 
 
 def create_floor(cfg: MeshPartsCfg):
@@ -269,6 +282,31 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
     return mesh
 
 
+def create_from_height_map(cfg: HeightMapMeshPartsCfg):
+    mesh = trimesh.Trimesh()
+    height_map = cfg.height_map
+
+    if cfg.fill_borders:
+        height_map = np.zeros([cfg.height_map.shape[0] + 2, cfg.height_map.shape[1] + 2])
+        height_map[1:-1, 1:-1] = cfg.height_map
+        height_map[0, :] = cfg.floor_thickness
+        height_map[-1, :] = cfg.floor_thickness
+        height_map[:, 0] = cfg.floor_thickness
+        height_map[:, -1] = cfg.floor_thickness
+
+        mesh = create_floor(cfg)
+
+    height_map -= cfg.dim[2] / 2.0
+    height_map_mesh = convert_heightfield_to_trimesh(
+        height_map,
+        cfg.horizontal_scale,
+        cfg.vertical_scale,
+        cfg.slope_threshold,
+    )
+    mesh = merge_meshes([mesh, height_map_mesh], False)
+    return mesh
+
+
 # def create_standard_stairs_bk(cfg: StairMeshPartsCfg.Stair):
 #     n_steps = int(cfg.total_height // cfg.step_height)
 #     step_height = cfg.total_height / n_steps
@@ -374,6 +412,14 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
 
 
 if __name__ == "__main__":
+
+    cfg = HeightMapMeshPartsCfg(height_map=np.ones((100, 100)))
+    mesh = create_from_height_map(cfg)
+    mesh.show()
+    print(get_height_array_of_mesh(mesh, cfg.dim, 5))
+
+    exit(0)
+
     cfg = PlatformMeshPartsCfg(
         array=np.array([[1, 0], [0, 0]]), z_dim_array=np.array([[0.5, 0], [0, 0]]), use_z_dim_array=True
     )

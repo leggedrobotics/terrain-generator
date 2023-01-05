@@ -58,6 +58,18 @@ class PlatformMeshPartsCfg(MeshPartsCfg):
 
 
 @dataclass
+class HeightMapMeshPartsCfg(MeshPartsCfg):
+    height_map: np.ndarray = np.ones((10, 10))
+    add_floor: bool = True
+    vertical_scale: float = 1.0
+    slope_threshold: float = 4.0
+    fill_borders: bool = True
+
+    def __post_init__(self):
+        self.horizontal_scale = self.dim[0] / (self.height_map.shape[0])
+
+
+@dataclass
 class MeshPattern:
     # name: str
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z

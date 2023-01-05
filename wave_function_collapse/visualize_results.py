@@ -6,6 +6,8 @@ import numpy as np
 import cv2
 from mesh_parts.mesh_utils import visualize_mesh
 
+import argparse
+
 
 def visualize_meshes(meshes):
     # Visualize meshes one by one with Open3D
@@ -49,18 +51,58 @@ def visualize_meshes(meshes):
         # plt.imsave(np.asarray(image), f"test_{i}.png")
 
 
+def visualize_and_save_mesh(mesh, vis=None, save_path=None):
+    # Visualize meshes one by one with Open3D
+    if vis is None:
+        vis = o3d.visualization.Visualizer()
+        vis.create_window()
+    mesh.compute_vertex_normals()
+    R = o3d.geometry.get_rotation_matrix_from_xyz([-1.0, 0.0, 0.2])
+    mesh.rotate(R, center=[0, 0, 0])
+
+    vis.clear_geometries()
+
+    # vis.add_geometry(mesh)
+    vis.add_geometry(mesh)
+    vis.poll_events()
+    vis.update_renderer()
+    # Add some time delay to see the mesh
+    time.sleep(1)
+
+    vis.capture_screen_image(save_path)
+    return vis
+    # vis.destroy_window()
+
+
 def main():
     # Load meshes
     meshes = []
+    vis = None
     for i in range(0, 10):
-        # mesh = o3d.io.read_triangle_mesh(f"results/result_mesh_{i}.stl")
-        mesh = trimesh.load_mesh(f"results/result_mesh_{i}.stl")
-        visualize_mesh(mesh)
-        # meshes.append(mesh)
+        mesh = o3d.io.read_triangle_mesh(f"results/result_mesh_{i}.stl")
+        # mesh = trimesh.load_mesh(f"results/result_mesh_{i}.stl")
+        vis = visualize_and_save_mesh(mesh, vis, save_path=f"results/result_mesh_{i}.png")
+
+    vis.destroy_window()
+    # meshes.append(mesh)
 
     # Visualize meshes one by one with Open3D
     # visualize_meshes(meshes)
 
 
+def show(mesh_path):
+    # Load meshes
+    mesh = trimesh.load_mesh(mesh_path)
+    visualize_mesh(mesh)
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    # show()
+
+    # argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mesh_path", type=str, default="results/result_mesh_0.stl")
+    args = parser.parse_args()
+
+    show(args.mesh_path)
