@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import trimesh
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 from dataclasses import asdict, is_dataclass
 import open3d as o3d
 
@@ -52,7 +52,7 @@ def rotate_mesh(mesh, deg):
 def get_height_array_of_mesh(mesh, dim, num_points, offset=0.01):
     # intersects_location requires origins to be the same shape as vectors
     x = np.linspace(-dim[0] / 2.0 + offset, dim[0] / 2.0 - offset, num_points)
-    y = np.linspace(dim[1] / 2.0 + offset, -dim[1] / 2.0 - offset, num_points)
+    y = np.linspace(dim[1] / 2.0 - offset, -dim[1] / 2.0 + offset, num_points)
     xv, yv = np.meshgrid(x, y)
     xv = xv.flatten()
     yv = yv.flatten()
@@ -61,13 +61,18 @@ def get_height_array_of_mesh(mesh, dim, num_points, offset=0.01):
     # # do the actual ray- mesh queries
     points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=False)
     array = np.zeros((num_points * num_points))
-    array[index_ray] = points[:, 2]
-    array = np.round(array, 1) + dim[2] / 2.0
+    array[index_ray] = points[:, 2] + dim[2] / 2.0
+    array = np.round(array, 1)
     array = array.reshape(num_points, num_points)
     return array
 
 
-def convert_heightfield_to_trimesh(height_field_raw, horizontal_scale, vertical_scale, slope_threshold=None):
+def convert_heightfield_to_trimesh(
+    height_field_raw: np.ndarray,
+    horizontal_scale: float,
+    vertical_scale: float,
+    slope_threshold: Optional[float] = None,
+):
     """
     Convert a heightfield array to a triangle mesh represented by vertices and triangles.
     Optionally, corrects vertical surfaces above the provide slope threshold:

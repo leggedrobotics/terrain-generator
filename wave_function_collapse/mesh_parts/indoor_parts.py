@@ -304,6 +304,8 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
         cfg.slope_threshold,
     )
     mesh = merge_meshes([mesh, height_map_mesh], False)
+    if cfg.simplify:
+        mesh = mesh.simplify_quadratic_decimation(cfg.target_num_faces)
     return mesh
 
 
@@ -413,15 +415,27 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
 
 if __name__ == "__main__":
 
-    cfg = HeightMapMeshPartsCfg(height_map=np.ones((100, 100)))
+    cfg = HeightMapMeshPartsCfg(height_map=np.ones((100, 100)) * 1.4, target_num_faces=50)
     mesh = create_from_height_map(cfg)
-    mesh.show()
     print(get_height_array_of_mesh(mesh, cfg.dim, 5))
+    mesh.show()
 
-    exit(0)
+    x = np.linspace(0, 1, 100)
+    y = np.linspace(0, 1, 100)
+    X, Y = np.meshgrid(x, y)
+    # Z = np.sin(X * 2 * np.pi) * np.cos(Y * 2 * np.pi)
+    Z = np.sin(X * 2 * np.pi)
+    Z = (Z + 1.0) * 0.2 + 0.2
+    cfg = HeightMapMeshPartsCfg(height_map=Z)
+    mesh = create_from_height_map(cfg)
+    print(get_height_array_of_mesh(mesh, cfg.dim, 5))
+    print("mesh faces ", mesh.faces.shape)
+    mesh.show()
 
     cfg = PlatformMeshPartsCfg(
-        array=np.array([[1, 0], [0, 0]]), z_dim_array=np.array([[0.5, 0], [0, 0]]), use_z_dim_array=True
+        array=np.array([[1, 0], [0, 0]]),
+        z_dim_array=np.array([[0.5, 0], [0, 0]]),
+        use_z_dim_array=True,
     )
     mesh = create_platform_mesh(cfg)
     print(get_height_array_of_mesh(mesh, cfg.dim, 5))

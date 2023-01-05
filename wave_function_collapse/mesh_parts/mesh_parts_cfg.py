@@ -64,6 +64,8 @@ class HeightMapMeshPartsCfg(MeshPartsCfg):
     vertical_scale: float = 1.0
     slope_threshold: float = 4.0
     fill_borders: bool = True
+    simplify: bool = True
+    target_num_faces: int = 500
 
     def __post_init__(self):
         self.horizontal_scale = self.dim[0] / (self.height_map.shape[0])
