@@ -10,6 +10,7 @@ from mesh_parts.mesh_parts_cfg import (
     WallMeshPartsCfg,
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
+    HeightMapMeshPartsCfg,
 )
 
 
@@ -157,6 +158,85 @@ def generate_stair_parts(
             rotations=(90, 180, 270),
             flips=("x", "y"),
             weight=weight_per_tile,
+        )
+        cfgs.append(cfg)
+    return cfgs
+
+
+def generate_ramp_parts(
+    name,
+    dim,
+    total_height=1.0,
+    array_shape=[10, 10],
+    offset=0.0,
+    depth_num=1,
+    weight=1.0,
+    seed=1234,
+):
+    np.random.seed(seed)
+    arrays = []
+    step_height = total_height / array_shape[1]
+    cfg = HeightMapMeshPartsCfg()
+    # residual = total_height - step_height * n_steps
+    ramp_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped"]
+    for stair_type in ramp_types:
+        h_1 = 0.0 + offset
+        h_2 = total_height + offset
+        # Randomly sample array
+        array_1 = np.zeros(array_shape) + offset  # stairs aligned to up
+        array_2 = np.zeros(array_shape) + offset  # stairs aligned to down
+        for s in range(array_shape[0]):
+            # print("s ", s)
+            # print("h1 ", h_1, " h2 ", h_2)
+            if stair_type == "wide":
+                array_1[:, s] = h_1
+                array_2[:, s] = h_2
+            elif stair_type == "half":
+                array_1[: int(array_shape[0] / 2), s] = h_1
+                array_2[: int(array_shape[0] / 2), s] = h_2
+            elif stair_type == "wide_float":
+                array_1[:, s] = h_1
+                array_2[:, s] = h_2
+            elif stair_type == "half_float":
+                array_1[: int(array_shape[0] / 2), s] = h_1
+                array_2[: int(array_shape[0] / 2), s] = h_2
+            elif stair_type == "corner":
+                array_1[:s, s] = h_1
+                array_2[:s, s] = h_2
+                array_1[s, :s] = h_1
+                array_2[s, :s] = h_2
+                array_1[s, s] = h_1
+                array_2[s, s] = h_2
+            elif stair_type == "corner_flipped":
+                array_1[:s, s] = total_height - h_1 + offset
+                array_2[:s, s] = total_height - h_2 + offset
+                array_1[s, :s] = total_height - h_1 + offset
+                array_2[s, :s] = total_height - h_2 + offset
+                array_1[s, s] = total_height - h_1 + offset
+                array_2[s, s] = total_height - h_2 + offset
+            if s % depth_num == 0 and s > 0:
+                h_1 = min(h_1 + step_height, total_height + offset)
+                h_2 = max(h_2 - step_height, offset)
+
+        print("array 1 \n", array_1)
+        print("array 2 \n", array_2)
+        arrays.append(array_1)
+        arrays.append(array_2)
+
+    weight_per_tile = weight / len(ramp_types) / 2
+    print("weight_per_tile", weight_per_tile)
+    cfgs = []
+    for i, array in enumerate(arrays):
+        cfg = HeightMapMeshPartsCfg(
+            name=f"{name}_{i}",
+            dim=dim,
+            height_map=array,
+            rotations=(90, 180, 270),
+            flips=("x", "y"),
+            weight=weight_per_tile,
+            slope_threshold=1.0,
+            target_num_faces=100,
+            simplify=True,
         )
         cfgs.append(cfg)
     return cfgs
@@ -482,6 +562,18 @@ class FloorPattern(MeshPattern):
                 name="stair_offset", dim=dim, seed=seed, array_shape=[15, 15], weight=2.0, depth_num=2, offset=1.0
             )
         )
+        + tuple(
+            generate_ramp_parts(
+                name="ramp",
+                dim=dim,
+                seed=seed,
+                array_shape=[100, 100],
+                total_height=1.0,
+                offset=0.00,
+                weight=1.0,
+                depth_num=1,
+            )
+        )
     )
     # wall_turn_edge: MeshPartsCfg = WallMeshPartsCfg(
     #     name="wall_t_e",
@@ -586,3 +678,10 @@ class FloorPattern(MeshPattern):
 if __name__ == "__main__":
     cfg = FloorPattern()
     print("cfg", cfg)
+    from mesh_parts.create_tiles import create_mesh_tile
+
+    for mesh_part in cfg.mesh_parts:
+        if "ramp" in mesh_part.name:
+            print(mesh_part)
+            mesh_tile = create_mesh_tile(mesh_part)
+            mesh_tile.get_mesh().show()
