@@ -3,13 +3,14 @@ from typing import Tuple
 import functools
 
 from wfc.tiles import Tile, ArrayTile, MeshTile
-from mesh_parts.indoor_parts import create_wall_mesh, create_stairs_mesh, create_platform_mesh
+from mesh_parts.indoor_parts import create_wall_mesh, create_stairs_mesh, create_platform_mesh, create_from_height_map
 from mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     WallMeshPartsCfg,
     MeshPattern,
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
+    HeightMapMeshPartsCfg,
 )
 from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
 
@@ -21,6 +22,8 @@ def create_mesh_tile(cfg: MeshPartsCfg):
         mesh_gen = create_stairs_mesh
     elif isinstance(cfg, PlatformMeshPartsCfg):
         mesh_gen = create_platform_mesh
+    elif isinstance(cfg, HeightMapMeshPartsCfg):
+        mesh_gen = create_from_height_map
     else:
         return
     cached_mesh_gen_verbose = get_cached_mesh_gen(mesh_gen, cfg, verbose=True)

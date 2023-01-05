@@ -9,11 +9,13 @@ from mesh_parts.mesh_parts_cfg import (
 )
 from mesh_parts.mesh_utils import (
     merge_meshes,
+    merge_two_height_meshes,
     rotate_mesh,
     flip_mesh,
     ENGINE,
     get_height_array_of_mesh,
     convert_heightfield_to_trimesh,
+    merge_two_height_meshes,
 )
 
 
@@ -287,25 +289,50 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
     height_map = cfg.height_map
 
     if cfg.fill_borders:
-        height_map = np.zeros([cfg.height_map.shape[0] + 2, cfg.height_map.shape[1] + 2])
-        height_map[1:-1, 1:-1] = cfg.height_map
-        height_map[0, :] = cfg.floor_thickness
-        height_map[-1, :] = cfg.floor_thickness
-        height_map[:, 0] = cfg.floor_thickness
-        height_map[:, -1] = cfg.floor_thickness
+        # height_map = np.zeros([cfg.height_map.shape[0] + 2, cfg.height_map.shape[1] + 2])
+        # height_map[1:-1, 1:-1] = cfg.height_map
+        # height_map[0, :] = cfg.floor_thickness
+        # height_map[-1, :] = cfg.floor_thickness
+        # height_map[:, 0] = cfg.floor_thickness
+        # height_map[:, -1] = cfg.floor_thickness
 
         mesh = create_floor(cfg)
 
     height_map -= cfg.dim[2] / 2.0
+    # print("height_map ", height_map)
     height_map_mesh = convert_heightfield_to_trimesh(
         height_map,
         cfg.horizontal_scale,
         cfg.vertical_scale,
         cfg.slope_threshold,
+        # add_border=False,
+        # border_height=cfg.floor_thickness - cfg.dim[2] / 2.0,
     )
+    # height_map_mesh.show()
+    bottom_height_map = height_map * 0.0 + cfg.floor_thickness - cfg.dim[2] / 2.0
+    # print("bottom_height_map ", bottom_height_map)
+    bottom_mesh = convert_heightfield_to_trimesh(
+        bottom_height_map,
+        cfg.horizontal_scale,
+        cfg.vertical_scale,
+        cfg.slope_threshold,
+    )
+    # bottom_mesh.show()
+    # print("height map edges ", height_map_mesh.edges, height_map_mesh.edges_face)
+    # print("bottom edges ", bottom_mesh.edges, bottom_mesh.edges_face)
+    # height_map_mesh = merge_meshes([height_map_mesh, bottom_mesh], False)
+    height_map_mesh = merge_two_height_meshes(height_map_mesh, bottom_mesh)
+    # print("height map edges ", height_map_mesh.edges, height_map_mesh.edges_face)
+    # height_map_mesh.show()
+    # extruded_mesh = extrude_convex_mesh(height_map_mesh, np.array([0, 0, -1.0]))
+    # extruded_mesh = trimesh.creation.extrude_triangulation(vertices=coords, faces=tris.simplices, height=-10)
+    # extruded_mesh.show()
+
     mesh = merge_meshes([mesh, height_map_mesh], False)
+    # mesh = merge_meshes([mesh, extruded_mesh], False)
     if cfg.simplify:
         mesh = mesh.simplify_quadratic_decimation(cfg.target_num_faces)
+    trimesh.repair.fix_normals(mesh)
     return mesh
 
 
@@ -415,10 +442,12 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
 
 if __name__ == "__main__":
 
-    cfg = HeightMapMeshPartsCfg(height_map=np.ones((100, 100)) * 1.4, target_num_faces=50)
+    cfg = HeightMapMeshPartsCfg(height_map=np.ones((3, 3)) * 1.4, target_num_faces=50)
     mesh = create_from_height_map(cfg)
     print(get_height_array_of_mesh(mesh, cfg.dim, 5))
     mesh.show()
+
+    # print("showed 1st ex")
 
     x = np.linspace(0, 1, 100)
     y = np.linspace(0, 1, 100)
@@ -426,7 +455,7 @@ if __name__ == "__main__":
     # Z = np.sin(X * 2 * np.pi) * np.cos(Y * 2 * np.pi)
     Z = np.sin(X * 2 * np.pi)
     Z = (Z + 1.0) * 0.2 + 0.2
-    cfg = HeightMapMeshPartsCfg(height_map=Z)
+    cfg = HeightMapMeshPartsCfg(height_map=Z, target_num_faces=3000, simplify=True)
     mesh = create_from_height_map(cfg)
     print(get_height_array_of_mesh(mesh, cfg.dim, 5))
     print("mesh faces ", mesh.faces.shape)
