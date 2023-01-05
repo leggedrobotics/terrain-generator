@@ -90,7 +90,7 @@ def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
 
 
 if __name__ == "__main__":
-    result_dir = "results_1"
+    result_dir = "results/results_3"
     os.makedirs(result_dir, exist_ok=True)
     for i in range(10):
         name = os.path.join(result_dir, f"result_mesh_{i}.stl")
