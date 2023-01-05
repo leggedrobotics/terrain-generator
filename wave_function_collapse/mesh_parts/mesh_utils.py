@@ -5,6 +5,7 @@ import trimesh
 from typing import Callable, Any, Optional
 from dataclasses import asdict, is_dataclass
 import open3d as o3d
+import copy
 
 
 ENGINE = "blender"
@@ -50,7 +51,7 @@ def rotate_mesh(mesh, deg):
     return new_mesh
 
 
-def get_height_array_of_mesh(mesh, dim, num_points, offset=0.01):
+def get_height_array_of_mesh(mesh, dim, num_points, offset=0.001):
     # intersects_location requires origins to be the same shape as vectors
     x = np.linspace(-dim[0] / 2.0 + offset, dim[0] / 2.0 - offset, num_points)
     y = np.linspace(dim[1] / 2.0 - offset, -dim[1] / 2.0 + offset, num_points)
@@ -356,7 +357,7 @@ def merge_two_height_meshes(mesh1, mesh2):
 #     return mesh
 
 
-def cfg_to_hash(cfg):
+def cfg_to_hash(cfg, exclude_keys=["weight"]):
     """MD5 hash of a config."""
     import hashlib
     import json
@@ -369,14 +370,33 @@ def cfg_to_hash(cfg):
                 return float(obj)
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
+            # if isinstance(obj, tuple):
+            #     return str(list(obj))
+            # if isinstance(obj, dict):
+            #     return self.default(obj)
             return json.JSONEncoder.default(self, obj)
 
+    def tuple_to_str(d):
+        new_d = {}
+        for k, v in d.items():
+            if isinstance(v, dict):
+                v = tuple_to_str(v)
+            if isinstance(k, tuple):
+                new_d[str(k)] = v
+            else:
+                new_d[k] = v
+        return new_d
+
     if isinstance(cfg, dict):
-        encoded = json.dumps(cfg, sort_keys=True, cls=NpEncoder).encode()
+        cfg_dict = copy.deepcopy(cfg)
     elif is_dataclass(cfg):
-        encoded = json.dumps(asdict(cfg), sort_keys=True, cls=NpEncoder).encode()
+        cfg_dict = asdict(cfg)
     else:
         raise ValueError("cfg must be a dict or dataclass.")
+    for key in exclude_keys:
+        cfg_dict.pop(key, None)
+    cfg_dict = tuple_to_str(cfg_dict)
+    encoded = json.dumps(cfg_dict, sort_keys=True, cls=NpEncoder).encode()
     dhash = hashlib.md5()
     # We need to sort arguments so {'a': 1, 'b': 2} is
     # the same as {'b': 2, 'a': 1}
@@ -402,8 +422,8 @@ def get_cached_mesh_gen(
                 print(f"Loading mesh {name} from cache {code}.stl ...")
             mesh = trimesh.load_mesh(os.path.join(CACHE_DIR, code + ".stl"))
         else:
-            if verbose:
-                print(f"Not loading {name} from cache, creating {code}.stl ...")
+            # if verbose:
+            print(f"Not loading {name} from cache, creating {code}.stl ...")
             mesh = mesh_gen_fn(cfg)
             mesh.export(os.path.join(CACHE_DIR, code + ".stl"))
         return mesh

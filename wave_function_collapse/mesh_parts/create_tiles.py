@@ -13,6 +13,7 @@ from mesh_parts.mesh_parts_cfg import (
     HeightMapMeshPartsCfg,
 )
 from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
+from alive_progress import alive_it
 
 
 def create_mesh_tile(cfg: MeshPartsCfg):
@@ -26,7 +27,7 @@ def create_mesh_tile(cfg: MeshPartsCfg):
         mesh_gen = create_from_height_map
     else:
         return
-    cached_mesh_gen_verbose = get_cached_mesh_gen(mesh_gen, cfg, verbose=True)
+    cached_mesh_gen_verbose = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
     cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
     name = cfg.name
     mesh = cached_mesh_gen_verbose()
@@ -40,7 +41,8 @@ def create_mesh_tile(cfg: MeshPartsCfg):
 
 def create_mesh_pattern(cfg: MeshPattern):
     tiles = []
-    for mesh_cfg in cfg.mesh_parts:
+    print("Creating mesh pattern... ")
+    for mesh_cfg in alive_it(cfg.mesh_parts):
         tile = create_mesh_tile(mesh_cfg)
         if tile is not None:
             tiles += tile.get_all_tiles(rotations=mesh_cfg.rotations, flips=mesh_cfg.flips)

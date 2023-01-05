@@ -14,6 +14,125 @@ from mesh_parts.mesh_parts_cfg import (
 )
 
 
+def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
+    platform_types = ["1100", "1110", "1111", "1111_f"]
+    cfgs = []
+    for platform_type in platform_types:
+        use_z_dim_array = False
+        if platform_type == "1100":
+            array = np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
+            array = min_h + array * (max_h - min_h)
+            z_dim_array = array
+        elif platform_type == "1110":
+            array = np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0]])
+            array = min_h + array * (max_h - min_h)
+            z_dim_array = array
+        elif platform_type == "1111":
+            array = np.ones((5, 5))
+            array = min_h + array * (max_h - min_h)
+            z_dim_array = array
+        elif platform_type == "1111_f":
+            array = np.ones((5, 5))
+            array = min_h + array * (max_h - min_h)
+            z_dim_array = np.ones((5, 5)) * 0.1
+            use_z_dim_array = True
+
+        cfg = PlatformMeshPartsCfg(
+            name=f"{name}_{platform_type}",
+            dim=dim,
+            array=array,
+            z_dim_array=z_dim_array,
+            rotations=(90, 180, 270),
+            flips=(),
+            weight=weight,
+            use_z_dim_array=use_z_dim_array,
+        )
+        cfgs.append(cfg)
+    return cfgs
+
+
+def generate_narrow(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
+    platform_types = ["I", "T", "L", "L2"]
+    cfgs = []
+    for platform_type in platform_types:
+        use_z_dim_array = False
+        if platform_type == "I":
+            array = np.array([[1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [1, 1, 1, 1, 1]])
+            array = min_h + array * (max_h - min_h)
+            z_dim_array = array
+        elif platform_type == "T":
+            array = np.array([[1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
+            array = min_h + array * (max_h - min_h)
+            z_dim_array = array
+        # elif platform_type == "L":
+        #     array = np.array([[1, 1, 1, 1, 1], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0]])
+        #     array = min_h + array * (max_h - min_h)
+        #     z_dim_array = array
+        # elif platform_type == "L2":
+        #     array = np.array([[1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
+        #     array = min_h + array * (max_h - min_h)
+        #     z_dim_array = array
+        # elif platform_type == "L3":
+        #     array = np.array([[1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
+        #     array = min_h + array * (max_h - min_h)
+        # z_dim_array = array
+
+        for prefix in ["", "_f"]:
+            if prefix == "_f":
+                z_dim_array = np.ones((5, 5)) * 0.1
+                use_z_dim_array = True
+            cfg = PlatformMeshPartsCfg(
+                name=f"{name}_{platform_type}{prefix}",
+                dim=dim,
+                array=array,
+                z_dim_array=z_dim_array,
+                rotations=(90, 180, 270),
+                flips=(),
+                weight=weight,
+                use_z_dim_array=use_z_dim_array,
+            )
+            cfgs.append(cfg)
+    return cfgs
+
+
+def generate_stepping_stones(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
+    platform_types = ["1100", "1110", "1111", "s", "s2", "p", "p2"]
+    cfgs = []
+    for platform_type in platform_types:
+        use_z_dim_array = False
+        if platform_type == "1100":
+            array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
+        # elif platform_type == "1110":
+        #     array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 0], [1, 0, 1, 0, 0]])
+        elif platform_type == "1111":
+            array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
+        elif platform_type == "s":
+            array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 1, 1, 1, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
+        elif platform_type == "s2":
+            array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
+        elif platform_type == "p":
+            array = np.array([[1, 1, 1, 1, 1], [0, 1, 0, 1, 0], [1, 0, 1, 0, 1], [0, 1, 0, 1, 0], [1, 1, 1, 1, 1]])
+        array = min_h + array * (max_h - min_h)
+        z_dim_array = array
+
+        for prefix in ["", "_f"]:
+            if prefix == "_f":
+                z_dim_array = np.ones((5, 5)) * 0.1
+                use_z_dim_array = True
+            cfg = PlatformMeshPartsCfg(
+                name=f"{name}_{platform_type}{prefix}",
+                dim=dim,
+                array=array,
+                z_dim_array=z_dim_array,
+                rotations=(90, 180, 270),
+                flips=(),
+                weight=weight,
+                use_z_dim_array=use_z_dim_array,
+            )
+            cfgs.append(cfg)
+    return cfgs
+
+
 def generate_floating_boxes(dim, n=15, array_shape=[5, 5], weight=1.0, seed=1234):
     np.random.seed(seed)
     weight_per_tile = weight / n
@@ -146,7 +265,7 @@ def generate_stair_parts(
         z_dim_arrays.append(np.round(z_dim_array_2, 1))
 
     weight_per_tile = weight / len(stair_types) / 2
-    print("weight_per_tile", weight_per_tile)
+    # print("weight_per_tile", weight_per_tile)
     cfgs = []
     for i, (array, z_dim_array) in enumerate(zip(arrays, z_dim_arrays)):
         cfg = PlatformMeshPartsCfg(
@@ -175,7 +294,7 @@ def generate_ramp_parts(
 ):
     np.random.seed(seed)
     arrays = []
-    step_height = total_height / array_shape[1]
+    step_height = total_height / (array_shape[1] - 2)
     cfg = HeightMapMeshPartsCfg()
     # residual = total_height - step_height * n_steps
     ramp_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped"]
@@ -218,13 +337,13 @@ def generate_ramp_parts(
                 h_1 = min(h_1 + step_height, total_height + offset)
                 h_2 = max(h_2 - step_height, offset)
 
-        print("array 1 \n", array_1)
-        print("array 2 \n", array_2)
+        # print("array 1 \n", array_1)
+        # print("array 2 \n", array_2)
         arrays.append(array_1)
         arrays.append(array_2)
 
     weight_per_tile = weight / len(ramp_types) / 2
-    print("weight_per_tile", weight_per_tile)
+    # print("weight_per_tile", weight_per_tile)
     cfgs = []
     for i, array in enumerate(arrays):
         cfg = HeightMapMeshPartsCfg(
@@ -234,9 +353,9 @@ def generate_ramp_parts(
             rotations=(90, 180, 270),
             flips=("x", "y"),
             weight=weight_per_tile,
-            slope_threshold=1.0,
-            target_num_faces=100,
-            simplify=True,
+            slope_threshold=0.5,
+            target_num_faces=1000,
+            simplify=False,
         )
         cfgs.append(cfg)
     return cfgs
@@ -248,7 +367,7 @@ class FloorPattern(MeshPattern):
     seed: int = 1234
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
         (
-            WallMeshPartsCfg(name="floor", dim=dim, wall_edges=(), weight=10.0),
+            WallMeshPartsCfg(name="floor", dim=dim, wall_edges=(), weight=13.0),
             WallMeshPartsCfg(
                 name="wall_s",
                 dim=dim,
@@ -291,42 +410,42 @@ class FloorPattern(MeshPattern):
             #     flips=(),
             #     weight=0.1,
             # )
-            PlatformMeshPartsCfg(
-                name="platform_1100",
-                dim=dim,
-                array=np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
-                # array=np.array([[1, 1, 0], [1, 1, 0], [0, 0, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_1110",
-                dim=dim,
-                array=np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0]]),
-                # array=np.array([[1, 1, 1], [1, 1, 0], [1, 1, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.10,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_1111",
-                dim=dim,
-                array=np.array([[1, 1], [1, 1]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_1111_f",
-                dim=dim,
-                array=np.array([[1, 1], [1, 1]]),
-                z_dim_array=np.ones((2, 2)) * 0.1,
-                use_z_dim_array=True,
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_1100",
+            #     dim=dim,
+            #     array=np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
+            #     # array=np.array([[1, 1, 0], [1, 1, 0], [0, 0, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_1110",
+            #     dim=dim,
+            #     array=np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0]]),
+            #     # array=np.array([[1, 1, 1], [1, 1, 0], [1, 1, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.10,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_1111",
+            #     dim=dim,
+            #     array=np.array([[1, 1], [1, 1]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_1111_f",
+            #     dim=dim,
+            #     array=np.array([[1, 1], [1, 1]]),
+            #     z_dim_array=np.ones((2, 2)) * 0.1,
+            #     use_z_dim_array=True,
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
             # platform4: MeshPartsCfg = PlatformMeshPartsCfg(
             #     name="platform_2000",
             #     dim=dim,
@@ -335,118 +454,118 @@ class FloorPattern(MeshPattern):
             #     flips=(),
             #     weight=0.1,
             # )
-            PlatformMeshPartsCfg(
-                name="platform_2200",
-                dim=dim,
-                array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.6,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2220",
-                dim=dim,
-                array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 0, 0, 0], [2, 2, 0, 0, 0], [2, 2, 0, 0, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.60,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2222",
-                dim=dim,
-                array=np.array([[2, 2], [2, 2]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.6,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2211",
-                dim=dim,
-                array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.60,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2221",
-                dim=dim,
-                array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [2, 2, 1, 1, 1]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.60,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2111",
-                dim=dim,
-                array=np.array([[2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.60,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2111_f",
-                dim=dim,
-                array=np.array([[2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
-                z_dim_array=np.ones((5, 5)) * 0.1,
-                use_z_dim_array=True,
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.60,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_2222_f",
-                dim=dim,
-                array=np.array([[2, 2], [2, 2]]),
-                z_dim_array=np.ones((2, 2)) * 0.1,
-                use_z_dim_array=True,
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.6,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_T",
-                dim=dim,
-                array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_T_f",
-                dim=dim,
-                array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
-                z_dim_array=np.ones((5, 5)) * 0.5,
-                use_z_dim_array=True,
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_stepping",
-                dim=dim,
-                array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_stepping_f",
-                dim=dim,
-                array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
-                z_dim_array=np.ones((5, 5)) * 0.5,
-                use_z_dim_array=True,
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
-            PlatformMeshPartsCfg(
-                name="platform_stepping",
-                dim=dim,
-                array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [1, 0, 1, 0, 0], [1, 1, 0, 0, 0], [1, 1, 1, 0, 0]]),
-                rotations=(90, 180, 270),
-                flips=(),
-                weight=0.1,
-            ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2200",
+            #     dim=dim,
+            #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.6,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2220",
+            #     dim=dim,
+            #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 0, 0, 0], [2, 2, 0, 0, 0], [2, 2, 0, 0, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.60,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2222",
+            #     dim=dim,
+            #     array=np.array([[2, 2], [2, 2]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.6,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2211",
+            #     dim=dim,
+            #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.60,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2221",
+            #     dim=dim,
+            #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [2, 2, 1, 1, 1]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.60,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2111",
+            #     dim=dim,
+            #     array=np.array([[2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.60,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2111_f",
+            #     dim=dim,
+            #     array=np.array([[2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+            #     z_dim_array=np.ones((5, 5)) * 0.1,
+            #     use_z_dim_array=True,
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.60,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_2222_f",
+            #     dim=dim,
+            #     array=np.array([[2, 2], [2, 2]]),
+            #     z_dim_array=np.ones((2, 2)) * 0.1,
+            #     use_z_dim_array=True,
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.6,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_T",
+            #     dim=dim,
+            #     array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_T_f",
+            #     dim=dim,
+            #     array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
+            #     z_dim_array=np.ones((5, 5)) * 0.5,
+            #     use_z_dim_array=True,
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_stepping",
+            #     dim=dim,
+            #     array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_stepping_f",
+            #     dim=dim,
+            #     array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+            #     z_dim_array=np.ones((5, 5)) * 0.5,
+            #     use_z_dim_array=True,
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
+            # PlatformMeshPartsCfg(
+            #     name="platform_stepping",
+            #     dim=dim,
+            #     array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [1, 0, 1, 0, 0], [1, 1, 0, 0, 0], [1, 1, 1, 0, 0]]),
+            #     rotations=(90, 180, 270),
+            #     flips=(),
+            #     weight=0.1,
+            # ),
             PlatformMeshPartsCfg(
                 name="platform_stepping_rand",
                 dim=dim,
@@ -555,6 +674,21 @@ class FloorPattern(MeshPattern):
         #         ),
         #     ),
         # )
+        + tuple(generate_platforms(name="platform_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.5))
+        + tuple(generate_platforms(name="platform_2", dim=dim, max_h=2.0, min_h=0.0, weight=0.5))
+        + tuple(generate_platforms(name="platform_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.5))
+        + tuple(generate_platforms(name="platform_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.5))
+        + tuple(generate_platforms(name="platform_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.5))
+        + tuple(generate_stepping_stones(name="stepping_1", dim=dim, max_h=1.0, min_h=0.0, weight=1.2))
+        + tuple(generate_stepping_stones(name="stepping_2", dim=dim, max_h=2.0, min_h=0.0, weight=1.2))
+        + tuple(generate_stepping_stones(name="stepping_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=1.2))
+        + tuple(generate_stepping_stones(name="stepping_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=1.2))
+        + tuple(generate_stepping_stones(name="stepping_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=1.2))
+        + tuple(generate_narrow(name="narrow_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.2))
+        + tuple(generate_narrow(name="narrow_2", dim=dim, max_h=2.0, min_h=0.0, weight=0.2))
+        + tuple(generate_narrow(name="narrow_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.2))
+        + tuple(generate_narrow(name="narrow_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.2))
+        + tuple(generate_narrow(name="narrow_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.2))
         + tuple(generate_floating_boxes(n=20, dim=dim, seed=seed, array_shape=[5, 5], weight=0.05))
         + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2))
         + tuple(
@@ -563,12 +697,41 @@ class FloorPattern(MeshPattern):
             )
         )
         + tuple(
+            generate_stair_parts(
+                name="stair_low", dim=dim, total_height=0.5, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2
+            )
+        )
+        + tuple(
+            generate_stair_parts(
+                name="stair_low_offset",
+                dim=dim,
+                total_height=0.5,
+                offset=0.5,
+                seed=seed,
+                array_shape=[15, 15],
+                weight=1.0,
+                depth_num=2,
+            )
+        )
+        + tuple(
             generate_ramp_parts(
                 name="ramp",
                 dim=dim,
                 seed=seed,
-                array_shape=[100, 100],
+                array_shape=[30, 30],
                 total_height=1.0,
+                offset=0.00,
+                weight=1.0,
+                depth_num=1,
+            )
+        )
+        + tuple(
+            generate_ramp_parts(
+                name="ramp_low",
+                dim=dim,
+                seed=seed,
+                array_shape=[30, 30],
+                total_height=0.5,
                 offset=0.00,
                 weight=1.0,
                 depth_num=1,
@@ -680,8 +843,16 @@ if __name__ == "__main__":
     print("cfg", cfg)
     from mesh_parts.create_tiles import create_mesh_tile
 
+    visualize_keywords = ["ramp_low"]
     for mesh_part in cfg.mesh_parts:
-        if "ramp" in mesh_part.name:
-            print(mesh_part)
-            mesh_tile = create_mesh_tile(mesh_part)
-            mesh_tile.get_mesh().show()
+        print(mesh_part)
+        for keyword in visualize_keywords:
+            if keyword in mesh_part.name:
+                mesh_tile = create_mesh_tile(mesh_part)
+                mesh_tile.get_mesh().show()
+                break
+
+        # if "ramp" in mesh_part.name:
+        #     print(mesh_part)
+        #     mesh_tile = create_mesh_tile(mesh_part)
+        #     mesh_tile.get_mesh().show()

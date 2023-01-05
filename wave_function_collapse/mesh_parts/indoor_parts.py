@@ -449,8 +449,8 @@ if __name__ == "__main__":
 
     # print("showed 1st ex")
 
-    x = np.linspace(0, 1, 100)
-    y = np.linspace(0, 1, 100)
+    x = np.linspace(0, 1, 10)
+    y = np.linspace(0, 1, 10)
     X, Y = np.meshgrid(x, y)
     # Z = np.sin(X * 2 * np.pi) * np.cos(Y * 2 * np.pi)
     Z = np.sin(X * 2 * np.pi)

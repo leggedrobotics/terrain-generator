@@ -1,13 +1,19 @@
-from ctypes import Array
+import os
+import pickle
 import random
-from threading import local
+import copy
+
+# from ctypes import Array
+# from threading import local
 import numpy as np
-import numpy.typing as npt
+
+# import numpy.typing as npt
 from dataclasses import dataclass
 from typing import Literal, Tuple, Dict, List
-import itertools
-import copy
-from alive_progress import alive_bar
+
+# import itertools
+from alive_progress import alive_bar, alive_it
+from mesh_parts.mesh_utils import cfg_to_hash
 
 
 class Wave:
@@ -330,6 +336,7 @@ class ConnectionManager:
         self.all_tiles_of_edge_type = {}  # dict of edges for each tile key: edge_type, value: (direction, tile_name)
         self.dimension = dimension
         self.edge_def = Edge(edge_types=self.edge_types_of_tiles)
+        self.cache_dir = "connection_cache"
 
     def register_tile(
         self,
@@ -354,10 +361,14 @@ class ConnectionManager:
                 self.all_tiles_of_edge_type[edge] = []
             self.all_tiles_of_edge_type[edge].append((direction, name))
 
-    def compute_connection_dict(self):
+    def get_connection_dict(self):
+        connections = self._load_from_cache()
+        return connections
+
+    def _compute_connection_dict(self):
         connections = {}
         readable_connections = {}
-        for name in self.names:
+        for name in alive_it(self.names):
             edge_types = self.edge_types_of_tiles[name]
             local_connections = {}
             local_readable_connections = {}
@@ -365,14 +376,30 @@ class ConnectionManager:
                 local_connections[direction_1] = set()
                 local_readable_connections[self.edge_def.to_str(direction_1)] = set()
                 another_edge_type = edge_type[::-1]
-                for direction_2, name_2 in self.all_tiles_of_edge_type[another_edge_type]:
-                    if (np.array(direction_1) + np.array(direction_2) == 0).all():
-                        local_connections[direction_1].add(name_2)
-                        local_readable_connections[self.edge_def.to_str(direction_1)].add(name_2)
+                if another_edge_type in self.all_tiles_of_edge_type:
+                    for direction_2, name_2 in self.all_tiles_of_edge_type[another_edge_type]:
+                        if (np.array(direction_1) + np.array(direction_2) == 0).all():
+                            local_connections[direction_1].add(name_2)
+                            local_readable_connections[self.edge_def.to_str(direction_1)].add(name_2)
             connections[name] = local_connections
             readable_connections[name] = local_readable_connections
         self.readable_connections = readable_connections
         return self._replace_name_with_number(connections)
+
+    def _load_from_cache(self):
+        d = self.edge_types_of_tiles
+        code = cfg_to_hash(d)
+        os.makedirs(self.cache_dir, exist_ok=True)
+        filename = os.path.join(self.cache_dir, code + ".pkl")
+        if os.path.exists(filename):
+            with open(filename, "rb") as handle:
+                connections = pickle.load(handle)
+        else:
+            connections = self._compute_connection_dict()
+            print(f"Saving cache as {filename} ...")
+            with open(filename, "wb") as handle:
+                pickle.dump(connections, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        return connections
 
     def _replace_name_with_number(self, d: dict):
         """Replace the names of the tiles with numbers. Recursively."""
@@ -425,7 +452,8 @@ class WFCSolver(object):
         Args:
             init_tiles: List of tuples. Each tuple contains the name of the tile and the position index of the tile.
         """
-        connections = self.cm.compute_connection_dict()
+        print("Get connection definition.")
+        connections = self.cm.get_connection_dict()
         tile_weights = [self.tile_weights[name] for name in self.cm.names]
         wfc = WFCCore(
             len(self.cm.names),
