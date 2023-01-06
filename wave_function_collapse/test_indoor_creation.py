@@ -12,7 +12,7 @@ from mesh_parts.create_tiles import create_mesh_pattern
 from mesh_parts.mesh_utils import visualize_mesh
 
 # from mesh_parts.mesh_parts_cfg import FloorPattern, StairsPattern
-from pattern_cfg import FloorPattern
+from configs.pattern_cfg import FloorPattern
 from alive_progress import alive_bar
 
 

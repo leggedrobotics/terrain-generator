@@ -3,7 +3,8 @@ from typing import Tuple
 import functools
 
 from wfc.tiles import Tile, ArrayTile, MeshTile
-from mesh_parts.indoor_parts import create_wall_mesh, create_stairs_mesh, create_platform_mesh, create_from_height_map
+from mesh_parts.indoor_parts import create_wall_mesh, create_stairs_mesh
+from mesh_parts.basic_parts import create_floor, create_platform_mesh, create_from_height_map
 from mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     WallMeshPartsCfg,
