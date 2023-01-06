@@ -52,34 +52,68 @@ def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
 
 
 def generate_narrow(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
-    platform_types = ["I", "T", "L", "L2"]
+    platform_types = ["I", "T", "T2", "L", "L2", "TT", "S", "S2", "PI", "PL"]
     cfgs = []
     for platform_type in platform_types:
         use_z_dim_array = False
         if platform_type == "I":
             array = np.array([[1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [1, 1, 1, 1, 1]])
-            array = min_h + array * (max_h - min_h)
-            z_dim_array = array
         elif platform_type == "T":
             array = np.array([[1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
-            array = min_h + array * (max_h - min_h)
-            z_dim_array = array
-        # elif platform_type == "L":
-        #     array = np.array([[1, 1, 1, 1, 1], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0]])
-        #     array = min_h + array * (max_h - min_h)
-        #     z_dim_array = array
-        # elif platform_type == "L2":
-        #     array = np.array([[1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
-        #     array = min_h + array * (max_h - min_h)
-        #     z_dim_array = array
-        # elif platform_type == "L3":
-        #     array = np.array([[1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
-        #     array = min_h + array * (max_h - min_h)
-        # z_dim_array = array
+        elif platform_type == "T":
+            array = np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]])
+        elif platform_type == "L":
+            array = np.array([[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [1, 1, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
+        elif platform_type == "L2":
+            array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 0], [1, 0, 1, 0, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0]])
+        elif platform_type == "TT":
+            array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [1, 1, 1, 1, 1]])
+        elif platform_type == "PI":
+            array = np.array([
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0]])
+        elif platform_type == "PL":
+            array = np.array([
+                [0, 0, 0, 1, 0, 0, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0]])
+        elif max_h - min_h <= 1.0 and platform_type == "S":
+            array = np.array([
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0.2, 0.4, 0.6, 0.8, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0]])
+        elif max_h - min_h <= 1.0 and platform_type == "S2":
+            array = np.array([
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0.2, 0.4, 0.6, 0.8, 1, 0],
+                [0, 0.2, 0.4, 0.6, 0.8, 1, 1],
+                [0, 0.2, 0.4, 0.6, 0.8, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0]])
+        else:
+            continue
+        array = min_h + array * (max_h - min_h)
+        z_dim_array = array
 
+        n = len(platform_types) * 2.0
+        weight_per_tile = weight / n
         for prefix in ["", "_f"]:
             if prefix == "_f":
-                z_dim_array = np.ones((5, 5)) * 0.1
+                z_dim_array = np.ones(array.shape) * 0.1
                 use_z_dim_array = True
             cfg = PlatformMeshPartsCfg(
                 name=f"{name}_{platform_type}{prefix}",
@@ -88,7 +122,7 @@ def generate_narrow(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
                 z_dim_array=z_dim_array,
                 rotations=(90, 180, 270),
                 flips=(),
-                weight=weight,
+                weight=weight_per_tile,
                 use_z_dim_array=use_z_dim_array,
             )
             cfgs.append(cfg)
@@ -102,8 +136,8 @@ def generate_stepping_stones(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1
         use_z_dim_array = False
         if platform_type == "1100":
             array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
-        # elif platform_type == "1110":
-        #     array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 0], [1, 0, 1, 0, 0]])
+        elif platform_type == "1110":
+            array = np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]])
         elif platform_type == "1111":
             array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
         elif platform_type == "s":
@@ -347,7 +381,7 @@ def generate_ramp_parts(
     cfgs = []
     for i, array in enumerate(arrays):
         cfg = HeightMapMeshPartsCfg(
-            name=f"{name}_{i}",
+            name=f"{name}_{ramp_types[i // 2]}_{i}",
             dim=dim,
             height_map=array,
             rotations=(90, 180, 270),
@@ -840,13 +874,13 @@ class FloorPattern(MeshPattern):
 
 if __name__ == "__main__":
     cfg = FloorPattern()
-    print("cfg", cfg)
+    # print("cfg", cfg)
     from mesh_parts.create_tiles import create_mesh_tile
 
-    visualize_keywords = ["ramp_low"]
+    visualize_keywords = ["narrow"]
     for mesh_part in cfg.mesh_parts:
-        print(mesh_part)
         for keyword in visualize_keywords:
+            # print(mesh_part)
             if keyword in mesh_part.name:
                 mesh_tile = create_mesh_tile(mesh_part)
                 mesh_tile.get_mesh().show()

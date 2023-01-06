@@ -31,8 +31,8 @@ def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
 
     # init_args = {"idx": [wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2], "tile_name": "floor"}
     init_tiles = [
-        # ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
-        ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("floor", [wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
         # ("floor", [wfc_solver.shape[0] // 4, 3 * wfc_solver.shape[1] // 4]),
@@ -90,7 +90,7 @@ def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
 
 
 if __name__ == "__main__":
-    result_dir = "results/results_3"
+    result_dir = "results/results_1"
     os.makedirs(result_dir, exist_ok=True)
     for i in range(10):
         name = os.path.join(result_dir, f"result_mesh_{i}.stl")

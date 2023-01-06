@@ -366,6 +366,7 @@ class ConnectionManager:
         return connections
 
     def _compute_connection_dict(self):
+        print("Computing connections...")
         connections = {}
         readable_connections = {}
         for name in alive_it(self.names):
@@ -384,6 +385,7 @@ class ConnectionManager:
             connections[name] = local_connections
             readable_connections[name] = local_readable_connections
         self.readable_connections = readable_connections
+        print("Replace names with number...")
         return self._replace_name_with_number(connections)
 
     def _load_from_cache(self):
