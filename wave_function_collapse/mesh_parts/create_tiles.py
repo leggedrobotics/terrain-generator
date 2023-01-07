@@ -28,10 +28,7 @@ def create_mesh_tile(cfg: MeshPartsCfg):
         mesh_gen = create_from_height_map
     else:
         return
-    if cfg.load_from_cache:
-        cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
-    else:
-        cached_mesh_gen = functools.partial(mesh_gen, cfg)
+    cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False, use_cache=cfg.load_from_cache)
     name = cfg.name
     mesh = cached_mesh_gen()
     if cfg.use_generator:

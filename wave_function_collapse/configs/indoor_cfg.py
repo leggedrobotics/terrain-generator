@@ -46,7 +46,9 @@ class IndoorPattern(MeshPattern):
         + tuple(generate_narrow(name="narrow_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.2))
         + tuple(generate_narrow(name="narrow_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.2))
         + tuple(generate_narrow(name="narrow_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.2))
-        + tuple(generate_floating_boxes(n=20, dim=dim, seed=seed, array_shape=[5, 5], weight=0.05))
+        + tuple(
+            generate_floating_boxes(name="floating_boxes", n=20, dim=dim, seed=seed, array_shape=[5, 5], weight=0.05)
+        )
         + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2))
         + tuple(
             generate_stair_parts(
@@ -122,331 +124,88 @@ class IndoorPattern(MeshPattern):
         # + tuple(generate_perlin_tile_configs(name="perlin_0.5", dim=dim, seed=seed, weight=1.2, offset=0.5))
         # + tuple(generate_perlin_tile_configs(name="perlin_1", dim=dim, seed=seed, weight=1.2, offset=1.0))
     )
-    # platform0: MeshPartsCfg = PlatformMeshPartsCfg(
-    # PlatformMeshPartsCfg(
-    #     name="platform_2.0",
-    #     dim=dim,
-    #     array=np.ones((5, 5)) * 2.0,
-    #     ),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    #     StairMeshPartsCfg(
-    #         name="stair_w",
-    #         rotations=(90, 180, 270),
-    #         flips=(),
-    #         weight=1.0,
-    #         stairs=(
-    #             StairMeshPartsCfg.Stair(
-    #                 step_width=2.0,
-    #                 step_depth=0.3,
-    #                 total_height=1.0,
-    #                 stair_type="standard",
-    #                 direction="up",
-    #                 add_residual_side_up=False,
-    #                 attach_side="front",
-    #                 add_rail=False,
-    #             ),
-    #         ),
-    #     ),
-    #     StairMeshPartsCfg(
-    #         name="stair_s",
-    #         dim=dim,
-    #         rotations=(90, 180, 270),
-    #         flips=("x", "y"),
-    #         weight=1.0,
-    #         stairs=(
-    #             StairMeshPartsCfg.Stair(
-    #                 step_width=1.0,
-    #                 step_depth=0.3,
-    #                 total_height=1.0,
-    #                 direction="up",
-    #                 add_residual_side_up=False,
-    #                 attach_side="front_right",
-    #                 add_rail=False,
-    #             ),
-    #         ),
-    #     ),
-    #     StairMeshPartsCfg(
-    #         name="stair_s_u",
-    #         dim=dim,
-    #         rotations=(90, 180, 270),
-    #         flips=("x", "y"),
-    #         weight=1.0,
-    #         stairs=(
-    #             StairMeshPartsCfg.Stair(
-    #                 step_width=1.0,
-    #                 step_depth=0.3,
-    #                 total_height=1.0,
-    #                 height_offset=1.0,
-    #                 direction="up",
-    #                 add_residual_side_up=True,
-    #                 attach_side="front_right",
-    #                 add_rail=False,
-    #             ),
-    #         ),
-    #     ),
-    # )
-    # platform0: MeshPartsCfg = PlatformMeshPartsCfg(
-    #     name="platform_1000",
-    #     dim=dim,
-    #     array=np.array([[1, 0], [0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # )
-    # PlatformMeshPartsCfg(
-    #     name="platform_1100",
-    #     dim=dim,
-    #     array=np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
-    #     # array=np.array([[1, 1, 0], [1, 1, 0], [0, 0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_1110",
-    #     dim=dim,
-    #     array=np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0], [1, 1, 0, 0, 0]]),
-    #     # array=np.array([[1, 1, 1], [1, 1, 0], [1, 1, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.10,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_1111",
-    #     dim=dim,
-    #     array=np.array([[1, 1], [1, 1]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_1111_f",
-    #     dim=dim,
-    #     array=np.array([[1, 1], [1, 1]]),
-    #     z_dim_array=np.ones((2, 2)) * 0.1,
-    #     use_z_dim_array=True,
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # platform4: MeshPartsCfg = PlatformMeshPartsCfg(
-    #     name="platform_2000",
-    #     dim=dim,
-    #     array=np.array([[2, 0], [0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # )
-    # PlatformMeshPartsCfg(
-    #     name="platform_2200",
-    #     dim=dim,
-    #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.6,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2220",
-    #     dim=dim,
-    #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 0, 0, 0], [2, 2, 0, 0, 0], [2, 2, 0, 0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.60,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2222",
-    #     dim=dim,
-    #     array=np.array([[2, 2], [2, 2]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.6,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2211",
-    #     dim=dim,
-    #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.60,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2221",
-    #     dim=dim,
-    #     array=np.array([[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [2, 2, 1, 1, 1]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.60,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2111",
-    #     dim=dim,
-    #     array=np.array([[2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.60,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2111_f",
-    #     dim=dim,
-    #     array=np.array([[2, 2, 1, 1, 1], [2, 2, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
-    #     z_dim_array=np.ones((5, 5)) * 0.1,
-    #     use_z_dim_array=True,
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.60,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_2222_f",
-    #     dim=dim,
-    #     array=np.array([[2, 2], [2, 2]]),
-    #     z_dim_array=np.ones((2, 2)) * 0.1,
-    #     use_z_dim_array=True,
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.6,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_T",
-    #     dim=dim,
-    #     array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_T_f",
-    #     dim=dim,
-    #     array=np.array([[1, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]),
-    #     z_dim_array=np.ones((5, 5)) * 0.5,
-    #     use_z_dim_array=True,
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_stepping",
-    #     dim=dim,
-    #     array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_stepping_f",
-    #     dim=dim,
-    #     array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
-    #     z_dim_array=np.ones((5, 5)) * 0.5,
-    #     use_z_dim_array=True,
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # PlatformMeshPartsCfg(
-    #     name="platform_stepping",
-    #     dim=dim,
-    #     array=np.array([[0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [1, 0, 1, 0, 0], [1, 1, 0, 0, 0], [1, 1, 1, 0, 0]]),
-    #     rotations=(90, 180, 270),
-    #     flips=(),
-    #     weight=0.1,
-    # ),
-    # wall_turn_edge: MeshPartsCfg = WallMeshPartsCfg(
-    #     name="wall_t_e",
-    #     dim=dim,
-    #     wall_edges=("bottom_right",),
-    #     rotations=(90, 180, 270),
-    #     flips=("x", "y"),
-    #     weight=0.1,
-    #     door_direction="",
-    # )
-    # wall_turn_T: MeshPartsCfg = WallMeshPartsCfg(
-    #     name="wall_T_e",
-    #     dim=dim,
-    #     wall_edges=("bottom_right", "right_bottom"),
-    #     rotations=(90, 180, 270),
-    #     flips=("x", "y"),
-    #     weight=0.1,
-    #     door_direction="",
-    # )
-    # wall_straight: MeshPartsCfg = WallMeshPartsCfg(name="wall_s", dim=dim, wall_edges=("up",), rotations=(90, 180, 270), flips=(), weight=2.0)
-    # wall_turn: MeshPartsCfg = WallMeshPartsCfg(name="wall_t", dim=dim, wall_edges=("up", "right"), rotations=(90, 180, 270), flips=(), weight=1.0)
-    # wall_straight_door: MeshPartsCfg = WallMeshPartsCfg(name="door_s", dim=dim, wall_edges=("up",), rotations=(90, 180, 270), flips=(), weight=0.2, door_direction="up", create_door=True)
 
 
-# @dataclass
-# class StairsPattern(MeshPattern):
-#     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
-# floor_middle: MeshPartsCfg = WallMeshPartsCfg(
-#     name="floor_middle", dim=dim, wall_edges=(), weight=0.1, height_offset=1.0
-# )
-# floor_top: MeshPartsCfg = WallMeshPartsCfg(name="floor_top", dim=dim, wall_edges=(), weight=0.1, height_offset=2.0)
-#
-# stair_straight_wall: MeshPartsCfg = StairMeshPartsCfg(
-#         name="stair_s_w",
-#         dim=dim,
-#         rotations=(90, 180, 270),
-#         flips=("x", "y"),
-#         weight=0.1,
-#         stairs=(
-#             StairMeshPartsCfg.Stair(
-#                 step_width=1.0,
-#                 step_depth=0.3,
-#                 total_height=1.0,
-#                 direction="up",
-#                 add_residual_side_up=True,
-#                 attach_side="front_right",
-#                 add_rail=False,
-#                 ),
-#             ),
-#         wall=WallMeshPartsCfg(
-#             name="wall",
-#             wall_edges=("right",),
-#             )
-#         )
-# stair_straight_up_wall: MeshPartsCfg = StairMeshPartsCfg(
-#         name="stair_s_u_w",
-#         dim=dim,
-#         rotations=(90, 180, 270),
-#         flips=("x", "y"),
-#         weight=0.1,
-#         stairs=(
-#             StairMeshPartsCfg.Stair(
-#                 step_width=1.0,
-#                 step_depth=0.3,
-#                 total_height=1.0,
-#                 height_offset=1.0,
-#                 direction="up",
-#                 add_residual_side_up=True,
-#                 attach_side="front_right",
-#                 add_rail=False,
-#                 ),
-#             ),
-#         wall=WallMeshPartsCfg(
-#             name="wall",
-#             wall_edges=("right",),
-#             )
-#         )
-# stair_turn: MeshPartsCfg = StairMeshPartsCfg(
-#         name="stair_t",
-#         dim=dim,
-#         stair_start_direction="bottom_right",
-#         stair_end_direction="up_left",
-#         rotations=(90, 180, 270),
-#         flips=("x",),
-#         weight=0.1,
-#         stair=StairMeshPartsCfg.Stair(
-#             step_width=1.0,
-#             step_height=0.2,
-#             step_depth=0.4,
-#             total_height=1.0,
-#             stair_type="standard",
-#             stair_start_direction="bottom_right",
-#             stair_end_direction="up_right",
-#             add_rail=False,
-#             fill_bottom=False),
-#         )
-# wall_straight: MeshPartsCfg = WallMeshPartsCfg(name="wall_s", dim=dim, wall_edges=("middle_left", "middle_right"), rotations=(90, 180, 270), flips=(), weight=2.0, door_direction="up")
-# wall_turn: MeshPartsCfg = WallMeshPartsCfg(name="wall_t", dim=dim, wall_edges=("middle_left", "middle_bottom"), rotations=(90, 180, 270), flips=(), weight=1.0, door_direction="")
-# wall_straight_door: MeshPartsCfg = WallMeshPartsCfg(name="door_s", dim=dim, wall_edges=("middle_left", "middle_right"), rotations=(90, 180, 270), flips=(), weight=0.2, door_direction="up", create_door=True)
+@dataclass
+class IndoorPatternLevels(MeshPattern):
+    dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
+    seed: int = 1234
+    levels: Tuple[float, ...] = (0.0, 0.1, 0.2, 0.3)
+    wall_height: float = 0.5
+    mesh_parts: Tuple[MeshPartsCfg, ...] = ()
+
+    def __post_init__(self):
+        cfgs = ()
+        dim = self.dim
+        seed = self.seed
+        wall_height = self.wall_height
+        min_hs = self.levels[:-1] + tuple([0.0 for _ in range(len(self.levels) - 2)])
+        max_hs = self.levels[1:] + self.levels[2:]
+        # for i in range(len(self.levels) - 2):
+        for min_h, max_h in zip(min_hs, max_hs):
+            # min_h = self.levels[i]
+            # max_h = self.levels[i + 1]
+            cfg = (
+                tuple(generate_walls(dim, wall_height=wall_height))
+                + tuple(
+                    generate_platforms(
+                        name=f"platform_{min_h}_{max_h}",
+                        dim=dim,
+                        max_h=max_h,
+                        min_h=min_h,
+                        weight=0.5,
+                        wall_height=wall_height,
+                    )
+                )
+                + tuple(
+                    generate_stepping_stones(
+                        name=f"stepping_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=1.2
+                    )
+                )
+                + tuple(generate_narrow(name=f"narrow_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=0.2))
+                + tuple(
+                    generate_floating_boxes(
+                        name=f"floating_boxes_{min_h}_{max_h}",
+                        dim=dim,
+                        max_h=max_h,
+                        min_h=min_h,
+                        seed=seed,
+                        array_shape=[5, 5],
+                        weight=0.05,
+                    )
+                )
+                + tuple(
+                    generate_stair_parts(
+                        name=f"stair_{min_h}_{max_h}",
+                        dim=dim,
+                        seed=seed,
+                        array_shape=[15, 15],
+                        weight=1.0,
+                        depth_num=2,
+                        total_height=max_h - min_h,
+                        wall_height=wall_height,
+                        offset=min_h,
+                    )
+                )
+                + tuple(
+                    generate_ramp_parts(
+                        name=f"ramp_{min_h}_{max_h}",
+                        dim=dim,
+                        seed=seed,
+                        array_shape=[30, 30],
+                        total_height=max_h - min_h,
+                        offset=min_h,
+                        weight=1.0,
+                        depth_num=1,
+                    )
+                )
+            )
+            cfgs += cfg
+        self.mesh_parts = cfgs
+
+
+if __name__ == "__main__":
+    cfg = IndoorPatternLevels()
+    # print(cfg)
+    for mesh_part in cfg.mesh_parts:
+        print("name ", mesh_part.name)

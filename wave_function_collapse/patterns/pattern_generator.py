@@ -16,42 +16,57 @@ from mesh_parts.mesh_parts_cfg import (
 # from mesh_parts.rough_parts import generate_perlin_tile_configs
 
 
-def generate_walls(dim):
+def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):
+    load_from_cache = True
     cfgs = (
-        WallMeshPartsCfg(name="floor", dim=dim, wall_edges=(), weight=13.0),
         WallMeshPartsCfg(
-            name="wall_s",
+            name=f"floor", dim=dim, wall_height=wall_height, wall_thickness=wall_thickness, wall_edges=(), weight=13.0
+        ),
+        WallMeshPartsCfg(
+            name=f"wall_s_{wall_height}",
             dim=dim,
+            wall_height=wall_height,
+            wall_thickness=wall_thickness,
             wall_edges=("middle_left", "middle_right"),
             rotations=(90, 180, 270),
             flips=(),
             weight=2.0,
+            load_from_cache=load_from_cache,
         ),
         WallMeshPartsCfg(
-            name="wall_t",
+            name=f"wall_t_{wall_height}",
             dim=dim,
+            wall_height=wall_height,
+            wall_thickness=wall_thickness,
             wall_edges=("middle_left", "middle_bottom"),
             rotations=(90, 180, 270),
             flips=(),
             weight=1.0,
+            load_from_cache=load_from_cache,
         ),
         WallMeshPartsCfg(
-            name="door_s",
+            name=f"door_s_{wall_height}",
             dim=dim,
+            wall_height=wall_height,
+            wall_thickness=wall_thickness,
             wall_edges=("middle_left", "middle_right"),
             rotations=(90, 180, 270),
             flips=(),
             weight=0.2,
             door_direction="up",
             create_door=True,
+            load_from_cache=load_from_cache,
         ),
         WallMeshPartsCfg(
-            name="wall_s_e",
+            name=f"wall_s_e_{wall_height}",
             dim=dim,
+            wall_height=wall_height,
+            wall_thickness=wall_thickness,
             wall_edges=("left",),
             rotations=(90, 180, 270),
             flips=(),
             weight=0.1,
+            load_from_cache=load_from_cache,
         ),
     )
     return cfgs
@@ -105,7 +120,7 @@ def generate_stepping_stones_stairs(dim):
     return cfgs
 
 
-def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
+def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_height=3.0, wall_thickness=0.4, seed=1234):
     platform_types = ["1100", "1110", "1111", "1111_f"]
     cfgs = []
     for platform_type in platform_types:
@@ -152,7 +167,12 @@ def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
                 flips=(),
                 weight=weights[i],
                 use_z_dim_array=use_z_dim_array,
-                wall=WallMeshPartsCfg(dim=dim, wall_edges=wall_pattern),
+                wall=WallMeshPartsCfg(
+                    dim=dim,
+                    wall_edges=wall_pattern,
+                    wall_height=wall_height,
+                    wall_thickness=wall_thickness,
+                ),
             )
             cfgs.append(cfg)
     return cfgs
@@ -286,12 +306,12 @@ def generate_stepping_stones(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1
     return cfgs
 
 
-def generate_floating_boxes(dim, n=15, array_shape=[5, 5], weight=1.0, seed=1234):
+def generate_floating_boxes(name, dim, n=15, max_h=1.0, min_h=0.0, array_shape=[5, 5], weight=1.0, seed=1234):
     np.random.seed(seed)
     weight_per_tile = weight / n
     cfgs = []
     for i in range(n):
-        name = f"random_floating_box_{i}"
+        cfg_name = f"{name}_{i}"
         # Randomly sample array
         array = np.random.uniform(0, 1, size=array_shape)
         array = np.round(array, 2)
@@ -314,6 +334,7 @@ def generate_floating_boxes(dim, n=15, array_shape=[5, 5], weight=1.0, seed=1234
         if np.random.uniform(0, 1) < 0.2:
             array[:, -1] = 0
 
+        array = min_h + array * (max_h - min_h)
         # Randomly sample z_dim_array
         z_dim_array = np.random.uniform(0.0, 1, size=array_shape) * array
         z_dim_array = z_dim_array.clip(0.0, array)
@@ -323,7 +344,7 @@ def generate_floating_boxes(dim, n=15, array_shape=[5, 5], weight=1.0, seed=1234
         # print("array ", array)
         # print("z_dim_array ", z_dim_array)
         cfg = PlatformMeshPartsCfg(
-            name=name,
+            name=cfg_name,
             dim=dim,
             array=array,
             z_dim_array=z_dim_array,
@@ -346,6 +367,8 @@ def generate_stair_parts(
     offset=0.0,
     step_thickness=0.1,
     depth_num=1,
+    wall_height=3.0,
+    wall_thickness=0.4,
     weight=1.0,
     seed=1234,
 ):
@@ -463,6 +486,8 @@ def generate_stair_parts(
                 flips=("x", "y"),
                 weight=weight,
                 wall=WallMeshPartsCfg(
+                    wall_height=wall_height,
+                    wall_thickness=wall_thickness,
                     dim=dim,
                     wall_edges=wall_pattern,
                 ),

@@ -12,11 +12,12 @@ from configs.indoor_cfg import IndoorPattern, IndoorPatternLevels
 from alive_progress import alive_bar
 
 
-def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
+def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_height=3.0, visualize=False):
 
     dim = (2.0, 2.0, 2.0)
-    # cfg = IndoorPattern(dim=dim)
-    cfg = IndoorPatternLevels(dim=dim)
+    levels = [np.round(level_diff * n, 2) for n in range(level_n)]
+    print("levels = ", levels)
+    cfg = IndoorPatternLevels(dim=dim, levels=tuple(levels), wall_height=wall_height)
     tiles = create_mesh_pattern(cfg)
 
     wfc_solver = WFCSolver(shape=[24, 24], dimensions=2, seed=None)
@@ -30,13 +31,12 @@ def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
         ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_2_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
-        # ("platform_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
-        # ("floor", [wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
-        # ("floor", [wfc_solver.shape[0] // 4, 3 * wfc_solver.shape[1] // 4]),
-        # ("platform_1111_f", [3 * wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4]),
-        # ("platform_2222_f", [3 * wfc_solver.shape[0] // 4, 3 * wfc_solver.shape[1] // 4]),
     ]
-    wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+    try:
+        wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+    except Exception as e:
+        print(e)
+        return
 
     tile_array = tiles["floor"].get_array()
     array_shape = tile_array.shape
@@ -70,8 +70,13 @@ def test_wall_mesh(mesh_name="result_mesh.stl", visualize=False):
 
 
 if __name__ == "__main__":
-    result_dir = "results/easy"
-    os.makedirs(result_dir, exist_ok=True)
-    for i in range(10):
-        name = os.path.join(result_dir, f"result_mesh_{i}.stl")
-        test_wall_mesh(name, visualize=False)
+
+    level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+    wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
+
+    for level_diff, wall_height in zip(level_diffs, wall_heights):
+        result_dir = f"results/level_{level_diff}"
+        os.makedirs(result_dir, exist_ok=True)
+        for i in range(10):
+            name = os.path.join(result_dir, f"mesh_{i}.stl")
+            test_wall_mesh(name, level_diff, wall_height=wall_height, visualize=False)

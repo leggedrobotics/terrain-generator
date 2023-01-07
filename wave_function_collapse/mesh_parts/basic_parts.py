@@ -165,11 +165,14 @@ def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up"):
 def create_wall_mesh(cfg: WallMeshPartsCfg):
     # Create the vertices of the wall
     floor = create_floor(cfg)
-    mesh = floor
+    meshes = [floor]
+    # mesh = floor
     for wall_edges in cfg.wall_edges:
         wall = create_standard_wall(cfg, wall_edges)
         # wall = get_wall_with_door(cfg, wall_edges)
-        mesh = merge_meshes([mesh, wall], cfg.minimal_triangles)
+        meshes.append(wall)
+        # mesh = merge_meshes([mesh, wall], cfg.minimal_triangles)
+    mesh = merge_meshes(meshes, cfg.minimal_triangles)
     if cfg.create_door:
         door = create_door(cfg, cfg.door_direction)
         mesh = trimesh.boolean.difference([mesh, door], engine=ENGINE)
