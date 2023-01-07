@@ -1,4 +1,4 @@
-from wfc.wfc import WFCCore
+from wfc.wfc import WFCCore, ConnectionManager
 
 
 def test_get_neighbours():
@@ -73,6 +73,70 @@ def test_3d_case():
     wfc.solve()
     wave = wfc.wave.wave
     print("wave ", wave)
+
+
+def test_connections():
+    # cm = ConnectionManager(load_from_cache=False)
+    # cm.register_tile("tile_1", {"up": "abc", "down": "bbb", "left": "ccc", "right": "ddd"})
+    # cm.register_tile("tile_2", {"up": "abc", "down": "bbb", "left": "ddd", "right": "ccc"})
+    # cm.register_tile("tile_3", {"up": "bbb", "down": "cba", "left": "ccc", "right": "ddd"})
+    # cm.register_tile("tile_4", {"up": "bbb", "down": "cba", "left": "ddd", "right": "ccc"})
+    #
+    # d = cm.get_connection_dict()
+    # print("d = ", d)
+    # # for k, v in d.items():
+    # #     # print(k, v)
+    # #     for kk, vv in v.items():
+    # #         print(kk, vv)
+    # assert d == {
+    #     0: {(-1, 0): {2, 3}, (1, 0): {2, 3}, (0, -1): {1, 3}, (0, 1): {1, 3}},
+    #     1: {(-1, 0): {2, 3}, (1, 0): {2, 3}, (0, -1): {0, 2}, (0, 1): {0, 2}},
+    #     2: {(-1, 0): {0, 1}, (1, 0): {0, 1}, (0, -1): {1, 3}, (0, 1): {1, 3}},
+    #     3: {(-1, 0): {0, 1}, (1, 0): {0, 1}, (0, -1): {0, 2}, (0, 1): {0, 2}},
+    # }
+
+    cm = ConnectionManager(load_from_cache=False)
+    cm.register_tile("tile_1", {"up": (0, 1, 2), "down": (1, 1, 1), "left": (2, 2, 2), "right": (3, 3, 3)})
+    cm.register_tile("tile_2", {"up": (0, 1, 2), "down": (1, 1, 1), "left": (3, 3, 3), "right": (2, 2, 2)})
+    cm.register_tile("tile_3", {"up": (1, 1, 1), "down": (2, 1, 0), "left": (2, 2, 2), "right": (3, 3, 3)})
+    cm.register_tile("tile_4", {"up": (1, 1, 1), "down": (2, 1, 0), "left": (3, 3, 3), "right": (2, 2, 2)})
+
+    d = cm.get_connection_dict()
+    print("d = ", d)
+    # for k, v in d.items():
+    #     # print(k, v)
+    #     for kk, vv in v.items():
+    #         print(kk, vv)
+    # assert d == {
+    #     0: {(-1, 0): {2, 3}, (1, 0): {2, 3}, (0, -1): {1, 3}, (0, 1): {1, 3}},
+    #     1: {(-1, 0): {2, 3}, (1, 0): {2, 3}, (0, -1): {0, 2}, (0, 1): {0, 2}},
+    #     2: {(-1, 0): {0, 1}, (1, 0): {0, 1}, (0, -1): {1, 3}, (0, 1): {1, 3}},
+    #     3: {(-1, 0): {0, 1}, (1, 0): {0, 1}, (0, -1): {0, 2}, (0, 1): {0, 2}},
+    # }
+
+    wfc = WFCCore(
+        len(cm.names),
+        d,
+        [10, 10],
+        dimensions=2,
+    )
+    print("Start solving...")
+    # if len(init_tiles) > 0:
+    #     # print("init ", init_args)
+    #     for (name, index) in init_tiles:
+    #         tile_id = self.cm.names.index(name)
+    #         # print("idx ", idx)
+    #         wfc.init(index, tile_id)
+    # else:
+    wfc.init_randomly()
+    wave = wfc.solve()
+    print("wave ", wave)
+
+    # connections = {
+    #     0: {(-1, 0): (0, 1), (0, -1): (0), (1, 0): (0, 1), (0, 1): (0, 1)},  # Mountain
+    #     1: {(-1, 0): (0, 1, 2), (0, -1): (0, 1), (1, 0): (0, 1, 2), (0, 1): (0, 1, 2)},  # Sand
+    #     2: {(-1, 0): (1, 2), (0, -1): (2), (1, 0): (2), (0, 1): (2)},  # Water
+    # }
 
     # import matplotlib.pyplot as plt
     # from matplotlib.colors import LinearSegmentedColormap

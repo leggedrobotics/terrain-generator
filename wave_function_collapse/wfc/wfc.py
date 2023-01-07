@@ -294,7 +294,7 @@ class Edge(object):
         if len(edge_types) > 0:
             self.register_edge_types(edge_types)
 
-    def register_edge_types(self, edge_types: Dict[str, str]):
+    def register_edge_types(self, edge_types: Dict[str, tuple]):
         """Register edge types."""
         self._check_edge_types(edge_types)
         self.edge_types = edge_types
@@ -319,6 +319,10 @@ class Edge(object):
     #     new_directions = self.directions.directions[deg]
     #     return {new_key: self.edge_types[key] for new_key, key in zip(new_directions, basic_directions)}
 
+    def get_all_directions_in_tuple(self):
+        for direction in self.directions.base_directions:
+            yield self._direction_to_tuple(direction)
+
     def get_tuple_edge_types(self):
         return {self._direction_to_tuple(key): value for key, value in self.edge_types.items()}
 
@@ -329,14 +333,26 @@ class Edge(object):
 class ConnectionManager:
     """Class to manage the connections between tiles."""
 
-    def __init__(self, dimension=2):
+    def __init__(self, dimension=2, load_from_cache=True):
         self.connections = {}
         self.names = []
+
+        # self.directions = Direction2D() if dimension == 2 else Direction3D()
+        self.edge_def = Edge()
+        # self.n_directions = 4 if dimension == 2 else 6
+
+        self.edges = {}
+        self.flipped_edges = {}
+        for edge_types in self.edge_def.get_all_directions_in_tuple():
+            self.edges[edge_types] = []
+            self.flipped_edges[edge_types] = []
+        # for direction in self.directions.base_directions:
+
         self.edge_types_of_tiles = {}  # dict of edges. key: tile_name, value: dict of edges
         self.all_tiles_of_edge_type = {}  # dict of edges for each tile key: edge_type, value: (direction, tile_name)
         self.dimension = dimension
-        self.edge_def = Edge(edge_types=self.edge_types_of_tiles)
         self.cache_dir = "connection_cache"
+        self.load_from_cache = load_from_cache
 
     def register_tile(
         self,
@@ -348,52 +364,97 @@ class ConnectionManager:
 
         self._register_tile(name, edges.get_tuple_edge_types())
 
-    def _register_tile(self, name: str, edge_types: Dict[tuple, str]):
+    def _register_tile(self, name: str, edge_types: Dict[tuple, tuple]):
         """Register a tile with the connection manager.
         Args:
             name: Name of the tile.
-            edge_types: Dict of edges. key: direction in tuple, value: edge_type
+            edge_types: Dict of edges. key: direction in tuple, value: edge_type in tuple of numbers.
         """
+        tile_id = len(self.names)
+        print(name, ", tile_id: ", tile_id)
         self.names.append(name)
-        self.edge_types_of_tiles[name] = edge_types
+        for direction, edge_type in edge_types.items():
+            self.edges[direction].append(edge_type)
+            self.flipped_edges[direction].append(edge_type[::-1])
+
+        self.edge_types_of_tiles[tile_id] = edge_types
         for direction, edge in edge_types.items():
             if edge not in self.all_tiles_of_edge_type:
                 self.all_tiles_of_edge_type[edge] = []
-            self.all_tiles_of_edge_type[edge].append((direction, name))
+            self.all_tiles_of_edge_type[edge].append((direction, tile_id))
 
     def get_connection_dict(self):
         connections = self._load_from_cache()
+        # print(connections)
         return connections
 
     def _compute_connection_dict(self):
         print("Computing connections...")
         connections = {}
         readable_connections = {}
-        for name in alive_it(self.names):
-            edge_types = self.edge_types_of_tiles[name]
-            local_connections = {}
-            local_readable_connections = {}
-            for direction_1, edge_type in edge_types.items():
-                local_connections[direction_1] = set()
-                local_readable_connections[self.edge_def.to_str(direction_1)] = set()
-                another_edge_type = edge_type[::-1]
-                if another_edge_type in self.all_tiles_of_edge_type:
-                    for direction_2, name_2 in self.all_tiles_of_edge_type[another_edge_type]:
-                        if (np.array(direction_1) + np.array(direction_2) == 0).all():
-                            local_connections[direction_1].add(name_2)
-                            local_readable_connections[self.edge_def.to_str(direction_1)].add(name_2)
-            connections[name] = local_connections
-            readable_connections[name] = local_readable_connections
-        self.readable_connections = readable_connections
-        print("Replace names with number...")
-        return self._replace_name_with_number(connections)
+
+        for edge_type, edges in self.edges.items():
+            self.edges[edge_type] = np.array(edges)
+        for edge_type, edges in self.flipped_edges.items():
+            self.flipped_edges[edge_type] = np.array(edges)
+
+        # print("new edges ", self.edges)
+
+        connectivities = {}
+
+        for edge_dir, edges in self.edges.items():
+            # print("edge_dir ", edge_dir)
+            opposite_edge_dir = tuple(-np.array(edge_dir))
+            opposite = np.array(self.flipped_edges[opposite_edge_dir])
+            connectivity = np.array(np.all((edges[:, None, :] == opposite[None, :, :]), axis=-1))
+            # print("connected ", connectivity)
+            indices = np.array(connectivity.nonzero()).T
+            # print("indices ", indices)
+            connectivities[edge_dir] = connectivity
+
+        connections = {}
+        n_tiles = len(self.names)
+        for i in range(n_tiles):
+            connections[i] = {}
+            for edge_dir, connectivity in connectivities.items():
+                # print("edge_dir ", edge_dir)
+                # print("connectivity ", connectivity)
+                indices = connectivity[i].nonzero()[0].tolist()
+                # print("indices ", indices)
+                connections[i][edge_dir] = tuple(sorted(indices))
+        # print(connections)
+
+        # for tile_id in alive_it(range(len(self.names))):
+        #     # name = self.names.index(str_name)
+        #     print("name ", tile_id)
+        #     edge_types = self.edge_types_of_tiles[tile_id]
+        #     print("edge types ", edge_types)
+        #     local_connections = {}
+        #     local_readable_connections = {}
+        #     for direction_1, edge_type in edge_types.items():
+        #         local_connections[direction_1] = set()
+        #         local_readable_connections[self.edge_def.to_str(direction_1)] = set()
+        #         another_edge_type = edge_type[::-1]
+        #         print("another_edge_type ", another_edge_type)
+        #         if another_edge_type in self.all_tiles_of_edge_type:
+        #             for direction_2, name_2 in self.all_tiles_of_edge_type[another_edge_type]:
+        #                 if (np.array(direction_1) + np.array(direction_2) == 0).all():
+        #                     local_connections[direction_1].add(name_2)
+        #                     local_readable_connections[self.edge_def.to_str(direction_1)].add(name_2)
+        #     connections[tile_id] = local_connections
+        #     readable_connections[self.names[tile_id]] = local_readable_connections
+        # self.readable_connections = readable_connections
+        # print("connections : ", connections)
+        # print("Replace names with number...")
+        return connections
+        # return self._replace_name_with_number(connections)
 
     def _load_from_cache(self):
         d = self.edge_types_of_tiles
         code = cfg_to_hash(d)
         os.makedirs(self.cache_dir, exist_ok=True)
         filename = os.path.join(self.cache_dir, code + ".pkl")
-        if os.path.exists(filename):
+        if os.path.exists(filename) and self.load_from_cache:
             with open(filename, "rb") as handle:
                 connections = pickle.load(handle)
         else:

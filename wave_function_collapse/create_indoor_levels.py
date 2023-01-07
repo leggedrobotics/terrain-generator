@@ -32,6 +32,8 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
         # ("platform_2_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
     ]
+    wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+
     try:
         wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
     except Exception as e:
@@ -73,6 +75,8 @@ if __name__ == "__main__":
 
     level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
     wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
+    # level_diffs = [0.1]
+    # wall_heights = [0.3]
 
     for level_diff, wall_height in zip(level_diffs, wall_heights):
         result_dir = f"results/level_{level_diff}"
