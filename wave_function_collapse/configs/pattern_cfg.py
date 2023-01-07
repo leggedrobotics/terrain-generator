@@ -12,6 +12,7 @@ from mesh_parts.mesh_parts_cfg import (
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
 )
+from mesh_parts.rough_parts import generate_perlin_tile_configs
 
 
 def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
@@ -37,17 +38,33 @@ def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
             z_dim_array = np.ones((5, 5)) * 0.1
             use_z_dim_array = True
 
-        cfg = PlatformMeshPartsCfg(
-            name=f"{name}_{platform_type}",
-            dim=dim,
-            array=array,
-            z_dim_array=z_dim_array,
-            rotations=(90, 180, 270),
-            flips=(),
-            weight=weight,
-            use_z_dim_array=use_z_dim_array,
-        )
-        cfgs.append(cfg)
+        wall_patterns = [
+            (),
+            ("middle_left", "middle_right"),
+            ("middle_bottom", "middle_right"),
+            # ("middle_left", "middle_bottom"),
+        ]
+        weights = [
+            weight,
+            weight * 0.1,
+            weight * 0.1,
+        ]
+        for i, wall_pattern in enumerate(wall_patterns):
+            new_name = f"{name}_{platform_type}"
+            if len(wall_pattern) > 0:
+                new_name += f"_wall_{wall_pattern}"
+            cfg = PlatformMeshPartsCfg(
+                name=new_name,
+                dim=dim,
+                array=array,
+                z_dim_array=z_dim_array,
+                rotations=(90, 180, 270),
+                flips=(),
+                weight=weights[i],
+                use_z_dim_array=use_z_dim_array,
+                wall=WallMeshPartsCfg(dim=dim, wall_edges=wall_pattern),
+            )
+            cfgs.append(cfg)
     return cfgs
 
 
@@ -69,41 +86,53 @@ def generate_narrow(name, dim, max_h=1.0, min_h=0.0, weight=1.0, seed=1234):
         elif platform_type == "TT":
             array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [1, 1, 1, 1, 1]])
         elif platform_type == "PI":
-            array = np.array([
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [1, 1, 1, 1, 1, 1, 1],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0]])
+            array = np.array(
+                [
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 1, 1, 1],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                ]
+            )
         elif platform_type == "PL":
-            array = np.array([
-                [0, 0, 0, 1, 0, 0, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [1, 1, 1, 1, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0]])
+            array = np.array(
+                [
+                    [0, 0, 0, 1, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 1, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                ]
+            )
         elif max_h - min_h <= 1.0 and platform_type == "S":
-            array = np.array([
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0.2, 0.4, 0.6, 0.8, 1, 1],
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0]])
+            array = np.array(
+                [
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0.2, 0.4, 0.6, 0.8, 1, 1],
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                ]
+            )
         elif max_h - min_h <= 1.0 and platform_type == "S2":
-            array = np.array([
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0.2, 0.4, 0.6, 0.8, 1, 0],
-                [0, 0.2, 0.4, 0.6, 0.8, 1, 1],
-                [0, 0.2, 0.4, 0.6, 0.8, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0]])
+            array = np.array(
+                [
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0.2, 0.4, 0.6, 0.8, 1, 0],
+                    [0, 0.2, 0.4, 0.6, 0.8, 1, 1],
+                    [0, 0.2, 0.4, 0.6, 0.8, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0],
+                ]
+            )
         else:
             continue
         array = min_h + array * (max_h - min_h)
@@ -236,7 +265,16 @@ def generate_stair_parts(
     step_height = max(step_height, total_height / array_shape[1])
     n_steps = int(total_height // step_height)
     # residual = total_height - step_height * n_steps
-    stair_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped"]
+    stair_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped", "turn"]
+    wall_patterns = [
+        [(), ("middle_left", "middle_right")],
+        [(), ("middle_left", "middle_right")],
+        [(), ("middle_left", "middle_right")],
+        [(), ("middle_left", "middle_right")],
+        [()],
+        [()],
+        [(), ("middle_left", "middle_bottom"), ("up", "right")],
+    ]
     for stair_type in stair_types:
         h_1 = 0.0 + offset
         h_2 = total_height + offset
@@ -286,6 +324,23 @@ def generate_stair_parts(
                 array_2[s, s] = total_height - h_2 + offset
                 z_dim_array_1 = array_1
                 z_dim_array_2 = array_2
+            elif stair_type == "turn":
+                half_idx = int(array_shape[0] / 2)
+                if s < half_idx:
+                    array_1[:half_idx, s] = h_1
+                    array_2[:half_idx, s] = h_2
+                    z_dim_array_1[:half_idx, s] = h_1
+                    z_dim_array_2[:half_idx, s] = h_2
+                else:
+                    array_1[s, half_idx:] = h_1
+                    array_2[s, half_idx:] = h_2
+                    z_dim_array_1[s, half_idx:] = h_1
+                    z_dim_array_2[s, half_idx:] = h_2
+                if s == half_idx:
+                    array_1[:half_idx, half_idx:] = h_1
+                    array_2[:half_idx, half_idx:] = h_2
+                    z_dim_array_1[:half_idx, half_idx:] = h_1
+                    z_dim_array_2[:half_idx, half_idx:] = h_2
             if s % depth_num == 0 and s > 0:
                 h_1 = min(h_1 + step_height, total_height + offset)
                 h_2 = max(h_2 - step_height, 0.0 + offset)
@@ -298,21 +353,31 @@ def generate_stair_parts(
         z_dim_arrays.append(np.round(z_dim_array_1, 1))
         z_dim_arrays.append(np.round(z_dim_array_2, 1))
 
-    weight_per_tile = weight / len(stair_types) / 2
+    weight_per_tile = weight / len(arrays)
+    # weights = [weight_per_tile, weight_per_tile * 0.5]
+    wall_weight = weight_per_tile * 0.5
     # print("weight_per_tile", weight_per_tile)
     cfgs = []
     for i, (array, z_dim_array) in enumerate(zip(arrays, z_dim_arrays)):
-        cfg = PlatformMeshPartsCfg(
-            name=f"{name}_{i}",
-            dim=dim,
-            array=array,
-            z_dim_array=z_dim_array,
-            use_z_dim_array=True,
-            rotations=(90, 180, 270),
-            flips=("x", "y"),
-            weight=weight_per_tile,
-        )
-        cfgs.append(cfg)
+        for j, wall_pattern in enumerate(wall_patterns[i // 2]):
+            weight = weight_per_tile
+            if len(wall_pattern) > 0:
+                weight = wall_weight
+            cfg = PlatformMeshPartsCfg(
+                name=f"{name}_wall_{wall_pattern}_{i}",
+                dim=dim,
+                array=array,
+                z_dim_array=z_dim_array,
+                use_z_dim_array=True,
+                rotations=(90, 180, 270),
+                flips=("x", "y"),
+                weight=weight,
+                wall=WallMeshPartsCfg(
+                    dim=dim,
+                    wall_edges=wall_pattern,
+                ),
+            )
+            cfgs.append(cfg)
     return cfgs
 
 
@@ -748,6 +813,30 @@ class FloorPattern(MeshPattern):
             )
         )
         + tuple(
+            generate_stair_parts(
+                name="stair_low_offset_1",
+                dim=dim,
+                total_height=0.5,
+                offset=1.0,
+                seed=seed,
+                array_shape=[15, 15],
+                weight=1.0,
+                depth_num=2,
+            )
+        )
+        + tuple(
+            generate_stair_parts(
+                name="stair_low_offset_2",
+                dim=dim,
+                total_height=0.5,
+                offset=1.5,
+                seed=seed,
+                array_shape=[15, 15],
+                weight=1.0,
+                depth_num=2,
+            )
+        )
+        + tuple(
             generate_ramp_parts(
                 name="ramp",
                 dim=dim,
@@ -771,6 +860,9 @@ class FloorPattern(MeshPattern):
                 depth_num=1,
             )
         )
+        # + tuple(generate_perlin_tile_configs(name="perlin_0", dim=dim, seed=seed, weight=1.2))
+        # + tuple(generate_perlin_tile_configs(name="perlin_0.5", dim=dim, seed=seed, weight=1.2, offset=0.5))
+        # + tuple(generate_perlin_tile_configs(name="perlin_1", dim=dim, seed=seed, weight=1.2, offset=1.0))
     )
     # wall_turn_edge: MeshPartsCfg = WallMeshPartsCfg(
     #     name="wall_t_e",
@@ -877,12 +969,13 @@ if __name__ == "__main__":
     # print("cfg", cfg)
     from mesh_parts.create_tiles import create_mesh_tile
 
-    visualize_keywords = ["narrow"]
+    visualize_keywords = ["stair_wall_()_12", ")_12"]
     for mesh_part in cfg.mesh_parts:
         for keyword in visualize_keywords:
-            # print(mesh_part)
+            # print(mesh_part.edges)
             if keyword in mesh_part.name:
                 mesh_tile = create_mesh_tile(mesh_part)
+                print(mesh_tile.name, mesh_tile.edges)
                 mesh_tile.get_mesh().show()
                 break
 

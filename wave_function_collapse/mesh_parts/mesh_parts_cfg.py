@@ -14,11 +14,12 @@ class MeshPartsCfg:
     flips: Tuple[str, ...] = ()  # ("x", "y")
     height_offset: float = 0.0
     use_generator: bool = True
+    load_from_cache: bool = True
 
 
 @dataclass
 class WallMeshPartsCfg(MeshPartsCfg):
-    wall_thickness: float = 0.1
+    wall_thickness: float = 0.4
     wall_height: float = 3.0
     wall_edges: Tuple[str, ...] = ()  # bottom, up, left, right, middle_left, middle_right, middle_up, middle_bottom
     wall_type: str = "wall"  # wall, window, door
@@ -55,6 +56,7 @@ class PlatformMeshPartsCfg(MeshPartsCfg):
     z_dim_array: np.ndarray = np.zeros((2, 2))
     add_floor: bool = True
     use_z_dim_array: bool = False  # If true, the box height is determined by the z_dim_array.
+    wall: Optional[WallMeshPartsCfg] = None  # It will be used to create the walls.
 
 
 @dataclass

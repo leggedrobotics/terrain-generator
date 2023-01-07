@@ -51,7 +51,7 @@ def rotate_mesh(mesh, deg):
     return new_mesh
 
 
-def get_height_array_of_mesh(mesh, dim, num_points, offset=0.001):
+def get_height_array_of_mesh(mesh, dim, num_points, offset=0.01):
     # intersects_location requires origins to be the same shape as vectors
     x = np.linspace(-dim[0] / 2.0 + offset, dim[0] / 2.0 - offset, num_points)
     y = np.linspace(dim[1] / 2.0 - offset, -dim[1] / 2.0 + offset, num_points)
@@ -357,7 +357,7 @@ def merge_two_height_meshes(mesh1, mesh2):
 #     return mesh
 
 
-def cfg_to_hash(cfg, exclude_keys=["weight"]):
+def cfg_to_hash(cfg, exclude_keys=["weight", "load_from_cache"]):
     """MD5 hash of a config."""
     import hashlib
     import json

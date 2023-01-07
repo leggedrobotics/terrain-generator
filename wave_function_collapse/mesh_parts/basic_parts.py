@@ -4,6 +4,7 @@ from mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
+    WallMeshPartsCfg,
 )
 from mesh_parts.mesh_utils import (
     merge_meshes,
@@ -11,6 +12,7 @@ from mesh_parts.mesh_utils import (
     convert_heightfield_to_trimesh,
     merge_two_height_meshes,
     get_height_array_of_mesh,
+    ENGINE,
 )
 
 
@@ -20,6 +22,158 @@ def create_floor(cfg: MeshPartsCfg):
     pose[:3, -1] = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness / 2.0 + cfg.height_offset]
     floor = trimesh.creation.box(dims, pose)
     return floor
+
+
+def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
+    if edge == "bottom":
+        dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
+        pos = [
+            0,
+            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "up":
+        dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
+        pos = [
+            0,
+            cfg.dim[1] / 2.0 - cfg.wall_thickness / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "left":
+        dim = [cfg.wall_thickness, cfg.dim[1], cfg.wall_height]
+        pos = [
+            -cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0,
+            0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "right":
+        dim = [cfg.wall_thickness, cfg.dim[1], cfg.wall_height]
+        pos = [
+            cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
+            0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "middle_bottom":
+        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
+        pos = [
+            0,
+            -cfg.dim[1] / 4.0 + cfg.wall_thickness / 4.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "middle_up":
+        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
+        pos = [
+            0,
+            cfg.dim[1] / 4.0 - cfg.wall_thickness / 4.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "middle_left":
+        dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
+        pos = [
+            -cfg.dim[0] / 4.0 + cfg.wall_thickness / 4.0,
+            0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "middle_right":
+        dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
+        pos = [
+            cfg.dim[0] / 4.0 - cfg.wall_thickness / 4.0,
+            0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "bottom_left":
+        dim = [cfg.dim[0] / 2.0, cfg.wall_thickness, cfg.wall_height]
+        pos = [
+            -cfg.dim[0] / 4.0,  # + cfg.wall_thickness / 2.0,
+            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "bottom_right":
+        dim = [cfg.dim[0] / 2.0, cfg.wall_thickness, cfg.wall_height]
+        pos = [
+            cfg.dim[0] / 4.0,  # - cfg.wall_thickness / 2.0,
+            -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "right_bottom":
+        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0, cfg.wall_height]
+        pos = [
+            cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
+            -cfg.dim[1] / 4.0,  # + cfg.wall_thickness / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    elif edge == "right_up":
+        dim = [cfg.wall_thickness, cfg.dim[1] / 2.0, cfg.wall_height]
+        pos = [
+            cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
+            cfg.dim[1] / 4.0,  # - cfg.wall_thickness / 2.0,
+            -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
+        ]
+    else:
+        raise ValueError(f"Edge {edge} is not defined.")
+
+    pose = np.eye(4)
+    pose[:3, -1] = pos
+    wall = trimesh.creation.box(dim, pose)
+    return wall
+
+
+def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up"):
+    if door_direction == "bottom" or door_direction == "up":
+        dim = [cfg.door_width, 2.0, cfg.door_height]
+        pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
+    elif door_direction == "left" or door_direction == "right":
+        dim = [2.0, cfg.door_width, cfg.door_height]
+        pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
+    elif door_direction == "middle_bottom":
+        dim = [2.0, cfg.door_width, cfg.door_height]
+        pos = [
+            0,
+            -cfg.dim[1] / 4.0 + cfg.wall_thickness / 4.0,
+            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0,
+        ]
+    elif door_direction == "middle_up":
+        dim = [2.0, cfg.door_width, cfg.door_height]
+        pos = [
+            0,
+            cfg.dim[1] / 4.0 - cfg.wall_thickness / 4.0,
+            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+        ]
+    elif door_direction == "middle_left":
+        dim = [cfg.door_width, 2.0, cfg.door_height]
+        pos = [
+            -cfg.dim[0] / 4.0 + cfg.wall_thickness / 4.0,
+            0,
+            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+        ]
+    elif door_direction == "middle_right":
+        dim = [cfg.door_width, 2.0, cfg.door_height]
+        pos = [
+            cfg.dim[0] / 4.0 - cfg.wall_thickness / 4.0,
+            0,
+            -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
+        ]
+    else:
+        return trimesh.Trimesh()
+
+    pose = np.eye(4)
+    pose[:3, -1] = pos
+    door = trimesh.creation.box(dim, pose)
+    return door
+
+
+def create_wall_mesh(cfg: WallMeshPartsCfg):
+    # Create the vertices of the wall
+    floor = create_floor(cfg)
+    mesh = floor
+    for wall_edges in cfg.wall_edges:
+        wall = create_standard_wall(cfg, wall_edges)
+        # wall = get_wall_with_door(cfg, wall_edges)
+        mesh = merge_meshes([mesh, wall], cfg.minimal_triangles)
+    if cfg.create_door:
+        door = create_door(cfg, cfg.door_direction)
+        mesh = trimesh.boolean.difference([mesh, door], engine=ENGINE)
+    return mesh
 
 
 def create_platform_mesh(cfg: PlatformMeshPartsCfg):
@@ -47,7 +201,13 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
                 )
                 box_mesh = trimesh.creation.box(dim, trimesh.transformations.translation_matrix(pos))
                 meshes.append(box_mesh)
+    if cfg.wall is not None:
+        wall_mesh = create_wall_mesh(cfg.wall)
+        meshes.append(wall_mesh)
+        # mesh = merge_meshes([mesh, wall_mesh], False)
+        # mesh.fill_holes()
     mesh = merge_meshes(meshes, cfg.minimal_triangles)
+    mesh.fill_holes()
     return mesh
 
 

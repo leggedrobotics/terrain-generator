@@ -3,8 +3,8 @@ from typing import Tuple
 import functools
 
 from wfc.tiles import Tile, ArrayTile, MeshTile
-from mesh_parts.indoor_parts import create_wall_mesh, create_stairs_mesh
-from mesh_parts.basic_parts import create_floor, create_platform_mesh, create_from_height_map
+from mesh_parts.indoor_parts import create_stairs_mesh
+from mesh_parts.basic_parts import create_floor, create_platform_mesh, create_from_height_map, create_wall_mesh
 from mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     WallMeshPartsCfg,
@@ -28,10 +28,12 @@ def create_mesh_tile(cfg: MeshPartsCfg):
         mesh_gen = create_from_height_map
     else:
         return
-    cached_mesh_gen_verbose = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
-    cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
+    if cfg.load_from_cache:
+        cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False)
+    else:
+        cached_mesh_gen = functools.partial(mesh_gen, cfg)
     name = cfg.name
-    mesh = cached_mesh_gen_verbose()
+    mesh = cached_mesh_gen()
     if cfg.use_generator:
         array = get_height_array_of_mesh(mesh, cfg.dim, 5)
         return MeshTile(name, array, cached_mesh_gen, mesh_dim=cfg.dim, weight=cfg.weight)
