@@ -20,7 +20,7 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
     cfg = IndoorPatternLevels(dim=dim, levels=tuple(levels), wall_height=wall_height)
     tiles = create_mesh_pattern(cfg)
 
-    wfc_solver = WFCSolver(shape=[24, 24], dimensions=2, seed=None)
+    wfc_solver = WFCSolver(shape=[20, 20], dimensions=2, seed=None)
 
     for tile in tiles.values():
         if visualize:
@@ -73,13 +73,15 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
 
 if __name__ == "__main__":
 
-    level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
-    wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
+    # level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+    # wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
+    level_diffs = [0.5]
+    wall_heights = [3.0]
     # level_diffs = [0.1]
     # wall_heights = [0.3]
 
     for level_diff, wall_height in zip(level_diffs, wall_heights):
-        result_dir = f"results/level_{level_diff}"
+        result_dir = f"results/level_{level_diff}_ray"
         os.makedirs(result_dir, exist_ok=True)
         for i in range(10):
             name = os.path.join(result_dir, f"mesh_{i}.stl")
