@@ -16,6 +16,7 @@ from mesh_parts.mesh_parts_cfg import (
 from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
 from alive_progress import alive_it
 import ray
+
 ray.init()
 
 
@@ -47,6 +48,7 @@ def create_mesh_pattern(cfg: MeshPattern):
     print("Creating mesh pattern... ")
     for mesh_cfg in alive_it(cfg.mesh_parts):
         tiles.append(create_mesh_tile.remote(mesh_cfg))
+    print("Waiting for parallel creation... ")
     tiles = ray.get(tiles)
     all_tiles = []
     for i, tile in enumerate(tiles):
@@ -55,5 +57,5 @@ def create_mesh_pattern(cfg: MeshPattern):
         # tile = create_mesh_tile(mesh_cfg)
         # if tile is not None:
         #     tiles += tile.get_all_tiles(rotations=mesh_cfg.rotations, flips=mesh_cfg.flips)
-    tile_dict = {tile.name: tile for tile in tiles}
+    tile_dict = {tile.name: tile for tile in all_tiles}
     return tile_dict

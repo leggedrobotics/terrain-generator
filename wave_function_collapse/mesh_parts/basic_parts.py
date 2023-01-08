@@ -221,7 +221,7 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
     if cfg.fill_borders:
         mesh = create_floor(cfg)
 
-    height_map -= cfg.dim[2] / 2.0
+    height_map = height_map.copy() - cfg.dim[2] / 2.0
     height_map_mesh = convert_heightfield_to_trimesh(
         height_map,
         cfg.horizontal_scale,
