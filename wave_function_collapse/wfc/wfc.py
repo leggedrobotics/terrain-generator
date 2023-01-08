@@ -371,7 +371,6 @@ class ConnectionManager:
             edge_types: Dict of edges. key: direction in tuple, value: edge_type in tuple of numbers.
         """
         tile_id = len(self.names)
-        print(name, ", tile_id: ", tile_id)
         self.names.append(name)
         for direction, edge_type in edge_types.items():
             self.edges[direction].append(edge_type)

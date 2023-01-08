@@ -32,7 +32,7 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
         # ("platform_2_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
     ]
-    wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+    # wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
 
     try:
         wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
