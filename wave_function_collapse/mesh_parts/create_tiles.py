@@ -15,13 +15,9 @@ from mesh_parts.mesh_parts_cfg import (
 )
 from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
 from alive_progress import alive_it
-import ray
 
-ray.init()
-
-
-@ray.remote
-def create_mesh_tile(cfg: MeshPartsCfg):
+# @ray.remote
+def create_mesh_tile(cfg: MeshPartsCfg) -> MeshTile:
     if isinstance(cfg, WallMeshPartsCfg):
         mesh_gen = create_wall_mesh
     elif isinstance(cfg, StairMeshPartsCfg):
@@ -44,10 +40,15 @@ def create_mesh_tile(cfg: MeshPartsCfg):
 
 
 def create_mesh_pattern(cfg: MeshPattern):
+    import ray
+
+    ray.init(ignore_reinit_error=True)
+    create_mesh_tile_remote = ray.remote(create_mesh_tile)
+
     tiles = []
     print("Creating mesh pattern... ")
     for mesh_cfg in alive_it(cfg.mesh_parts):
-        tiles.append(create_mesh_tile.remote(mesh_cfg))
+        tiles.append(create_mesh_tile_remote.remote(mesh_cfg))
     print("Waiting for parallel creation... ")
     tiles = ray.get(tiles)
     all_tiles = []

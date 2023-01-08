@@ -313,7 +313,7 @@ def generate_floating_boxes(name, dim, n=15, max_h=1.0, min_h=0.0, array_shape=[
     for i in range(n):
         cfg_name = f"{name}_{i}"
         # Randomly sample array
-        array = np.random.uniform(0, 1, size=array_shape)
+        array = np.random.uniform(min_h, max_h, size=array_shape)
         array = np.round(array, 2)
         array[0, :] = np.round(array[0, :], 1)
         array[-1, :] = np.round(array[-1, :], 1)
@@ -322,18 +322,47 @@ def generate_floating_boxes(name, dim, n=15, max_h=1.0, min_h=0.0, array_shape=[
         array = array.clip(0.1, 1.0)
 
         # Randomly create edges
-        if np.random.uniform(0, 1) < 0.5:
-            array[0, :] = 0.0
-        if np.random.uniform(0, 1) < 0.5:
-            array[-1, :] = np.array([1, 1, 1, 0, 0])
-            # array[-1, :] = 1.0
-        if np.random.uniform(0, 1) < 0.2:
-            array[:, 0] = np.array([1, 1, 1, 0, 0])
-        if np.random.uniform(0, 1) < 0.2:
-            array[:, 0] = 0
-        if np.random.uniform(0, 1) < 0.2:
-            array[:, -1] = 0
-
+        if i % 4 == 0:
+            array[0, :] = min_h
+            array[-1, :] = min_h
+            array[:, 0] = min_h
+            array[:, -1] = min_h
+        if i % 4 == 1:
+            array[0, :] = max_h
+            array[-1, :] = max_h
+            array[:, 0] = max_h
+            array[:, -1] = max_h
+        if i % 4 == 2:
+            array[:, 0] = min_h
+            array[:, -1] = min_h
+            array[0, :] = max_h
+            array[-1, :] = max_h
+        if i % 4 == 3:
+            array[0, :] = max_h
+            array[-1, :] = min_h
+            array[:, 0] = max_h
+            array[:, -1] = min_h
+        # if np.random.uniform(0, 1) < 0.5:
+        #     array[0, :] = min_h
+        # if np.random.uniform(0, 1) < 0.5:
+        #     array[0, :] = min_h
+        # if np.random.uniform(0, 1) < 0.5:
+        #     # array[-1, :] = np.array([1, 1, 1, 0, 0])
+        #     array[-1, :] = min_h
+        #     # array[-1, :] = 1.0
+        # if np.random.uniform(0, 1) < 0.2:
+        #     # array[:, 0] = np.array([1, 1, 1, 0, 0])
+        #     array[:, 0] = max_h
+        # if np.random.uniform(0, 1) < 0.2:
+        #     array[:, -1] = max_h
+        # if np.random.uniform(0, 1) < 0.2:
+        #     array[0:, :] = max_h
+        #     array[-1:, :] = max_h
+        # if np.random.uniform(0, 1) < 0.2:
+        #     array[:, 0] = min_h
+        # if np.random.uniform(0, 1) < 0.2:
+        #     array[:, -1] = min_h
+        #
         array = min_h + array * (max_h - min_h)
         # Randomly sample z_dim_array
         z_dim_array = np.random.uniform(0.0, 1, size=array_shape) * array
@@ -352,6 +381,7 @@ def generate_floating_boxes(name, dim, n=15, max_h=1.0, min_h=0.0, array_shape=[
             rotations=(90, 180, 270),
             flips=("x", "y"),
             weight=weight_per_tile,
+            minimal_triangles=False,
         )
         # print("cfg ", cfg)
         cfgs.append(cfg)

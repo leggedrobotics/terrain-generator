@@ -23,6 +23,9 @@ from patterns.pattern_generator import (
     generate_stair_parts,
     generate_stepping_stones,
 )
+from mesh_parts.create_tiles import create_mesh_tile
+from mesh_parts.basic_parts import create_from_height_map
+from mesh_parts.mesh_utils import get_height_array_of_mesh
 
 
 @dataclass
@@ -47,7 +50,7 @@ class IndoorPattern(MeshPattern):
         + tuple(generate_narrow(name="narrow_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.2))
         + tuple(generate_narrow(name="narrow_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.2))
         + tuple(
-            generate_floating_boxes(name="floating_boxes", n=20, dim=dim, seed=seed, array_shape=[5, 5], weight=0.05)
+            generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=0.05)
         )
         + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2))
         + tuple(
@@ -130,7 +133,7 @@ class IndoorPattern(MeshPattern):
 class IndoorPatternLevels(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
-    levels: Tuple[float, ...] = (0.0, 0.1, 0.2, 0.3)
+    levels: Tuple[float, ...] = (0.0, 0.5, 1.0, 1.5, 2.0)
     wall_height: float = 0.5
     mesh_parts: Tuple[MeshPartsCfg, ...] = ()
 
@@ -166,6 +169,7 @@ class IndoorPatternLevels(MeshPattern):
                 + tuple(
                     generate_floating_boxes(
                         name=f"floating_boxes_{min_h}_{max_h}",
+                        n=30,
                         dim=dim,
                         max_h=max_h,
                         min_h=min_h,
@@ -207,5 +211,14 @@ class IndoorPatternLevels(MeshPattern):
 if __name__ == "__main__":
     cfg = IndoorPatternLevels()
     # print(cfg)
+    keywords = ["floating_boxes_0.0_1.0"]
     for mesh_part in cfg.mesh_parts:
         print("name ", mesh_part.name)
+        if any([keyword in mesh_part.name for keyword in keywords]):
+            print(mesh_part)
+            tile = create_mesh_tile(mesh_part)
+            print("tile ", tile)
+            mesh = tile.get_mesh()
+            print("mesh ", mesh)
+            mesh.show()
+            print(get_height_array_of_mesh(mesh, mesh_part.dim, 5))

@@ -29,7 +29,7 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
 
     init_tiles = [
         ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
-        # ("platform_2_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("platform_0.0_2.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
     ]
     # wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
@@ -73,15 +73,15 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
 
 if __name__ == "__main__":
 
-    # level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
-    # wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
-    level_diffs = [0.5]
-    wall_heights = [3.0]
+    level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+    wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
+    # level_diffs = [0.5]
+    # wall_heights = [3.0]
     # level_diffs = [0.1]
     # wall_heights = [0.3]
 
     for level_diff, wall_height in zip(level_diffs, wall_heights):
-        result_dir = f"results/level_{level_diff}_ray"
+        result_dir = f"results/level_{level_diff}_floating"
         os.makedirs(result_dir, exist_ok=True)
         for i in range(10):
             name = os.path.join(result_dir, f"mesh_{i}.stl")
