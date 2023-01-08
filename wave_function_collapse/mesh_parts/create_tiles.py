@@ -15,8 +15,11 @@ from mesh_parts.mesh_parts_cfg import (
 )
 from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
 from alive_progress import alive_it
+import ray
+ray.init()
 
 
+@ray.remote
 def create_mesh_tile(cfg: MeshPartsCfg):
     if isinstance(cfg, WallMeshPartsCfg):
         mesh_gen = create_wall_mesh
@@ -43,8 +46,14 @@ def create_mesh_pattern(cfg: MeshPattern):
     tiles = []
     print("Creating mesh pattern... ")
     for mesh_cfg in alive_it(cfg.mesh_parts):
-        tile = create_mesh_tile(mesh_cfg)
-        if tile is not None:
-            tiles += tile.get_all_tiles(rotations=mesh_cfg.rotations, flips=mesh_cfg.flips)
+        tiles.append(create_mesh_tile.remote(mesh_cfg))
+    tiles = ray.get(tiles)
+    all_tiles = []
+    for i, tile in enumerate(tiles):
+        mesh_cfg = cfg.mesh_parts[i]
+        all_tiles += tile.get_all_tiles(rotations=mesh_cfg.rotations, flips=mesh_cfg.flips)
+        # tile = create_mesh_tile(mesh_cfg)
+        # if tile is not None:
+        #     tiles += tile.get_all_tiles(rotations=mesh_cfg.rotations, flips=mesh_cfg.flips)
     tile_dict = {tile.name: tile for tile in tiles}
     return tile_dict
