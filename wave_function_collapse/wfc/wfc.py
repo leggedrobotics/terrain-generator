@@ -24,6 +24,7 @@ class Wave:
         self.wave = np.zeros(shape, dtype=np.int32)  # first dimension is for the tile, second is for the orientation
         self.valid = np.ones((self.n_tiles, *shape), dtype=bool)
         self.is_collapsed = np.zeros(shape, dtype=bool)
+        self.wave_order = np.zeros_like(self.wave)
 
     def substitute(self, obj: "Wave"):
         self.wave = copy.deepcopy(obj.wave)
@@ -35,6 +36,7 @@ class Wave:
         new_wave.wave = copy.deepcopy(self.wave)
         new_wave.valid = copy.deepcopy(self.valid)
         new_wave.is_collapsed = copy.deepcopy(self.is_collapsed)
+        new_wave.wave_order = copy.deepcopy(self.wave_order)
         return new_wave
 
 
@@ -97,6 +99,7 @@ class WFCCore:
 
     def _update_wave(self, idx: np.ndarray, tile_id: int):
         self.wave.wave[tuple(idx)] = tile_id
+        self.wave.wave_order[tuple(idx)] = self.wave.is_collapsed.sum()
         self.wave.is_collapsed[tuple(idx)] = True
         self.wave.valid[(slice(None),) + tuple(idx)] = False
         self.wave.valid[(tile_id,) + tuple(idx)] = True
@@ -175,7 +178,7 @@ class WFCCore:
                 else:
                     if (
                         np.sum(self.wave.is_collapsed == False) < self.prev_remaining_grid_num
-                        or np.sum(self.wave.is_collapsed == False) == 1
+                        or np.sum(self.wave.is_collapsed == False) <= 1
                     ):
                         # print("prev_remaining_grid_num: ", self.prev_remaining_grid_num)
                         # self.prev_remaining_grid_num = min(
@@ -209,6 +212,7 @@ class WFCCore:
         if self.total_back_track_cnt > self.max_backtracking:
             raise ValueError("Too many total backtracks.", self.total_back_track_cnt)
         self.wave = self.history[-1 - look_back].copy()
+        self.history = self.history[: -1 - look_back]
         if look_back == len(self.history) - 1:
             # print("wave ", self.wave.is_collapsed)
             entropy = np.sum(self.wave.valid, axis=0)
@@ -517,7 +521,7 @@ class WFCSolver(object):
         print("Get connection definition.")
         connections = self.cm.get_connection_dict()
         tile_weights = [self.tile_weights[name] for name in self.cm.names]
-        wfc = WFCCore(
+        self.wfc = WFCCore(
             len(self.cm.names),
             connections,
             self.shape,
@@ -532,13 +536,16 @@ class WFCSolver(object):
             for (name, index) in init_tiles:
                 tile_id = self.cm.names.index(name)
                 # print("idx ", idx)
-                wfc.init(index, tile_id)
+                self.wfc.init(index, tile_id)
         else:
-            wfc.init_randomly()
-        wave = wfc.solve()
+            self.wfc.init_randomly()
+        wave = self.wfc.solve()
         print("Finished solving.")
         return wave
 
     @property
     def names(self):
         return self.cm.names
+
+    def get_history(self):
+        return self.wfc.history

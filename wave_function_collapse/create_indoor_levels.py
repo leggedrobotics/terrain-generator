@@ -12,7 +12,9 @@ from configs.indoor_cfg import IndoorPattern, IndoorPatternLevels
 from alive_progress import alive_bar
 
 
-def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_height=3.0, visualize=False):
+def test_wall_mesh(
+    mesh_name="result_mesh.stl", mesh_dir="results/result", level_diff=0.5, level_n=5, wall_height=3.0, visualize=False
+):
 
     dim = (2.0, 2.0, 2.0)
     levels = [np.round(level_diff * n, 2) for n in range(level_n)]
@@ -29,16 +31,36 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
 
     init_tiles = [
         ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
-        # ("platform_0.0_2.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("platform_1.0_2.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("platform_0.0_1.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
     ]
-    # wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+    wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
 
-    try:
-        wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
-    except Exception as e:
-        print(e)
-        return
+    # try:
+    #     wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
+    # except Exception as e:
+    #     print(e)
+    #     return
+
+    # wave_history = []
+    # is_collapsed_history = []
+    # for w in wfc_solver.get_history():
+    #     print(w.wave)
+    #     print(w.is_collapsed)
+    #     wave_history.append(w.wave)
+    #     is_collapsed_history.append(w.is_collapsed)
+    #
+    # print("wave order ", wfc_solver.wfc.wave.wave_order)
+    #
+    # wave_history = np.array(wave_history)
+    # is_collapsed_history = np.array(is_collapsed_history)
+    # np.save(os.path.join(mesh_dir, "wave_history.npy"), wave_history)
+    # np.save(os.path.join(mesh_dir, "is_collapsed_history.npy"), is_collapsed_history)
+    # history = wfc_solver.get_history()
+    # np.save(os.path.join(mesh_dir, "history.npy"), history)
+    np.save(os.path.join(mesh_dir, "wave.npy"), wave)
+    np.save(os.path.join(mesh_dir, "wave_order.npy"), wfc_solver.wfc.wave.wave_order)
 
     tile_array = tiles["floor"].get_array()
     array_shape = tile_array.shape
@@ -60,10 +82,19 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
         for y in range(wave.shape[0]):
             for x in range(wave.shape[1]):
                 mesh = tiles[names[wave[y, x]]].get_mesh().copy()
+                mesh.export(os.path.join(mesh_dir, f"{wave[y, x]}_{y}_{x}_{names[wave[y, x]]}.obj"))
                 xy_offset = np.array([x * dim[0], -y * dim[1], 0.0])
                 mesh.apply_translation(xy_offset)
+                mesh.export(os.path.join(mesh_dir, f"{wave[y, x]}_{y}_{x}_{names[wave[y, x]]}_translated.obj"))
                 result_mesh += mesh
                 bar()
+
+    bbox = result_mesh.bounding_box.bounds
+    # Get the center of the bounding box.
+    center = np.mean(bbox, axis=0)
+    center[2] = 0.0
+    # Get the size of the bounding box.
+    result_mesh = result_mesh.apply_translation(-center)
 
     print("saving mesh to ", mesh_name)
     result_mesh.export(mesh_name)
@@ -73,16 +104,17 @@ def test_wall_mesh(mesh_name="result_mesh.stl", level_diff=0.5, level_n=5, wall_
 
 if __name__ == "__main__":
 
-    level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
-    wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
-    # level_diffs = [0.5]
-    # wall_heights = [3.0]
+    # level_diffs = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+    # wall_heights = [0.15, 0.3, 1.0, 2.0, 3.0, 3.0]
+    level_diffs = [0.5]
+    wall_heights = [3.0]
     # level_diffs = [0.1]
     # wall_heights = [0.3]
 
     for level_diff, wall_height in zip(level_diffs, wall_heights):
-        result_dir = f"results/level_{level_diff}_floating"
+        # result_dir = f"results/level_{level_diff}_floating_platform1"
+        result_dir = f"results/test_history"
         os.makedirs(result_dir, exist_ok=True)
         for i in range(10):
             name = os.path.join(result_dir, f"mesh_{i}.stl")
-            test_wall_mesh(name, level_diff, wall_height=wall_height, visualize=False)
+            test_wall_mesh(name, result_dir, level_diff, wall_height=wall_height, visualize=False)
