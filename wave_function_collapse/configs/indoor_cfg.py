@@ -50,7 +50,7 @@ class IndoorPattern(MeshPattern):
         + tuple(generate_narrow(name="narrow_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.2))
         + tuple(generate_narrow(name="narrow_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.2))
         + tuple(
-            generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=0.05)
+            generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=10.0)
         )
         + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2))
         + tuple(
@@ -142,8 +142,10 @@ class IndoorPatternLevels(MeshPattern):
         dim = self.dim
         seed = self.seed
         wall_height = self.wall_height
-        min_hs = self.levels[:-1] + tuple([0.0 for _ in range(len(self.levels) - 2)])
-        max_hs = self.levels[1:] + self.levels[2:]
+        min_hs = self.levels[:-1] + tuple(
+            [self.levels[0], self.levels[2]]
+        )  # + tuple([0.0 for _ in range(len(self.levels) - 2)])
+        max_hs = self.levels[1:] + tuple([self.levels[2], self.levels[2 + 2]])  # + self.levels[2:]
         # for i in range(len(self.levels) - 2):
         for min_h, max_h in zip(min_hs, max_hs):
             # min_h = self.levels[i]
@@ -175,7 +177,7 @@ class IndoorPatternLevels(MeshPattern):
                         min_h=min_h,
                         seed=seed,
                         array_shape=[5, 5],
-                        weight=0.05,
+                        weight=1.05,
                     )
                 )
                 + tuple(

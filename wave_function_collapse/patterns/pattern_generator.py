@@ -322,26 +322,31 @@ def generate_floating_boxes(name, dim, n=15, max_h=1.0, min_h=0.0, array_shape=[
         array = array.clip(0.1, 1.0)
 
         # Randomly create edges
-        if i % 4 == 0:
+        if i % 5 == 0:
             array[0, :] = min_h
             array[-1, :] = min_h
             array[:, 0] = min_h
             array[:, -1] = min_h
-        if i % 4 == 1:
+        if i % 5 == 1:
             array[0, :] = max_h
             array[-1, :] = max_h
             array[:, 0] = max_h
             array[:, -1] = max_h
-        if i % 4 == 2:
+        if i % 5 == 2:
+            array[0, :] = max_h
+            array[-1, :] = max_h
+            array[:, 0] = min_h
+            array[:, -1] = min_h
+        if i % 5 == 3:
+            array[0, :] = max_h
+            array[:, 0] = max_h
+            array[-1, :] = min_h
+            array[:, -1] = min_h
+        if i % 5 == 4:
+            array[-1, :] = min_h
             array[:, 0] = min_h
             array[:, -1] = min_h
             array[0, :] = max_h
-            array[-1, :] = max_h
-        if i % 4 == 3:
-            array[0, :] = max_h
-            array[-1, :] = min_h
-            array[:, 0] = max_h
-            array[:, -1] = min_h
         # if np.random.uniform(0, 1) < 0.5:
         #     array[0, :] = min_h
         # if np.random.uniform(0, 1) < 0.5:

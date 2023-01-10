@@ -13,9 +13,9 @@ CACHE_DIR = "mesh_cache"
 # ENGINE = "scad"
 
 
-def merge_meshes(meshes, minimal_triangles=False):
+def merge_meshes(meshes, minimal_triangles=False, engine="blender"):
     if minimal_triangles:
-        meshes = trimesh.boolean.union(meshes, engine=ENGINE)
+        meshes = trimesh.boolean.union(meshes, engine=engine)
     else:
         meshes = trimesh.util.concatenate(meshes)
     return meshes
