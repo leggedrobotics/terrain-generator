@@ -213,8 +213,17 @@ class WFCCore:
         #     raise ValueError("Too many backtracks.", self.back_track_cnt, len(self.history))
         if self.total_back_track_cnt > self.max_backtracking:
             raise ValueError("Too many total backtracks.", self.total_back_track_cnt)
-        self.wave = self.history[-1 - look_back].copy()
-        self.history = self.history[: -1 - look_back]
+        if ((look_back + 1) > len(self.history)) or (len(self.history) <= 1):
+            self.wave = self.history[0].copy()
+            self.history = [self.history[0]]
+            self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
+            # print(
+            # f"reset back tracking. look_back: {look_back}, back_track: {self.back_track_cnt}, history: {len(self.history)}"
+            # )
+            self.back_track_cnt = 0
+        else:
+            self.wave = self.history[-1 - look_back].copy()
+            self.history = self.history[: -1 - look_back]
         if look_back == len(self.history) - 1:
             # print("wave ", self.wave.is_collapsed)
             entropy = np.sum(self.wave.valid, axis=0)
