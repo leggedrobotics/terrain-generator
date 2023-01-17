@@ -30,6 +30,7 @@ class Wave:
         self.wave = copy.deepcopy(obj.wave)
         self.valid = copy.deepcopy(obj.valid)
         self.is_collapsed = copy.deepcopy(obj.is_collapsed)
+        self.wave_order = copy.deepcopy(obj.wave_order)
 
     def copy(self):
         new_wave = Wave(self.n_tiles, self.shape, self.dimensions)
@@ -170,6 +171,7 @@ class WFCCore:
                 idx = self.collapse(entropy)
                 # print("Entropy:\n", entropy)
                 # print("wave:\n", self.wave.wave)
+                # print("wave_order:\n", self.wave.wave_order)
                 if entropy[tuple(idx)] == self.n_tiles + 1:
                     break
                 if entropy[tuple(idx)] == 0:
@@ -203,7 +205,7 @@ class WFCCore:
         # self.prev_remaining_grid_num = np.sum(self.wave.is_collapsed == False)
         self.back_track_cnt += 1
         self.total_back_track_cnt += 1
-        look_back = min(self.back_track_cnt // 10, len(self.history) - 1)
+        look_back = max(min(self.back_track_cnt // 10, len(self.history) - 2), 0)
         # if self.total_back_track_cnt > 1000:
         #     look_back += min(self.total_back_track_cnt // 1000, len(self.history))
         # print("look_back:", self.total_back_track_cnt, look_back, self.prev_remaining_grid_num, len(self.history))

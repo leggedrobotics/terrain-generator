@@ -120,7 +120,7 @@ def generate_stepping_stones_stairs(dim):
     return cfgs
 
 
-def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_height=3.0, wall_thickness=0.4, seed=1234):
+def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_weight=0.1, wall_height=3.0, wall_thickness=0.4, seed=1234):
     platform_types = ["1100", "1110", "1111", "1111_f"]
     cfgs = []
     for platform_type in platform_types:
@@ -151,8 +151,8 @@ def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_height=
         ]
         weights = [
             weight,
-            weight * 0.1,
-            weight * 0.1,
+            wall_weight,
+            wall_weight,
         ]
         for i, wall_pattern in enumerate(wall_patterns):
             new_name = f"{name}_{platform_type}"

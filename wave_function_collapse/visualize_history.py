@@ -59,13 +59,24 @@ def visualize_history(result_dir: str):
                 # mesh += meshes[key]
                 mesh = meshes[key]
 
+        mesh.export(os.path.join(result_dir, f"mesh_part_{i}.obj"))
+
         o3d_mesh = mesh.as_open3d
+        R = o3d.geometry.get_rotation_matrix_from_xyz([-1.0, 0.0, 0.2])
+        print("R ", R)
+        o3d_mesh.rotate(R, center=[0, 0, 0])
         o3d_mesh.compute_vertex_normals()
         # vis.clear_geometries()
         vis.add_geometry(o3d_mesh)
         vis.poll_events()
-        time.sleep(0.1)
+        view_control = vis.get_view_control()
+        view_control.set_zoom(1.5)
+        # view_control.camera_local_translate(vis, forward=-10.0, up=-0.5)
+        # view_control.set_lookat([0, 0, 0])
+
+        time.sleep(0.05)
         # vis.
+    time.sleep(1000)
 
 
-visualize_history("results/test_history")
+visualize_history("results/test_history_2")

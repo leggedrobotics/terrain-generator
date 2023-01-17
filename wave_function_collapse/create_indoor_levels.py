@@ -13,7 +13,14 @@ from alive_progress import alive_bar
 
 
 def test_wall_mesh(
-    mesh_name="result_mesh.stl", mesh_dir="results/result", level_diff=0.5, level_n=5, wall_height=3.0, visualize=False
+    mesh_name="result_mesh.stl",
+    mesh_dir="results/result",
+    shape=[20, 20],
+    level_diff=0.5,
+    level_n=5,
+    wall_height=3.0,
+    visualize=False,
+    enable_history=False,
 ):
 
     dim = (2.0, 2.0, 2.0)
@@ -22,17 +29,21 @@ def test_wall_mesh(
     cfg = IndoorPatternLevels(dim=dim, levels=tuple(levels), wall_height=wall_height)
     tiles = create_mesh_pattern(cfg)
 
-    wfc_solver = WFCSolver(shape=[20, 20], dimensions=2, seed=None)
+    wfc_solver = WFCSolver(shape=shape, dimensions=2, seed=None)
 
     for tile in tiles.values():
         if visualize:
-            print(tile)
+            print(tile.name)
         wfc_solver.register_tile(*tile.get_dict_tile())
 
+    init_name = "narrow_0.0_1.0_I"
+    init_name = "stepping_0.0_1.0_s"
+
     init_tiles = [
-        ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        # ("floor", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1.0_2.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_0.0_1.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        (init_name, (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
     ]
     wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)
@@ -59,8 +70,9 @@ def test_wall_mesh(
     # np.save(os.path.join(mesh_dir, "is_collapsed_history.npy"), is_collapsed_history)
     # history = wfc_solver.get_history()
     # np.save(os.path.join(mesh_dir, "history.npy"), history)
-    np.save(os.path.join(mesh_dir, "wave.npy"), wave)
-    np.save(os.path.join(mesh_dir, "wave_order.npy"), wfc_solver.wfc.wave.wave_order)
+    if enable_history:
+        np.save(os.path.join(mesh_dir, "wave.npy"), wave)
+        np.save(os.path.join(mesh_dir, "wave_order.npy"), wfc_solver.wfc.wave.wave_order)
 
     tile_array = tiles["floor"].get_array()
     array_shape = tile_array.shape
@@ -82,10 +94,12 @@ def test_wall_mesh(
         for y in range(wave.shape[0]):
             for x in range(wave.shape[1]):
                 mesh = tiles[names[wave[y, x]]].get_mesh().copy()
-                mesh.export(os.path.join(mesh_dir, f"{wave[y, x]}_{y}_{x}_{names[wave[y, x]]}.obj"))
+                if enable_history:
+                    mesh.export(os.path.join(mesh_dir, f"{wave[y, x]}_{y}_{x}_{names[wave[y, x]]}.obj"))
                 xy_offset = np.array([x * dim[0], -y * dim[1], 0.0])
                 mesh.apply_translation(xy_offset)
-                mesh.export(os.path.join(mesh_dir, f"{wave[y, x]}_{y}_{x}_{names[wave[y, x]]}_translated.obj"))
+                if enable_history:
+                    mesh.export(os.path.join(mesh_dir, f"{wave[y, x]}_{y}_{x}_{names[wave[y, x]]}_translated.obj"))
                 result_mesh += mesh
                 bar()
 
@@ -113,8 +127,10 @@ if __name__ == "__main__":
 
     for level_diff, wall_height in zip(level_diffs, wall_heights):
         # result_dir = f"results/level_{level_diff}_floating_platform1"
-        result_dir = f"results/test_history"
+        result_dir = f"results/test_each_parts"
         os.makedirs(result_dir, exist_ok=True)
-        for i in range(10):
+        for i in range(1):
             name = os.path.join(result_dir, f"mesh_{i}.stl")
-            test_wall_mesh(name, result_dir, level_diff, wall_height=wall_height, visualize=False)
+            test_wall_mesh(
+                name, result_dir, shape=[3, 3], level_diff=level_diff, wall_height=wall_height, visualize=True
+            )
