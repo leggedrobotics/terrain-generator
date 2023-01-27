@@ -120,7 +120,7 @@ def generate_stepping_stones_stairs(dim):
     return cfgs
 
 
-def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_height=3.0, wall_thickness=0.4, seed=1234):
+def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_weight=0.1, wall_height=3.0, wall_thickness=0.4, seed=1234):
     platform_types = ["1100", "1110", "1111", "1111_f"]
     cfgs = []
     for platform_type in platform_types:
@@ -151,8 +151,8 @@ def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_height=
         ]
         weights = [
             weight,
-            weight * 0.1,
-            weight * 0.1,
+            wall_weight,
+            wall_weight,
         ]
         for i, wall_pattern in enumerate(wall_patterns):
             new_name = f"{name}_{platform_type}"
@@ -322,26 +322,31 @@ def generate_floating_boxes(name, dim, n=15, max_h=1.0, min_h=0.0, array_shape=[
         array = array.clip(0.1, 1.0)
 
         # Randomly create edges
-        if i % 4 == 0:
+        if i % 5 == 0:
             array[0, :] = min_h
             array[-1, :] = min_h
             array[:, 0] = min_h
             array[:, -1] = min_h
-        if i % 4 == 1:
+        if i % 5 == 1:
             array[0, :] = max_h
             array[-1, :] = max_h
             array[:, 0] = max_h
             array[:, -1] = max_h
-        if i % 4 == 2:
+        if i % 5 == 2:
+            array[0, :] = max_h
+            array[-1, :] = max_h
+            array[:, 0] = min_h
+            array[:, -1] = min_h
+        if i % 5 == 3:
+            array[0, :] = max_h
+            array[:, 0] = max_h
+            array[-1, :] = min_h
+            array[:, -1] = min_h
+        if i % 5 == 4:
+            array[-1, :] = min_h
             array[:, 0] = min_h
             array[:, -1] = min_h
             array[0, :] = max_h
-            array[-1, :] = max_h
-        if i % 4 == 3:
-            array[0, :] = max_h
-            array[-1, :] = min_h
-            array[:, 0] = max_h
-            array[:, -1] = min_h
         # if np.random.uniform(0, 1) < 0.5:
         #     array[0, :] = min_h
         # if np.random.uniform(0, 1) < 0.5:

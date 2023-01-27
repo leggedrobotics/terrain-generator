@@ -158,7 +158,8 @@ class IndoorPatternLevels(MeshPattern):
                         dim=dim,
                         max_h=max_h,
                         min_h=min_h,
-                        weight=0.5,
+                        weight=10000000.0,
+                        wall_weight=0.1,
                         wall_height=wall_height,
                     )
                 )

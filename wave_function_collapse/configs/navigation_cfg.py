@@ -29,7 +29,7 @@ from mesh_parts.mesh_utils import get_height_array_of_mesh
 
 
 @dataclass
-class IndoorPattern(MeshPattern):
+class IndoorNavigationPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
@@ -39,16 +39,16 @@ class IndoorPattern(MeshPattern):
         + tuple(generate_platforms(name="platform_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.5))
         + tuple(generate_platforms(name="platform_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.5))
         + tuple(generate_platforms(name="platform_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.5))
-        + tuple(generate_stepping_stones(name="stepping_1", dim=dim, max_h=1.0, min_h=0.0, weight=1.2))
-        + tuple(generate_stepping_stones(name="stepping_2", dim=dim, max_h=2.0, min_h=0.0, weight=1.2))
-        + tuple(generate_stepping_stones(name="stepping_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=1.2))
-        + tuple(generate_stepping_stones(name="stepping_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=1.2))
-        + tuple(generate_stepping_stones(name="stepping_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=1.2))
-        + tuple(generate_narrow(name="narrow_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.2))
-        + tuple(generate_narrow(name="narrow_2", dim=dim, max_h=2.0, min_h=0.0, weight=0.2))
-        + tuple(generate_narrow(name="narrow_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.2))
-        + tuple(generate_narrow(name="narrow_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.2))
-        + tuple(generate_narrow(name="narrow_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.2))
+        # + tuple(generate_stepping_stones(name="stepping_1", dim=dim, max_h=1.0, min_h=0.0, weight=1.2))
+        # + tuple(generate_stepping_stones(name="stepping_2", dim=dim, max_h=2.0, min_h=0.0, weight=1.2))
+        # + tuple(generate_stepping_stones(name="stepping_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=1.2))
+        # + tuple(generate_stepping_stones(name="stepping_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=1.2))
+        # + tuple(generate_stepping_stones(name="stepping_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=1.2))
+        # + tuple(generate_narrow(name="narrow_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.2))
+        # + tuple(generate_narrow(name="narrow_2", dim=dim, max_h=2.0, min_h=0.0, weight=0.2))
+        # + tuple(generate_narrow(name="narrow_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.2))
+        # + tuple(generate_narrow(name="narrow_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.2))
+        # + tuple(generate_narrow(name="narrow_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.2))
         + tuple(
             generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=10.0)
         )
@@ -130,7 +130,7 @@ class IndoorPattern(MeshPattern):
 
 
 @dataclass
-class IndoorPatternLevels(MeshPattern):
+class IndoorNavigationPatternLevels(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
     levels: Tuple[float, ...] = (0.0, 0.5, 1.0, 1.5, 2.0)
@@ -142,10 +142,12 @@ class IndoorPatternLevels(MeshPattern):
         dim = self.dim
         seed = self.seed
         wall_height = self.wall_height
-        min_hs = self.levels[:-1] + tuple(
-            [self.levels[0], self.levels[2]]
-        )  # + tuple([0.0 for _ in range(len(self.levels) - 2)])
-        max_hs = self.levels[1:] + tuple([self.levels[2], self.levels[2 + 2]])  # + self.levels[2:]
+        min_hs = (
+            self.levels[:-1]
+            + tuple([self.levels[0], self.levels[2]])
+            + tuple([0.0 for _ in range(len(self.levels) - 2)])
+        )
+        max_hs = self.levels[1:] + tuple([self.levels[2], self.levels[2 + 2]]) + self.levels[2:]
         # for i in range(len(self.levels) - 2):
         for min_h, max_h in zip(min_hs, max_hs):
             # min_h = self.levels[i]
@@ -162,12 +164,12 @@ class IndoorPatternLevels(MeshPattern):
                         wall_height=wall_height,
                     )
                 )
-                + tuple(
-                    generate_stepping_stones(
-                        name=f"stepping_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=1.2
-                    )
-                )
-                + tuple(generate_narrow(name=f"narrow_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=0.2))
+                # + tuple(
+                #     generate_stepping_stones(
+                #         name=f"stepping_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=1.2
+                #     )
+                # )
+                # + tuple(generate_narrow(name=f"narrow_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=0.2))
                 + tuple(
                     generate_floating_boxes(
                         name=f"floating_boxes_{min_h}_{max_h}",
