@@ -78,3 +78,17 @@ class MeshPattern:
     # name: str
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     mesh_parts: Tuple[MeshPartsCfg, ...] = (MeshPartsCfg(),)
+
+
+@dataclass
+class CapsuleMeshPartsCfg(MeshPartsCfg):
+    radii: Tuple[float, ...] = ()
+    heights: Tuple[float, ...] = ()
+    transformations: Tuple[np.ndarray, ...] = ()
+
+
+@dataclass
+class CylinderMeshParts(MeshPartsCfg):
+    radii: Tuple[float, ...] = ()
+    heights: Tuple[float, ...] = ()
+    transformations: Tuple[np.ndarray, ...] = ()

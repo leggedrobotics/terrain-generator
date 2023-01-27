@@ -5,6 +5,7 @@ from mesh_parts.mesh_parts_cfg import (
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
     WallMeshPartsCfg,
+    CapsuleMeshPartsCfg,
 )
 from mesh_parts.mesh_utils import (
     merge_meshes,
@@ -244,7 +245,34 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
     return mesh
 
 
+def create_capsule_mesh(cfg: CapsuleMeshPartsCfg):
+    # Create the vertices of the wall
+    meshes = []
+    for i in range(len(cfg.radii)):
+        capsule = trimesh.creation.capsule(
+            radius=cfg.radii[i],
+            height=cfg.heights[i],
+            # transform=cfg.transformations[i],
+        )
+        capsule.apply_transform(cfg.transformations[i])
+        meshes.append(capsule)
+    mesh = merge_meshes(meshes, cfg.minimal_triangles)
+    return mesh
+
+
 if __name__ == "__main__":
+
+    positions = [np.array([0.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]), np.array([1.0, 0.0, 0.0])]
+    transformations = [trimesh.transformations.random_rotation_matrix() for i in range(len(positions))]
+    for i in range(len(positions)):
+        transformations[i][:3, -1] = positions[i]
+    capsule_cfg = CapsuleMeshPartsCfg(radii=(0.1, 0.2, 0.3), heights=(0.4, 0.5, 0.6), transformations=tuple(transformations))
+    capsule_mesh = create_capsule_mesh(capsule_cfg)
+    capsule_mesh.show()
+    print(get_height_array_of_mesh(capsule_mesh, capsule_cfg.dim, 5))
+
+
+
     cfg = HeightMapMeshPartsCfg(height_map=np.ones((3, 3)) * 1.4, target_num_faces=50)
     mesh = create_from_height_map(cfg)
     print(get_height_array_of_mesh(mesh, cfg.dim, 5))
