@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Tuple, Optional
 from dataclasses import dataclass
+import trimesh
 
 from numpy.random import f
 
@@ -11,6 +12,8 @@ from mesh_parts.mesh_parts_cfg import (
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
+    CapsuleMeshPartsCfg,
+    BoxMeshPartsCfg,
 )
 
 # from mesh_parts.rough_parts import generate_perlin_tile_configs
@@ -610,17 +613,97 @@ def generate_ramp_parts(
     return cfgs
 
 
+def generate_floating_capsules(name, dim, n=15, max_l=1.0, min_l=0.1, min_r=0.1, max_r=1.0, max_n_per_tile=10, weight=1.0, seed=1234):
+    np.random.seed(seed)
+    weight_per_tile = weight / n
+    cfgs = []
+    for i in range(n):
+        cfg_name = f"{name}_{i}"
+        # Randomly sample array
+        n_cylinders = int(np.random.uniform(2, max_n_per_tile))
+        radii = []
+        heights = []
+        transformations = []
+        for j in range(n_cylinders):
+            r = np.random.uniform(min_r, max_r)
+            l = np.random.uniform(min_l, max_l)
+            p = np.zeros(3)
+            p[:2] = np.random.normal(0.0, 0.4, 2)
+            p[2] = np.random.uniform(0.0, 1.0)
+            radii.append(r)
+            heights.append(l)
+            transformation = trimesh.transformations.random_rotation_matrix()
+            transformation[:3, -1] = p
+            transformations.append(transformation)
+        cfg = CapsuleMeshPartsCfg(
+            name=f"{cfg_name}_{j}",
+            dim=dim,
+            radii=tuple(radii),
+            heights=tuple(heights),
+            transformations=tuple(transformations),
+            rotations=(90, 180, 270),
+            flips=("x", "y"),
+            weight=weight_per_tile,
+            minimal_triangles=False,
+        )
+        cfgs.append(cfg)
+    return cfgs
+
+
+def generate_random_boxes(name, dim, n=15, max_w=1.0, min_w=0.1, max_h=1.0, min_h=0.1, max_n_per_tile=10, xy_std=0.4, min_z=0.0, max_z=1.0, weight=1.0, seed=1234):
+    np.random.seed(seed)
+    weight_per_tile = weight / n
+    cfgs = []
+    for i in range(n):
+        cfg_name = f"{name}_{i}"
+        # Randomly sample array
+        n_cylinders = int(np.random.uniform(2, max_n_per_tile))
+        dims = []
+        transformations = []
+        for j in range(n_cylinders):
+            box_dim = np.zeros(3)
+            box_dim[:2] = np.random.uniform(min_w, max_w, 2)
+            box_dim[2] = np.random.uniform(min_h, max_h)
+            p = np.zeros(3)
+            p[:2] = np.random.normal(0.0, xy_std, 2)
+            p[2] = np.random.uniform(min_z, max_z)
+            dims.append(box_dim)
+            transformation = trimesh.transformations.random_rotation_matrix()
+            transformation[:3, -1] = p
+            transformations.append(transformation)
+        cfg = BoxMeshPartsCfg(
+            name=f"{cfg_name}_{j}",
+            dim=dim,
+            box_dims=tuple(dims),
+            transformations=tuple(transformations),
+            rotations=(90, 180, 270),
+            flips=("x", "y"),
+            weight=weight_per_tile,
+            minimal_triangles=False,
+        )
+        cfgs.append(cfg)
+    return cfgs
+
+
 if __name__ == "__main__":
-    cfg = FloorPattern()
-    # print("cfg", cfg)
+    # cfg = FloorPattern()
+    # cfgs = generate_floating_capsules("capsule", [2, 2, 2], n=10, max_l=1.0, min_l=0.5, min_r=0.05, max_r=0.2, max_n_per_tile=10, weight=1.0, seed=1234)
+    cfgs = generate_random_boxes("boxes", [2, 2, 2], n=10, max_h=0.5, min_h=0.1, min_w=0.10, max_w=0.5, max_n_per_tile=15, weight=1.0, seed=1234)
+    # print("cfg", cfgs)
+
     from mesh_parts.create_tiles import create_mesh_tile
 
-    visualize_keywords = ["stair_wall_()_12", ")_12"]
-    for mesh_part in cfg.mesh_parts:
+    visualize_keywords = ["boxes"]
+    # for mesh_part in cfg.mesh_parts:
+    for cfg in cfgs:
+        print("cfg ", cfg)
+        cfg.load_from_cache = False
+        mesh_tile = create_mesh_tile(cfg)
+        print("mesh part ", mesh_tile)
         for keyword in visualize_keywords:
             # print(mesh_part.edges)
-            if keyword in mesh_part.name:
-                mesh_tile = create_mesh_tile(mesh_part)
+            if keyword in mesh_tile.name:
+                # mesh_tile = create_mesh_tile(mesh_part)
                 print(mesh_tile.name, mesh_tile.edges)
                 mesh_tile.get_mesh().show()
                 break

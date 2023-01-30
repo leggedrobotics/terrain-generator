@@ -6,6 +6,7 @@ from mesh_parts.mesh_parts_cfg import (
     HeightMapMeshPartsCfg,
     WallMeshPartsCfg,
     CapsuleMeshPartsCfg,
+    BoxMeshPartsCfg
 )
 from mesh_parts.mesh_utils import (
     merge_meshes,
@@ -247,14 +248,63 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
 
 def create_capsule_mesh(cfg: CapsuleMeshPartsCfg):
     # Create the vertices of the wall
-    meshes = []
+    if cfg.add_floor:
+        floor = create_floor(cfg)
+        meshes = [floor]
+    else:
+        meshes = []
     for i in range(len(cfg.radii)):
         capsule = trimesh.creation.capsule(
             radius=cfg.radii[i],
             height=cfg.heights[i],
             # transform=cfg.transformations[i],
         )
-        capsule.apply_transform(cfg.transformations[i])
+        t = cfg.transformations[i].copy()
+        t[2, 3] -= cfg.dim[2] / 2.0
+        capsule.apply_transform(t)
+        meshes.append(capsule)
+    mesh = merge_meshes(meshes, cfg.minimal_triangles)
+    return mesh
+
+
+def create_box_mesh(cfg: BoxMeshPartsCfg):
+    print("create box mesh!!!!")
+    if cfg.add_floor:
+        print("create floor")
+        floor = create_floor(cfg)
+        meshes = [floor]
+    else:
+        print("not create floor")
+        meshes = []
+    for i in range(len(cfg.box_dims)):
+        t = cfg.transformations[i].copy()
+        t[2, 3] -= cfg.dim[2] / 2.0
+        box = trimesh.creation.box(
+                cfg.box_dims[i],
+                t,
+        )
+        # box.apply_transform(t)
+        meshes.append(box)
+    mesh = merge_meshes(meshes, cfg.minimal_triangles)
+    return mesh
+
+
+def create_random_mesh(cfg: CapsuleMeshPartsCfg):
+    # Create the vertices of the wall
+    if cfg.add_floor:
+        floor = create_floor(cfg)
+        meshes = [floor]
+    else:
+        meshes = []
+    for i in range(len(cfg.radii)):
+        capsule = trimesh.creation.capsule(
+            radius=cfg.radii[i],
+            height=cfg.heights[i],
+            # transform=cfg.transformations[i],
+        )
+        t = cfg.transformations[i].copy()
+        t[2, 3] -= cfg.dim[2] / 2.0
+        capsule.apply_transform(t)
         meshes.append(capsule)
     mesh = merge_meshes(meshes, cfg.minimal_triangles)
     return mesh

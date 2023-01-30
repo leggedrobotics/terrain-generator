@@ -4,7 +4,7 @@ import functools
 
 from wfc.tiles import Tile, ArrayTile, MeshTile
 from mesh_parts.indoor_parts import create_stairs_mesh
-from mesh_parts.basic_parts import create_floor, create_platform_mesh, create_from_height_map, create_wall_mesh
+from mesh_parts.basic_parts import create_floor, create_platform_mesh, create_from_height_map, create_wall_mesh, create_capsule_mesh, create_box_mesh
 from mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     WallMeshPartsCfg,
@@ -12,6 +12,8 @@ from mesh_parts.mesh_parts_cfg import (
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
+    CapsuleMeshPartsCfg,
+    BoxMeshPartsCfg,
 )
 from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen
 from alive_progress import alive_it
@@ -26,6 +28,10 @@ def create_mesh_tile(cfg: MeshPartsCfg) -> MeshTile:
         mesh_gen = create_platform_mesh
     elif isinstance(cfg, HeightMapMeshPartsCfg):
         mesh_gen = create_from_height_map
+    elif isinstance(cfg, CapsuleMeshPartsCfg):
+        mesh_gen = create_capsule_mesh
+    elif isinstance(cfg, BoxMeshPartsCfg):
+        mesh_gen = create_box_mesh
     else:
         return
     cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False, use_cache=cfg.load_from_cache)

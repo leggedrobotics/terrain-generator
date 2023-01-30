@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from dataclasses import dataclass
 
 
@@ -82,13 +82,28 @@ class MeshPattern:
 
 @dataclass
 class CapsuleMeshPartsCfg(MeshPartsCfg):
+    add_floor: bool = True
     radii: Tuple[float, ...] = ()
     heights: Tuple[float, ...] = ()
     transformations: Tuple[np.ndarray, ...] = ()
 
 
 @dataclass
-class CylinderMeshParts(MeshPartsCfg):
+class CylinderMeshPartsCfg(MeshPartsCfg):
+    add_floor: bool = True
     radii: Tuple[float, ...] = ()
     heights: Tuple[float, ...] = ()
     transformations: Tuple[np.ndarray, ...] = ()
+
+
+@dataclass
+class BoxMeshPartsCfg(MeshPartsCfg):
+    add_floor: bool = True
+    box_dims: Tuple[Tuple[float, float, float], ...] = ()
+    transformations: Tuple[np.ndarray, ...] = ()
+
+
+@dataclass
+class RandomMeshPartsCfg(MeshPartsCfg):
+    add_floor: bool = True
+    meshes: Tuple[Union[CapsuleMeshPartsCfg, BoxMeshPartsCfg], ...] = ()
