@@ -14,7 +14,9 @@ from mesh_parts.mesh_parts_cfg import (
     HeightMapMeshPartsCfg,
     CapsuleMeshPartsCfg,
     BoxMeshPartsCfg,
+    CombinedMeshPartsCfg,
 )
+from scipy.spatial.transform import Rotation
 
 # from mesh_parts.rough_parts import generate_perlin_tile_configs
 
@@ -123,7 +125,9 @@ def generate_stepping_stones_stairs(dim):
     return cfgs
 
 
-def generate_platforms(name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_weight=0.1, wall_height=3.0, wall_thickness=0.4, seed=1234):
+def generate_platforms(
+    name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_weight=0.1, wall_height=3.0, wall_thickness=0.4, seed=1234
+):
     platform_types = ["1100", "1110", "1111", "1111_f"]
     cfgs = []
     for platform_type in platform_types:
@@ -613,7 +617,23 @@ def generate_ramp_parts(
     return cfgs
 
 
-def generate_floating_capsules(name, dim, n=15, max_l=1.0, min_l=0.1, min_r=0.1, max_r=1.0, max_n_per_tile=10, weight=1.0, seed=1234):
+def generate_floating_capsules(
+    name,
+    dim,
+    n=15,
+    max_l=1.0,
+    min_l=0.1,
+    min_r=0.1,
+    max_r=1.0,
+    max_n_per_tile=10,
+    max_h=1.0,
+    weight=1.0,
+    seed=1234,
+    rot_x=0.0,
+    rot_y=0.0,
+    rot_z=2.0 * np.pi,
+    horizontal=True,
+):
     np.random.seed(seed)
     weight_per_tile = weight / n
     cfgs = []
@@ -629,10 +649,17 @@ def generate_floating_capsules(name, dim, n=15, max_l=1.0, min_l=0.1, min_r=0.1,
             l = np.random.uniform(min_l, max_l)
             p = np.zeros(3)
             p[:2] = np.random.normal(0.0, 0.4, 2)
-            p[2] = np.random.uniform(0.0, 1.0)
+            p[2] = np.random.uniform(0.0, max_h)
             radii.append(r)
             heights.append(l)
-            transformation = trimesh.transformations.random_rotation_matrix()
+            # transformation = trimesh.transformations.random_rotation_matrix()
+            R = Rotation.from_rotvec(
+                [np.random.uniform(0, rot_x), np.random.uniform(0, rot_y), np.random.uniform(0, rot_z)]
+            ).as_matrix()
+            if horizontal:
+                R = R @ Rotation.from_rotvec([0, 0.5 * np.pi, 0]).as_matrix()
+            transformation = np.eye(4)
+            transformation[:3, :3] = R
             transformation[:3, -1] = p
             transformations.append(transformation)
         cfg = CapsuleMeshPartsCfg(
@@ -650,7 +677,21 @@ def generate_floating_capsules(name, dim, n=15, max_l=1.0, min_l=0.1, min_r=0.1,
     return cfgs
 
 
-def generate_random_boxes(name, dim, n=15, max_w=1.0, min_w=0.1, max_h=1.0, min_h=0.1, max_n_per_tile=10, xy_std=0.4, min_z=0.0, max_z=1.0, weight=1.0, seed=1234):
+def generate_random_boxes(
+    name,
+    dim,
+    n=15,
+    max_w=1.0,
+    min_w=0.1,
+    max_h=1.0,
+    min_h=0.1,
+    max_n_per_tile=10,
+    xy_std=0.4,
+    min_z=0.0,
+    max_z=1.0,
+    weight=1.0,
+    seed=1234,
+):
     np.random.seed(seed)
     weight_per_tile = weight / n
     cfgs = []
@@ -685,10 +726,227 @@ def generate_random_boxes(name, dim, n=15, max_w=1.0, min_w=0.1, max_h=1.0, min_
     return cfgs
 
 
+def add_capsules(cfgs):
+    # print("add capsules ", cfgs)
+    new_cfgs = []
+    capsule_cfgs = generate_floating_capsules(
+        name="capsules",
+        dim=cfgs[0].dim,
+        n=len(cfgs),
+        max_l=1.5,
+        min_l=0.5,
+        min_r=0.05,
+        max_r=0.1,
+        max_h=0.6,
+        max_n_per_tile=10,
+        weight=1.0,
+        seed=1234,
+    )
+    for i, cfg in enumerate(cfgs):
+        new_cfg = CombinedMeshPartsCfg(
+            name=f"{cfg.name}_capsules_{i}", add_floor=cfg.add_floor, cfgs=(cfg, capsule_cfgs[i])
+        )
+        new_cfgs.append(new_cfg)
+    return new_cfgs
+
+
+def generate_overhanging_platforms(name, dim, max_h=1.0, min_h=0.0, h=0.75, thickness=0.2, weight=1.0, seed=1234):
+    # platform_types = ["1100", "1110", "1111", "s", "s2", "p", "p2"]
+    cfgs = []
+    arrays = [
+        # np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 1]]),
+        np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 0, 0, 0, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 0, 0, 0, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [1, 0, 0, 0, 1]]),
+        np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1]]),
+        np.array(
+            [
+                [1, 1, 1, 1, 1],
+                [0, 0.1, 0.2, 0.3, 0.4],
+                [0, 0.1, 0.2, 0.3, 0.4],
+                [0, 0.1, 0.2, 0.3, 0.4],
+                [1, 1, 1, 1, 1],
+            ]
+        ),
+        np.array(
+            [
+                [1, 1, 1, 1, 1],
+                [0, 0.2, 0.0, 0.2, 0.0],
+                [0, 0.2, 0.0, 0.2, 0.0],
+                [0, 0.2, 0.0, 0.2, 0.0],
+                [1, 1, 1, 1, 1],
+            ]
+        ),
+        np.array(
+            [
+                [1, 1, 1, 1, 1],
+                [0.4, 0.5, 0.6, 0.7, 0.8],
+                [0.4, 0.5, 0.6, 0.7, 0.8],
+                [0.4, 0.5, 0.6, 0.7, 0.8],
+                [1, 1, 1, 1, 1],
+            ]
+        ),
+        np.array(
+            [
+                [1, 1, 1, 1, 1],
+                [0.8, 0.9, 1.0, 1.0, 1.0],
+                [0.8, 0.9, 1.0, 1.0, 1.0],
+                [0.8, 0.9, 1.0, 1.0, 1.0],
+                [1, 1, 1, 1, 1],
+            ]
+        ),
+        # np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+        # np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+        # np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+    ]
+
+    additional_arrays = [np.where(array == 1, 0.0, array + h + thickness) for array in arrays]
+    z_dim_arrays = [np.where(array == 1, 0.0, thickness) for array in arrays]
+
+    additional_arrays_with_holes = [array.copy() for array in additional_arrays]
+    for array in additional_arrays_with_holes:
+        # array[2, 2] = 0
+        array[0, :] = 0
+        array[-1, :] = 0
+        array[:, 0] = 0
+        array[:, -1] = 0
+    # print("additinal_arrays", additional_arrays)
+    # print("z_dim_arrays", z_dim_arrays)
+
+    arrays = arrays + arrays
+    additional_arrays = additional_arrays + additional_arrays_with_holes
+    z_dim_arrays = z_dim_arrays + z_dim_arrays
+
+    # additinal_arrays = [
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 1, 1], [1, 1, 0, 1, 1], [1, 1, 0, 1, 1]]),
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 0, 1, 1], [1, 1, 0, 1, 1]]),
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0.1, 0.2, 0.3, 0.4], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0.1, 0.0, 0.1, 0.0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0.4, 0.5, 0.6, 0.7, 0.8], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+    #     np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0.8, 0.9, 1.0, 1.0, 1.0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]),
+    # ]
+    # zs = [
+    #     np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]),
+    #     np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+    #     np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+    #     np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+    #     np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]]),
+    #     ]
+    zs = arrays
+
+    # for platform_type in platform_types:
+    #     use_z_dim_array = False
+    #     if platform_type == "1100":
+    #         array = np.array([[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])
+    #     elif platform_type == "1110":
+    #         array = np.array([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0]])
+    #     elif platform_type == "1111":
+    #         array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
+    #     elif platform_type == "s":
+    #         array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 1, 1, 1, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
+    #     elif platform_type == "s2":
+    #         array = np.array([[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]])
+    #     elif platform_type == "p":
+    #         array = np.array([[1, 1, 1, 1, 1], [0, 1, 0, 1, 0], [1, 0, 1, 0, 1], [0, 1, 0, 1, 0], [1, 1, 1, 1, 1]])
+    for i, array in enumerate(arrays):
+        array = min_h + array * (max_h - min_h)
+        z_dim_array = array
+        additional_array = additional_arrays[i]
+        additional_array = min_h + additional_array * (max_h - min_h)
+        additional_z_dim_array = z_dim_arrays[i] * (max_h - min_h)
+
+        for prefix in ["", "_f"]:
+            if prefix == "_f":
+                use_z_dim_array = True
+                add_array = (additional_array,)
+                add_z_dim = (additional_z_dim_array,)
+            # z_dim_array = np.ones((5, 5)) * 0.1
+            # use_z_dim_array = True
+            else:
+                use_z_dim_array = False
+                add_array = None
+                add_z_dim = None
+            cfg = PlatformMeshPartsCfg(
+                name=f"{name}_{prefix}_{i}",
+                dim=dim,
+                array=array,
+                z_dim_array=z_dim_array,
+                arrays=add_array,
+                z_dim_arrays=add_z_dim,
+                rotations=(90, 180, 270),
+                flips=(),
+                weight=weight,
+                use_z_dim_array=use_z_dim_array,
+            )
+            cfgs.append(cfg)
+    return cfgs
+
+
+# def generate_confined_boxes(
+#     name,
+#     dim,
+#     n=15,
+#     max_w=1.0,
+#     min_w=0.1,
+#     max_h=1.0,
+#     min_h=0.1,
+#     max_n_per_tile=10,
+#     xy_std=0.4,
+#     min_z=0.0,
+#     max_z=1.0,
+#     weight=1.0,
+#     seed=1234,
+# ):
+#     np.random.seed(seed)
+#     weight_per_tile = weight / n
+#     cfgs = []
+#     for y in range(3):
+#         for x in range(3):
+#             p = np.array([x * cfg.dim[0], y * cfg.dim[1], 0.0])
+#     # for i in range(n):
+#     #     cfg_name = f"{name}_{i}"
+#     #     # Randomly sample array
+#     #     # n_cylinders = int(np.random.uniform(2, max_n_per_tile))
+#     #     dims = []
+#     #     transformations = []
+#     #     for j in range(n_cylinders):
+#     #         box_dim = np.zeros(3)
+#     #         box_dim[:2] = np.random.uniform(min_w, max_w, 2)
+#     #         box_dim[2] = np.random.uniform(min_h, max_h)
+#     #         p = np.zeros(3)
+#     #         p[:2] = np.random.normal(0.0, xy_std, 2)
+#     #         p[2] = np.random.uniform(min_z, max_z)
+#     #         dims.append(box_dim)
+#     #         transformation = trimesh.transformations.random_rotation_matrix()
+#     #         transformation[:3, -1] = p
+#     #         transformations.append(transformation)
+#     #     cfg = BoxMeshPartsCfg(
+#     #         name=f"{cfg_name}_{j}",
+#     #         dim=dim,
+#     #         box_dims=tuple(dims),
+#     #         transformations=tuple(transformations),
+#     #         rotations=(90, 180, 270),
+#     #         flips=("x", "y"),
+#     #         weight=weight_per_tile,
+#     #         minimal_triangles=False,
+#     #     )
+#     #     cfgs.append(cfg)
+#     return cfgs
+
+
 if __name__ == "__main__":
     # cfg = FloorPattern()
     # cfgs = generate_floating_capsules("capsule", [2, 2, 2], n=10, max_l=1.0, min_l=0.5, min_r=0.05, max_r=0.2, max_n_per_tile=10, weight=1.0, seed=1234)
-    cfgs = generate_random_boxes("boxes", [2, 2, 2], n=10, max_h=0.5, min_h=0.1, min_w=0.10, max_w=0.5, max_n_per_tile=15, weight=1.0, seed=1234)
+    # cfgs = generate_random_boxes(
+    #     "boxes", [2, 2, 2], n=10, max_h=0.5, min_h=0.1, min_w=0.10, max_w=0.5, max_n_per_tile=15, weight=1.0, seed=1234
+    # )
+    cfgs = generate_overhanging_platforms("boxes", [2, 2, 2], max_h=0.5, min_h=0.1, weight=1.0, seed=1234)
+    # print("cfg", cfgs)
     # print("cfg", cfgs)
 
     from mesh_parts.create_tiles import create_mesh_tile

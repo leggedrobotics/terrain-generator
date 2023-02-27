@@ -54,6 +54,8 @@ class StairMeshPartsCfg(MeshPartsCfg):
 class PlatformMeshPartsCfg(MeshPartsCfg):
     array: np.ndarray = np.zeros((2, 2))
     z_dim_array: np.ndarray = np.zeros((2, 2))
+    arrays: Optional[Tuple[np.ndarray, ...]] = None  # Additional arrays
+    z_dim_arrays: Optional[Tuple[np.ndarray, ...]] = None  # Additional arrays
     add_floor: bool = True
     use_z_dim_array: bool = False  # If true, the box height is determined by the z_dim_array.
     wall: Optional[WallMeshPartsCfg] = None  # It will be used to create the walls.
@@ -107,3 +109,9 @@ class BoxMeshPartsCfg(MeshPartsCfg):
 class RandomMeshPartsCfg(MeshPartsCfg):
     add_floor: bool = True
     meshes: Tuple[Union[CapsuleMeshPartsCfg, BoxMeshPartsCfg], ...] = ()
+
+
+@dataclass
+class CombinedMeshPartsCfg(MeshPartsCfg):
+    add_floor: bool = True
+    cfgs: Tuple[MeshPartsCfg, ...] = ()

@@ -6,7 +6,7 @@ from mesh_parts.mesh_parts_cfg import (
     HeightMapMeshPartsCfg,
     WallMeshPartsCfg,
     CapsuleMeshPartsCfg,
-    BoxMeshPartsCfg
+    BoxMeshPartsCfg,
 )
 from mesh_parts.mesh_utils import (
     merge_meshes,
@@ -18,7 +18,7 @@ from mesh_parts.mesh_utils import (
 )
 
 
-def create_floor(cfg: MeshPartsCfg):
+def create_floor(cfg: MeshPartsCfg, **kwargs):
     dims = [cfg.dim[0], cfg.dim[1], cfg.floor_thickness]
     pose = np.eye(4)
     pose[:3, -1] = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness / 2.0 + cfg.height_offset]
@@ -26,7 +26,7 @@ def create_floor(cfg: MeshPartsCfg):
     return floor
 
 
-def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
+def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom", **kwargs):
     if edge == "bottom":
         dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
         pos = [
@@ -120,7 +120,7 @@ def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
     return wall
 
 
-def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up"):
+def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up", **kwargs):
     if door_direction == "bottom" or door_direction == "up":
         dim = [cfg.door_width, 2.0, cfg.door_height]
         pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
@@ -164,7 +164,7 @@ def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up"):
     return door
 
 
-def create_wall_mesh(cfg: WallMeshPartsCfg):
+def create_wall_mesh(cfg: WallMeshPartsCfg, **kwargs):
     # Create the vertices of the wall
     floor = create_floor(cfg)
     meshes = [floor]
@@ -181,31 +181,42 @@ def create_wall_mesh(cfg: WallMeshPartsCfg):
     return mesh
 
 
-def create_platform_mesh(cfg: PlatformMeshPartsCfg):
+def create_platform_mesh(cfg: PlatformMeshPartsCfg, **kwargs):
     meshes = []
     min_h = 0.0
     if cfg.add_floor:
         meshes.append(create_floor(cfg))
         min_h = cfg.floor_thickness
-    dim_xy = [cfg.dim[0] / cfg.array.shape[0], cfg.dim[1] / cfg.array.shape[1]]
-    for y in range(cfg.array.shape[1]):
-        for x in range(cfg.array.shape[0]):
-            if cfg.array[y, x] > min_h:
-                h = cfg.array[y, x]
-                dim = [dim_xy[0], dim_xy[1], h]
-                if cfg.use_z_dim_array:
-                    z = cfg.z_dim_array[y, x]
-                    if z > 0.0 and z < h:
-                        dim = np.array([dim_xy[0], dim_xy[1], cfg.z_dim_array[y, x]])
-                pos = np.array(
-                    [
-                        x * dim[0] - cfg.dim[0] / 2.0 + dim[0] / 2.0,
-                        -y * dim[1] + cfg.dim[1] / 2.0 - dim[1] / 2.0,
-                        h - dim[2] / 2.0 - cfg.dim[2] / 2.0,
-                    ]
-                )
-                box_mesh = trimesh.creation.box(dim, trimesh.transformations.translation_matrix(pos))
-                meshes.append(box_mesh)
+
+    arrays = [cfg.array]
+    z_dim_arrays = [cfg.z_dim_array]
+
+    # Additional arrays
+    if cfg.arrays is not None:
+        arrays += cfg.arrays
+    if cfg.z_dim_arrays is not None:
+        z_dim_arrays += cfg.z_dim_arrays
+
+    for array, z_dim_array in zip(arrays, z_dim_arrays):
+        dim_xy = [cfg.dim[0] / array.shape[0], cfg.dim[1] / array.shape[1]]
+        for y in range(array.shape[1]):
+            for x in range(array.shape[0]):
+                if array[y, x] > min_h:
+                    h = array[y, x]
+                    dim = [dim_xy[0], dim_xy[1], h]
+                    if cfg.use_z_dim_array:
+                        z = z_dim_array[y, x]
+                        if z > 0.0 and z < h:
+                            dim = np.array([dim_xy[0], dim_xy[1], z_dim_array[y, x]])
+                    pos = np.array(
+                        [
+                            x * dim[0] - cfg.dim[0] / 2.0 + dim[0] / 2.0,
+                            -y * dim[1] + cfg.dim[1] / 2.0 - dim[1] / 2.0,
+                            h - dim[2] / 2.0 - cfg.dim[2] / 2.0,
+                        ]
+                    )
+                    box_mesh = trimesh.creation.box(dim, trimesh.transformations.translation_matrix(pos))
+                    meshes.append(box_mesh)
     if cfg.wall is not None:
         wall_mesh = create_wall_mesh(cfg.wall)
         meshes.append(wall_mesh)
@@ -216,7 +227,7 @@ def create_platform_mesh(cfg: PlatformMeshPartsCfg):
     return mesh
 
 
-def create_from_height_map(cfg: HeightMapMeshPartsCfg):
+def create_from_height_map(cfg: HeightMapMeshPartsCfg, **kwargs):
     mesh = trimesh.Trimesh()
     height_map = cfg.height_map
 
@@ -246,28 +257,28 @@ def create_from_height_map(cfg: HeightMapMeshPartsCfg):
     return mesh
 
 
-def create_capsule_mesh(cfg: CapsuleMeshPartsCfg):
-    # Create the vertices of the wall
-    if cfg.add_floor:
-        floor = create_floor(cfg)
-        meshes = [floor]
-    else:
-        meshes = []
-    for i in range(len(cfg.radii)):
-        capsule = trimesh.creation.capsule(
-            radius=cfg.radii[i],
-            height=cfg.heights[i],
-            # transform=cfg.transformations[i],
-        )
-        t = cfg.transformations[i].copy()
-        t[2, 3] -= cfg.dim[2] / 2.0
-        capsule.apply_transform(t)
-        meshes.append(capsule)
-    mesh = merge_meshes(meshes, cfg.minimal_triangles)
-    return mesh
+# def create_capsule_mesh(cfg: CapsuleMeshPartsCfg, **kwargs):
+#     # Create the vertices of the wall
+#     if cfg.add_floor:
+#         floor = create_floor(cfg)
+#         meshes = [floor]
+#     else:
+#         meshes = []
+#     for i in range(len(cfg.radii)):
+#         capsule = trimesh.creation.capsule(
+#             radius=cfg.radii[i],
+#             height=cfg.heights[i],
+#             # transform=cfg.transformations[i],
+#         )
+#         t = cfg.transformations[i].copy()
+#         t[2, 3] -= cfg.dim[2] / 2.0
+#         capsule.apply_transform(t)
+#         meshes.append(capsule)
+#     mesh = merge_meshes(meshes, cfg.minimal_triangles)
+#     return mesh
 
 
-def create_box_mesh(cfg: BoxMeshPartsCfg):
+def create_box_mesh(cfg: BoxMeshPartsCfg, **kwargs):
     print("create box mesh!!!!")
     if cfg.add_floor:
         print("create floor")
@@ -280,8 +291,8 @@ def create_box_mesh(cfg: BoxMeshPartsCfg):
         t = cfg.transformations[i].copy()
         t[2, 3] -= cfg.dim[2] / 2.0
         box = trimesh.creation.box(
-                cfg.box_dims[i],
-                t,
+            cfg.box_dims[i],
+            t,
         )
         # box.apply_transform(t)
         meshes.append(box)
@@ -289,7 +300,7 @@ def create_box_mesh(cfg: BoxMeshPartsCfg):
     return mesh
 
 
-def create_random_mesh(cfg: CapsuleMeshPartsCfg):
+def create_random_mesh(cfg: CapsuleMeshPartsCfg, **kwargs):
     # Create the vertices of the wall
     if cfg.add_floor:
         floor = create_floor(cfg)
@@ -310,18 +321,59 @@ def create_random_mesh(cfg: CapsuleMeshPartsCfg):
     return mesh
 
 
+def create_capsule_mesh(cfg: CapsuleMeshPartsCfg, mesh: trimesh.Trimesh = None, **kwargs):
+    # Create the vertices of the wall
+    meshes = []
+    positions = []
+    for i in range(len(cfg.radii)):
+        capsule = trimesh.creation.capsule(
+            radius=cfg.radii[i],
+            height=cfg.heights[i],
+            # transform=cfg.transformations[i],
+        )
+        t = cfg.transformations[i].copy()
+        t[2, 3] -= cfg.dim[2] / 2.0
+        positions.append(t[0:3, 3])
+        capsule.apply_transform(t)
+        meshes.append(capsule)
+
+    # Get heights of each position of capsule
+    if mesh is not None:
+        positions = np.array(positions)
+        x = positions[:, 0]
+        y = positions[:, 1]
+        origins = np.stack([x, y, np.ones_like(x) * cfg.dim[2] * 2], axis=-1)
+        # print("origins ", origins)
+        vectors = np.stack([np.zeros_like(x), np.zeros_like(y), -np.ones_like(x)], axis=-1)
+        # print("vectors ", vectors)
+        # # do the actual ray- mesh queries
+        points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=True)
+        # print("points ", points)
+        # print("index_ray ", index_ray)
+        # print("index_tri ", index_tri)
+        translations = []
+        for idx in index_ray:
+            # positions[idx, 2] += points[idx, 2]
+            translations.append(cfg.dim[2] / 2.0 + points[idx, 2])
+        # print("translations ", translations)
+        for i, m in enumerate(meshes):
+            m.apply_translation([0, 0, translations[i]])
+    mesh = merge_meshes(meshes, cfg.minimal_triangles)
+    return mesh
+
+
 if __name__ == "__main__":
 
     positions = [np.array([0.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]), np.array([1.0, 0.0, 0.0])]
     transformations = [trimesh.transformations.random_rotation_matrix() for i in range(len(positions))]
     for i in range(len(positions)):
         transformations[i][:3, -1] = positions[i]
-    capsule_cfg = CapsuleMeshPartsCfg(radii=(0.1, 0.2, 0.3), heights=(0.4, 0.5, 0.6), transformations=tuple(transformations))
+    capsule_cfg = CapsuleMeshPartsCfg(
+        radii=(0.1, 0.2, 0.3), heights=(0.4, 0.5, 0.6), transformations=tuple(transformations)
+    )
     capsule_mesh = create_capsule_mesh(capsule_cfg)
     capsule_mesh.show()
     print(get_height_array_of_mesh(capsule_mesh, capsule_cfg.dim, 5))
-
-
 
     cfg = HeightMapMeshPartsCfg(height_map=np.ones((3, 3)) * 1.4, target_num_faces=50)
     mesh = create_from_height_map(cfg)
