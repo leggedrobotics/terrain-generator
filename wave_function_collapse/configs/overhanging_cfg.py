@@ -24,6 +24,8 @@ from patterns.pattern_generator import (
     generate_stepping_stones,
     generate_floating_capsules,
     generate_random_boxes,
+    generate_overhanging_platforms,
+    add_capsules,
 )
 from mesh_parts.create_tiles import create_mesh_tile
 from mesh_parts.basic_parts import create_from_height_map
@@ -35,12 +37,87 @@ class OverhangingPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
-        (WallMeshPartsCfg( name=f"floor", dim=dim, wall_edges=(), weight=13.0),)
+        (WallMeshPartsCfg(name=f"floor", dim=dim, wall_edges=(), weight=0.01),)
+        # + tuple(
+        #     generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=1.0)
+        # )
+        # + tuple(
+        #     generate_floating_capsules(
+        #         "capsules",
+        #         [2, 2, 2],
+        #         n=10,
+        #         max_l=1.5,
+        #         min_l=0.5,
+        #         min_r=0.05,
+        #         max_r=0.1,
+        #         max_n_per_tile=10,
+        #         weight=1.0,
+        #         seed=1234,
+        #     )
+        # )
+        # + tuple(
+        #     generate_random_boxes(
+        #         "boxes",
+        #         [2, 2, 2],
+        #         n=10,
+        #         max_h=0.5,
+        #         min_h=0.1,
+        #         min_w=0.10,
+        #         max_w=0.5,
+        #         max_n_per_tile=15,
+        #         weight=1.0,
+        #         seed=1234,
+        #     )
+        # )
+        # + tuple(
+        #     add_capsules(
+        #         generate_ramp_parts(
+        #             name="ramp",
+        #             dim=dim,
+        #             seed=seed,
+        #             array_shape=[30, 30],
+        #             total_height=1.0,
+        #             offset=0.00,
+        #             weight=1.0,
+        #             depth_num=1,
+        #         )
+        #     )
+        # )
+        # + tuple(
+        #     add_capsules(
+        #         generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2)
+        #     )
+        # )
         + tuple(
-            generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=1.0)
+            generate_overhanging_platforms(
+                name="overhanging_platforms_0.65",
+                thickness=0.2,
+                h=0.65,
+                dim=dim,
+                seed=seed,
+                weight=1.0,
+            )
         )
-        + tuple(generate_floating_capsules("capsules", [2, 2, 2], n=10, max_l=1.0, min_l=0.5, min_r=0.05, max_r=0.2, max_n_per_tile=10, weight=1.0, seed=1234))
-        + tuple(generate_random_boxes("boxes", [2, 2, 2], n=10, max_h=0.5, min_h=0.1, min_w=0.10, max_w=0.5, max_n_per_tile=15, weight=1.0, seed=1234))
+        + tuple(
+            generate_overhanging_platforms(
+                name="overhanging_platforms_0.5",
+                thickness=0.2,
+                h=0.5,
+                dim=dim,
+                seed=seed,
+                weight=1.0,
+            )
+        )
+        + tuple(
+            generate_overhanging_platforms(
+                name="overhanging_platforms_1.5",
+                thickness=0.2,
+                h=1.0,
+                dim=dim,
+                seed=seed,
+                weight=1.0,
+            )
+        )
         # + tuple(generate_perlin_tile_configs(name="perlin_0", dim=dim, seed=seed, weight=1.2))
         # + tuple(generate_perlin_tile_configs(name="perlin_0.5", dim=dim, seed=seed, weight=1.2, offset=0.5))
         # + tuple(generate_perlin_tile_configs(name="perlin_1", dim=dim, seed=seed, weight=1.2, offset=1.0))
@@ -54,7 +131,7 @@ class OverhangingPattern(MeshPattern):
 #     levels: Tuple[float, ...] = (0.0, 0.5, 1.0, 1.5, 2.0)
 #     wall_height: float = 0.5
 #     mesh_parts: Tuple[MeshPartsCfg, ...] = ()
-# 
+#
 #     def __post_init__(self):
 #         cfgs = ()
 #         dim = self.dim
@@ -133,7 +210,7 @@ class OverhangingPattern(MeshPattern):
 if __name__ == "__main__":
     cfg = OverhangingPattern()
     # print(cfg)
-    keywords = ["capsule"]
+    keywords = ["mesh"]
     for mesh_part in cfg.mesh_parts:
         print("name ", mesh_part.name)
         if any([keyword in mesh_part.name for keyword in keywords]):

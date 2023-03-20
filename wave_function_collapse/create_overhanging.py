@@ -49,6 +49,10 @@ def create_tiles(
         # ("platform_1.0_2.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         # ("platform_0.0_1.0_1111_f", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
         (init_name, (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
+        (init_name, (wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4)),
+        # (init_name, (wfc_solver.shape[0] // 4 * 3, wfc_solver.shape[1] // 4)),
+        # (init_name, (wfc_solver.shape[0] // 4, wfc_solver.shape[1] // 4 * 3)),
+        (init_name, (wfc_solver.shape[0] // 4 * 3, wfc_solver.shape[1] // 4 * 3)),
         # ("platform_1_1111", (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2)),
     ]
     wave = wfc_solver.run(init_tiles=init_tiles, max_steps=10000)

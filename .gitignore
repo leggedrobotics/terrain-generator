@@ -1,5 +1,4 @@
-
-connection_cache
+results/
 mesh_cache
-results/nav_0.6_floor_with_history
-wave_function_collapse/results
+*.pyc
+*.pkl
