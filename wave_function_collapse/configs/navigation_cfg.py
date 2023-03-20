@@ -134,7 +134,7 @@ class IndoorNavigationPatternLevels(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
     levels: Tuple[float, ...] = (0.0, 0.5, 1.0, 1.5, 2.0)
-    wall_height: float = 0.5
+    wall_height: float = 3.0
     mesh_parts: Tuple[MeshPartsCfg, ...] = ()
 
     def __post_init__(self):
@@ -170,18 +170,18 @@ class IndoorNavigationPatternLevels(MeshPattern):
                 #     )
                 # )
                 # + tuple(generate_narrow(name=f"narrow_{min_h}_{max_h}", dim=dim, max_h=max_h, min_h=min_h, weight=0.2))
-                + tuple(
-                    generate_floating_boxes(
-                        name=f"floating_boxes_{min_h}_{max_h}",
-                        n=30,
-                        dim=dim,
-                        max_h=max_h,
-                        min_h=min_h,
-                        seed=seed,
-                        array_shape=[5, 5],
-                        weight=1.05,
-                    )
-                )
+                # + tuple(
+                #     generate_floating_boxes(
+                #         name=f"floating_boxes_{min_h}_{max_h}",
+                #         n=30,
+                #         dim=dim,
+                #         max_h=max_h,
+                #         min_h=min_h,
+                #         seed=seed,
+                #         array_shape=[5, 5],
+                #         weight=1.05,
+                #     )
+                # )
                 + tuple(
                     generate_stair_parts(
                         name=f"stair_{min_h}_{max_h}",
