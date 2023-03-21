@@ -33,8 +33,8 @@ class LSystem:
         return state
 
 
-def generate_tree_mesh():
-    num_branches = 4
+def generate_tree_mesh(num_branches=2, iterations=3, angle_adjustment=22.5, seed=0):
+    # num_branches = 4
     rules = {
         "F": "FF",
         "X": "F[{0}X]{1}"
@@ -59,8 +59,8 @@ def generate_tree_mesh():
     }
 
     # Generate the L-system state
-    lsys = LSystem("X", rules, angle_adjustment=20.5, num_branches=num_branches)
-    state = lsys.generate(3)
+    lsys = LSystem("X", rules, angle_adjustment=angle_adjustment, num_branches=num_branches)
+    state = lsys.generate(iterations)
 
     # Initialize the tree mesh
     tree = trimesh.Trimesh()
@@ -133,6 +133,6 @@ def generate_tree_mesh():
 
 
 # Generate the tree mesh and export it to an OBJ file
-tree_mesh = generate_tree_mesh()
+tree_mesh = generate_tree_mesh(num_branches=4)
 tree_mesh.show()
 tree_mesh.export("tree.obj")
