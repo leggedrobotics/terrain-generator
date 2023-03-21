@@ -194,6 +194,54 @@ def create_narrow(cfg: MeshPartsCfg, width=0.5, side_std=0.0, height_std=0.0, n=
     return cfgs
 
 
+def create_stepping(cfg: MeshPartsCfg, width=0.5, side_std=0.0, height_std=0.0, ratio=0.5, n=10, **kwargs):
+    dims = []
+    transformations = []
+
+    step_length = cfg.dim[1] / n * ratio
+
+    for i in range(n):
+        # First platform_
+        dims.append([width, step_length, cfg.floor_thickness])
+        t = np.eye(4)
+        x = np.random.normal(0, side_std)
+        y = -cfg.dim[1] / 2.0 + (i + 0.5) * cfg.dim[1] / n
+        z = cfg.floor_thickness / 2.0 + np.random.normal(0, height_std)
+        t[:3, -1] = np.array([x, y, z])
+        transformations.append(t)
+
+    cfgs = (
+        PlatformMeshPartsCfg(
+            name="start",
+            dim=cfg.dim,
+            array=np.array([[0, 0], [0, 0]]),
+            # rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        BoxMeshPartsCfg(
+            name="middle",
+            dim=cfg.dim,
+            box_dims=tuple(dims),
+            transformations=tuple(transformations),
+            # rotations=(90, 180, 270),
+            # flips=("x", "y"),
+            weight=0.1,
+            minimal_triangles=False,
+            add_floor=False,
+        ),
+        PlatformMeshPartsCfg(
+            name="goal",
+            dim=cfg.dim,
+            array=np.array([[0, 0], [0, 0]]),
+            # rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+    )
+    return cfgs
+
+
 def create_box_grid(cfg: MeshPartsCfg, height_diff=0.5, height_std=0.2, n=8, **kwargs):
     height_diff = height_diff + cfg.floor_thickness
     array = np.zeros((n, n))

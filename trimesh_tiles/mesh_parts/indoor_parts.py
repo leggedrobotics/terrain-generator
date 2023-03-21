@@ -1,16 +1,16 @@
 import trimesh
 import numpy as np
-from mesh_parts.mesh_parts_cfg import (
-    WallMeshPartsCfg,
-    StairMeshPartsCfg,
-)
-from mesh_parts.mesh_utils import (
+from utils import (
     merge_meshes,
     rotate_mesh,
     ENGINE,
     get_height_array_of_mesh,
 )
-from mesh_parts.basic_parts import create_floor
+from .mesh_parts_cfg import (
+    WallMeshPartsCfg,
+    StairMeshPartsCfg,
+)
+from .basic_parts import create_floor
 
 
 def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):

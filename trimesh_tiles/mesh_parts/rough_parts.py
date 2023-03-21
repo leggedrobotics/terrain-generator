@@ -1,21 +1,21 @@
 import trimesh
 import numpy as np
 import matplotlib.pyplot as plt
-from mesh_parts.mesh_parts_cfg import (
-    WallMeshPartsCfg,
-    # StairMeshPartsCfg,
-    HeightMapMeshPartsCfg,
-)
-from mesh_parts.mesh_utils import (
+from perlin_numpy import generate_perlin_noise_2d, generate_fractal_noise_2d
+
+
+from utils import (
     merge_meshes,
     rotate_mesh,
     ENGINE,
     get_height_array_of_mesh,
 )
-from mesh_parts.basic_parts import create_floor
-from mesh_parts.create_tiles import create_mesh_tile
-
-from perlin_numpy import generate_perlin_noise_2d, generate_fractal_noise_2d
+from .mesh_parts_cfg import (
+    WallMeshPartsCfg,
+    # StairMeshPartsCfg,
+    HeightMapMeshPartsCfg,
+)
+from .basic_parts import create_floor
 
 
 def generate_perlin_tile_configs(name, dim, weight, height=0.5, offset=0.1, seed=0, shape=(128, 128), res=(8, 8)):
@@ -124,6 +124,8 @@ def generate_perlin_tile_configs(name, dim, weight, height=0.5, offset=0.1, seed
 
 
 if __name__ == "__main__":
+    from .create_tiles import create_mesh_tile
+
     print("test")
     # generate_perlin_tile_configs("perlin", 1.0)
     cfgs = []

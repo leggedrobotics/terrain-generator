@@ -3,9 +3,9 @@ from typing import Tuple, Callable
 import trimesh
 import functools
 
-from wfc.tiles import Tile, ArrayTile, MeshTile
-from mesh_parts.indoor_parts import create_stairs_mesh
-from mesh_parts.basic_parts import (
+from wfc.tiles import MeshTile
+from .indoor_parts import create_stairs_mesh
+from .basic_parts import (
     create_floor,
     create_platform_mesh,
     create_from_height_map,
@@ -13,7 +13,7 @@ from mesh_parts.basic_parts import (
     create_capsule_mesh,
     create_box_mesh,
 )
-from mesh_parts.mesh_parts_cfg import (
+from .mesh_parts_cfg import (
     MeshPartsCfg,
     WallMeshPartsCfg,
     MeshPattern,
@@ -24,8 +24,9 @@ from mesh_parts.mesh_parts_cfg import (
     BoxMeshPartsCfg,
     CombinedMeshPartsCfg,
 )
-from mesh_parts.mesh_utils import get_height_array_of_mesh, get_cached_mesh_gen, merge_meshes
-from alive_progress import alive_it
+from utils import get_height_array_of_mesh, get_cached_mesh_gen, merge_meshes
+
+# from alive_progress import alive_it
 
 
 def get_mesh_gen(cfg: MeshPartsCfg) -> Callable:
@@ -72,12 +73,14 @@ def create_mesh_tile(cfg: MeshPartsCfg) -> MeshTile:
     cached_mesh_gen = get_cached_mesh_gen(mesh_gen, cfg, verbose=False, use_cache=cfg.load_from_cache)
     name = cfg.name
     mesh = cached_mesh_gen()
+    # If edge array is not provided, create it from the mesh
+    if cfg.edge_array is None:
+        cfg.edge_array = get_height_array_of_mesh(mesh, cfg.dim, 5)
+    # Create the tile
     if cfg.use_generator:
-        array = get_height_array_of_mesh(mesh, cfg.dim, 5)
-        return MeshTile(name, array, cached_mesh_gen, mesh_dim=cfg.dim, weight=cfg.weight)
+        return MeshTile(name, cached_mesh_gen, array=cfg.edge_array, mesh_dim=cfg.dim, weight=cfg.weight)
     else:
-        array = get_height_array_of_mesh(mesh, cfg.dim, 5)
-        return MeshTile(name, array, mesh, mesh_dim=cfg.dim, weight=cfg.weight)
+        return MeshTile(name, mesh, array=array, mesh_dim=cfg.dim, weight=cfg.weight)
 
 
 def create_mesh_pattern(cfg: MeshPattern):
@@ -88,7 +91,7 @@ def create_mesh_pattern(cfg: MeshPattern):
 
     tiles = []
     print("Creating mesh pattern... ")
-    for mesh_cfg in alive_it(cfg.mesh_parts):
+    for mesh_cfg in cfg.mesh_parts:
         tiles.append(create_mesh_tile_remote.remote(mesh_cfg))
     print("Waiting for parallel creation... ")
     tiles = ray.get(tiles)

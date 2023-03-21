@@ -4,7 +4,7 @@ import functools
 from typing import Dict, Optional, Any, Callable, Tuple, Union
 
 from .wfc import Direction2D, Direction3D
-from mesh_parts.mesh_utils import flip_mesh, rotate_mesh, get_height_array_of_mesh
+from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh
 
 
 class Tile:
@@ -138,8 +138,8 @@ class MeshTile(ArrayTile):
     def __init__(
         self,
         name: str,
-        array: np.ndarray,
         mesh: Union[trimesh.Trimesh, Callable[[], trimesh.Trimesh]],
+        array: Optional[np.ndarray] = None,
         edges: Optional[Dict[str, str]] = None,
         mesh_dim: Tuple[float, float, float] = (2.0, 2.0, 2.0),
         array_sample_size: int = 5,

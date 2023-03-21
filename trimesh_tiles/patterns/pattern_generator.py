@@ -4,8 +4,9 @@ from dataclasses import dataclass
 import trimesh
 
 from numpy.random import f
+from scipy.spatial.transform import Rotation
 
-from mesh_parts.mesh_parts_cfg import (
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPattern,
     MeshPartsCfg,
     WallMeshPartsCfg,
@@ -16,9 +17,6 @@ from mesh_parts.mesh_parts_cfg import (
     BoxMeshPartsCfg,
     CombinedMeshPartsCfg,
 )
-from scipy.spatial.transform import Rotation
-
-# from mesh_parts.rough_parts import generate_perlin_tile_configs
 
 
 def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):

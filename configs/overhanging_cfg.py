@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from numpy.random import f
 
-from mesh_parts.mesh_parts_cfg import (
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPattern,
     MeshPartsCfg,
     WallMeshPartsCfg,
@@ -12,9 +12,9 @@ from mesh_parts.mesh_parts_cfg import (
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
 )
-from mesh_parts.rough_parts import generate_perlin_tile_configs
+from trimesh_tiles.mesh_parts.rough_parts import generate_perlin_tile_configs
 
-from patterns.pattern_generator import (
+from trimesh_tiles.patterns.pattern_generator import (
     generate_walls,
     generate_floating_boxes,
     generate_narrow,
@@ -27,9 +27,8 @@ from patterns.pattern_generator import (
     generate_overhanging_platforms,
     add_capsules,
 )
-from mesh_parts.create_tiles import create_mesh_tile
-from mesh_parts.basic_parts import create_from_height_map
-from mesh_parts.mesh_utils import get_height_array_of_mesh
+from trimesh_tiles.mesh_parts.create_tiles import create_mesh_tile
+from trimesh_tiles.mesh_parts.basic_parts import create_from_height_map
 
 
 @dataclass
@@ -208,6 +207,7 @@ class OverhangingPattern(MeshPattern):
 
 
 if __name__ == "__main__":
+    from utils import get_height_array_of_mesh
     cfg = OverhangingPattern()
     # print(cfg)
     keywords = ["mesh"]

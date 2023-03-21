@@ -1,6 +1,6 @@
 import trimesh
 import numpy as np
-from mesh_parts.mesh_parts_cfg import (
+from .mesh_parts_cfg import (
     MeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
@@ -8,7 +8,7 @@ from mesh_parts.mesh_parts_cfg import (
     CapsuleMeshPartsCfg,
     BoxMeshPartsCfg,
 )
-from mesh_parts.mesh_utils import (
+from utils import (
     merge_meshes,
     merge_two_height_meshes,
     convert_heightfield_to_trimesh,

@@ -2,3 +2,5 @@ results/
 mesh_cache
 *.pyc
 *.pkl
+*.obj
+*.stl

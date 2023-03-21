@@ -13,6 +13,7 @@ class MeshPartsCfg:
     rotations: Tuple[int, ...] = ()  # (90, 180, 270)
     flips: Tuple[str, ...] = ()  # ("x", "y")
     height_offset: float = 0.0
+    edge_array: Optional[np.ndarray] = None  # Array for edge definition. If None, height of the mesh is used.
     use_generator: bool = True
     load_from_cache: bool = True
 

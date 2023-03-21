@@ -13,7 +13,7 @@ from typing import Literal, Tuple, Dict, List
 
 # import itertools
 from alive_progress import alive_bar, alive_it
-from mesh_parts.mesh_utils import cfg_to_hash
+from utils import cfg_to_hash
 
 
 class Wave:

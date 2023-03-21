@@ -4,9 +4,9 @@ import trimesh
 
 from wfc.wfc import WFCSolver
 
-from mesh_parts.create_tiles import create_mesh_pattern
-from mesh_parts.mesh_utils import visualize_mesh
-from mesh_parts.mesh_parts_cfg import MeshPattern
+from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
+from utils.mesh_utils import visualize_mesh
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPattern
 
 from configs.navigation_cfg import IndoorNavigationPatternLevels
 from alive_progress import alive_bar
