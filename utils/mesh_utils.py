@@ -2,7 +2,7 @@ import os
 import numpy as np
 from pyglet.window.key import P
 import trimesh
-from typing import Callable, Any, Optional
+from typing import Callable, Any, Optional, Union, Tuple, List, Literal
 from dataclasses import asdict, is_dataclass
 import open3d as o3d
 import copy
@@ -13,7 +13,7 @@ CACHE_DIR = "mesh_cache"
 # ENGINE = "scad"
 
 
-def merge_meshes(meshes, minimal_triangles=False, engine="blender"):
+def merge_meshes(meshes: List[trimesh.Trimesh], minimal_triangles: bool = False, engine: str = "blender"):
     if minimal_triangles:
         meshes = trimesh.boolean.union(meshes, engine=engine)
     else:
@@ -21,7 +21,7 @@ def merge_meshes(meshes, minimal_triangles=False, engine="blender"):
     return meshes
 
 
-def flip_mesh(mesh, direction):
+def flip_mesh(mesh: trimesh.Trimesh, direction: Literal["x", "y"]):
     """Flip a mesh in a given direction."""
     new_mesh = mesh.copy()
     if direction == "x":
@@ -36,7 +36,7 @@ def flip_mesh(mesh, direction):
     return new_mesh
 
 
-def rotate_mesh(mesh, deg):
+def rotate_mesh(mesh: trimesh.Trimesh, deg: Literal[90, 180, 270]):
     """Rotate a mesh in a given degree."""
     new_mesh = mesh.copy()
     if deg == 90:
@@ -51,7 +51,41 @@ def rotate_mesh(mesh, deg):
     return new_mesh
 
 
-def get_height_array_of_mesh(mesh, dim, num_points, offset=0.01):
+def get_heights_from_mesh(mesh: trimesh.Trimesh, origins: np.ndarray):
+    """Get the height of a mesh at a given origin.
+    Args:
+        mesh (trimesh.Trimesh): mesh
+        origins (np.ndarray): origins
+    Returns:
+        heights (np.ndarray): heights
+    """
+
+    # if origins dimension is 2, add 3rd dimension
+    if origins.shape[1] == 2:
+        origins = np.concatenate([origins, np.ones((origins.shape[0], 1)) * 100], axis=1)
+
+    vectors = np.stack(
+        [np.zeros_like(origins[:, 0]), np.zeros_like(origins[:, 1]), -np.ones_like(origins[:, 2])], axis=-1
+    )
+    # # do the actual ray- mesh queries
+    points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=False)
+    array = np.zeros((origins.shape[0]))
+    if len(points) > 0:
+        array[index_ray] = points[:, 2]
+    return array
+
+
+def get_height_array_of_mesh(mesh: trimesh.Trimesh, dim: Tuple[int, int, int], num_points: int, offset: float = 0.01):
+    """
+    Get the height array of a mesh.
+    Args:
+        mesh: The mesh.
+        dim: The dimension of the mesh.
+        num_points: The number of points in the height array.
+        offset: The offset of the height array.
+    Returns:
+        The height array.
+    """
     # intersects_location requires origins to be the same shape as vectors
     x = np.linspace(-dim[0] / 2.0 + offset, dim[0] / 2.0 - offset, num_points)
     y = np.linspace(dim[1] / 2.0 - offset, -dim[1] / 2.0 + offset, num_points)
@@ -70,7 +104,12 @@ def get_height_array_of_mesh(mesh, dim, num_points, offset=0.01):
     return array
 
 
-def convert_heightfield_to_trimesh(height_field_raw, horizontal_scale, vertical_scale, slope_threshold=None):
+def convert_heightfield_to_trimesh(
+    height_field_raw: np.ndarray,
+    horizontal_scale: float,
+    vertical_scale: float,
+    slope_threshold: Optional[float] = None,
+):
     """
     Convert a heightfield array to a triangle mesh represented by vertices and triangles.
     Optionally, corrects vertical surfaces above the provide slope threshold:
@@ -148,7 +187,7 @@ def convert_heightfield_to_trimesh(height_field_raw, horizontal_scale, vertical_
     return mesh
 
 
-def merge_two_height_meshes(mesh1, mesh2):
+def merge_two_height_meshes(mesh1: trimesh.Trimesh, mesh2: trimesh.Trimesh):
     """
     Merge two heightfield meshes into one.
     Parameters:
@@ -190,7 +229,7 @@ def merge_two_height_meshes(mesh1, mesh2):
     return merged_mesh
 
 
-def visualize_mesh(mesh, save_path=None):
+def visualize_mesh(mesh: Union[trimesh.Trimesh, o3d.geometry.TriangleMesh], save_path=None):
     """Visualize a mesh."""
     # o3d_mesh = o3d.geometry.TriangleMesh()
     if isinstance(mesh, trimesh.Trimesh):

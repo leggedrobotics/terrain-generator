@@ -1,6 +1,8 @@
 import trimesh
 import random
 import numpy as np
+from utils import get_heights_from_mesh
+from typing import Tuple
 
 
 class LSystem:
@@ -33,8 +35,19 @@ class LSystem:
         return state
 
 
-def generate_tree_mesh(num_branches=2, iterations=3, angle_adjustment=22.5, seed=0):
-    # num_branches = 4
+def generate_tree_mesh(
+    num_branches: int = 2, iterations: int = 3, angle_adjustment: float = 22.5, cylinder_sections: int = 8
+):
+    """
+    Generate a tree mesh using an L-system.
+    Args:
+        num_branches: Number of branches to generate
+        iterations: Number of iterations to run the L-system
+        angle_adjustment: Angle adjustment for each iteration
+        cylinder_sections: Number of sections to use for the tree cylinders
+    Returns:
+        tree_mesh: A trimesh.Trimesh object representing the tree mesh
+    """
     rules = {
         "F": "FF",
         "X": "F[{0}X]{1}"
@@ -83,7 +96,7 @@ def generate_tree_mesh(num_branches=2, iterations=3, angle_adjustment=22.5, seed
             endpoint = position + step_size * direction
             distance = np.linalg.norm(endpoint)
             radius = max(0.005, min(0.04 - 0.02 * distance, 0.03))
-            cylinder = trimesh.creation.cylinder(radius=radius, height=step_size)
+            cylinder = trimesh.creation.cylinder(radius=radius, height=step_size, sections=cylinder_sections)
             center = (position + endpoint) / 2.0
             cylinder.apply_transform(rot_mat)
             cylinder.apply_translation(center)
@@ -132,7 +145,60 @@ def generate_tree_mesh(num_branches=2, iterations=3, angle_adjustment=22.5, seed
     return tree
 
 
-# Generate the tree mesh and export it to an OBJ file
-tree_mesh = generate_tree_mesh(num_branches=4)
-tree_mesh.show()
-tree_mesh.export("tree.obj")
+def add_trees_on_terrain(
+    terrain_mesh: trimesh.Trimesh,
+    num_trees: int = 10,
+    tree_scale_range: Tuple[float, float] = (0.5, 1.5),
+    tree_deg_range: Tuple[float, float] = (-30.0, 30.0),
+    tree_cylinder_sections: int = 6,
+):
+    """
+    Add trees to a terrain mesh.
+    Args:
+        terrain_mesh: A trimesh.Trimesh object representing the terrain mesh
+        num_trees: Number of trees to add
+        tree_scale_range: Range of tree scales to use
+        tree_deg_range: Range of tree rotation angles to use
+        tree_cylinder_sections: Number of sections to use for the tree cylinders
+    Returns:
+        A trimesh.Trimesh object representing the terrain mesh with trees
+    """
+
+    # Generate a tree mesh using the provided function
+
+    bbox = terrain_mesh.bounding_box.bounds
+    tree_meshes = []
+    # apply random rotations and translations to the tree meshes
+    positions = np.zeros((num_trees, 3))
+    positions[:, 0] = np.random.uniform(bbox[0][0], bbox[1][0], size=(num_trees,))
+    positions[:, 1] = np.random.uniform(bbox[0][1], bbox[1][1], size=(num_trees,))
+    positions[:, 2] = get_heights_from_mesh(terrain_mesh, positions[:, :2])
+
+    tree_rad_range = (tree_deg_range[0] * np.pi / 180.0, tree_deg_range[1] * np.pi / 180.0)
+
+    for i in range(num_trees):
+        num_branches = np.random.randint(2, 4)
+        tree_mesh = generate_tree_mesh(num_branches=num_branches, cylinder_sections=tree_cylinder_sections)
+        tree_mesh.apply_scale(np.random.uniform(*tree_scale_range))
+        pose = np.eye(4)
+        pose[:3, 3] = positions[i]
+        q = trimesh.transformations.quaternion_from_euler(
+            np.random.uniform(tree_rad_range[0], tree_rad_range[1]),
+            np.random.uniform(tree_rad_range[0], tree_rad_range[1]),
+            np.random.uniform(0, 2 * np.pi),
+        )
+        pose[:3, :3] = trimesh.transformations.quaternion_matrix(q)[:3, :3]
+        tree_mesh.apply_transform(pose)
+        tree_meshes.append(tree_mesh)
+
+    # Merge all the tree meshes into a single mesh
+    tree_mesh = trimesh.util.concatenate(tree_meshes)
+
+    return tree_meshes
+
+
+if __name__ == "__main__":
+    # Generate the tree mesh and export it to an OBJ file
+    tree_mesh = generate_tree_mesh(num_branches=4, cylinder_sections=6)
+    tree_mesh.show()
+    tree_mesh.export("tree.obj")
