@@ -37,7 +37,9 @@ def generate_perlin_terrain(
 
 if __name__ == "__main__":
     terrain = generate_perlin_terrain()
-    tree_mesh = add_trees_on_terrain(terrain, num_trees=150, tree_scale_range=(0.2, 1.5), tree_cylinder_sections=4)
+    tree_mesh = add_trees_on_terrain(
+        terrain, num_trees=250, tree_scale_range=(0.5, 1.5), tree_deg_range=(-60, 60), tree_cylinder_sections=4
+    )
     mesh = terrain + tree_mesh
     mesh.show()
     mesh.export("mountain.obj")
