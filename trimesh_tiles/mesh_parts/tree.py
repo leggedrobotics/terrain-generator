@@ -3,6 +3,7 @@ import random
 import numpy as np
 from utils import get_heights_from_mesh
 from typing import Tuple
+from alive_progress import alive_bar
 
 
 class LSystem:
@@ -176,20 +177,22 @@ def add_trees_on_terrain(
 
     tree_rad_range = (tree_deg_range[0] * np.pi / 180.0, tree_deg_range[1] * np.pi / 180.0)
 
-    for i in range(num_trees):
-        num_branches = np.random.randint(2, 4)
-        tree_mesh = generate_tree_mesh(num_branches=num_branches, cylinder_sections=tree_cylinder_sections)
-        tree_mesh.apply_scale(np.random.uniform(*tree_scale_range))
-        pose = np.eye(4)
-        pose[:3, 3] = positions[i]
-        q = trimesh.transformations.quaternion_from_euler(
-            np.random.uniform(tree_rad_range[0], tree_rad_range[1]),
-            np.random.uniform(tree_rad_range[0], tree_rad_range[1]),
-            np.random.uniform(0, 2 * np.pi),
-        )
-        pose[:3, :3] = trimesh.transformations.quaternion_matrix(q)[:3, :3]
-        tree_mesh.apply_transform(pose)
-        tree_meshes.append(tree_mesh)
+    with alive_bar(num_trees, dual_line=True, title="tree generation") as bar:
+        for i in range(num_trees):
+            num_branches = np.random.randint(2, 4)
+            tree_mesh = generate_tree_mesh(num_branches=num_branches, cylinder_sections=tree_cylinder_sections)
+            tree_mesh.apply_scale(np.random.uniform(*tree_scale_range))
+            pose = np.eye(4)
+            pose[:3, 3] = positions[i]
+            q = trimesh.transformations.quaternion_from_euler(
+                np.random.uniform(tree_rad_range[0], tree_rad_range[1]),
+                np.random.uniform(tree_rad_range[0], tree_rad_range[1]),
+                np.random.uniform(0, 2 * np.pi),
+            )
+            pose[:3, :3] = trimesh.transformations.quaternion_matrix(q)[:3, :3]
+            tree_mesh.apply_transform(pose)
+            tree_meshes.append(tree_mesh)
+            bar()
 
     # Merge all the tree meshes into a single mesh
     tree_mesh = trimesh.util.concatenate(tree_meshes)

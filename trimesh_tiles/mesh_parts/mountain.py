@@ -36,10 +36,17 @@ def generate_perlin_terrain(
 
 
 if __name__ == "__main__":
-    terrain = generate_perlin_terrain()
+    terrain = generate_perlin_terrain(horizontal_scale=0.2, vertical_scale=3.0)
+    # terrain.show()
     tree_mesh = add_trees_on_terrain(
-        terrain, num_trees=250, tree_scale_range=(0.5, 1.5), tree_deg_range=(-60, 60), tree_cylinder_sections=4
+        terrain, num_trees=100, tree_scale_range=(0.15, 0.55), tree_deg_range=(-60, 60), tree_cylinder_sections=4
     )
     mesh = terrain + tree_mesh
-    mesh.show()
+    # mesh.show()
+    bbox = mesh.bounding_box.bounds
+    # Get the center of the bounding box.
+    center = np.mean(bbox, axis=0)
+    center[2] = 0.0
+    # Translate the mesh to the center of the bounding box.
+    mesh = mesh.apply_translation(-center)
     mesh.export("mountain.obj")

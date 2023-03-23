@@ -4,3 +4,4 @@ mesh_cache
 *.pkl
 *.obj
 *.stl
+*.json
