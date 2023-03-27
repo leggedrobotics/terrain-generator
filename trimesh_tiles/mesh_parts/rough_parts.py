@@ -11,7 +11,7 @@ from utils import (
     get_height_array_of_mesh,
 )
 from .mesh_parts_cfg import (
-    WallMeshPartsCfg,
+    WallPartsCfg,
     # StairMeshPartsCfg,
     HeightMapMeshPartsCfg,
 )

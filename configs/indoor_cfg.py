@@ -7,7 +7,7 @@ from numpy.random import f
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPattern,
     MeshPartsCfg,
-    WallMeshPartsCfg,
+    WallPartsCfg,
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,

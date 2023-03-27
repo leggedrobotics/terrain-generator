@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPattern,
     MeshPartsCfg,
-    WallMeshPartsCfg,
+    WallPartsCfg,
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
@@ -22,10 +22,10 @@ from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
 def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):
     load_from_cache = True
     cfgs = (
-        WallMeshPartsCfg(
+        WallPartsCfg(
             name=f"floor", dim=dim, wall_height=wall_height, wall_thickness=wall_thickness, wall_edges=(), weight=13.0
         ),
-        WallMeshPartsCfg(
+        WallPartsCfg(
             name=f"wall_s_{wall_height}",
             dim=dim,
             wall_height=wall_height,
@@ -36,7 +36,7 @@ def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):
             weight=2.0,
             load_from_cache=load_from_cache,
         ),
-        WallMeshPartsCfg(
+        WallPartsCfg(
             name=f"wall_t_{wall_height}",
             dim=dim,
             wall_height=wall_height,
@@ -47,7 +47,7 @@ def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):
             weight=1.0,
             load_from_cache=load_from_cache,
         ),
-        WallMeshPartsCfg(
+        WallPartsCfg(
             name=f"door_s_{wall_height}",
             dim=dim,
             wall_height=wall_height,
@@ -60,7 +60,7 @@ def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):
             create_door=True,
             load_from_cache=load_from_cache,
         ),
-        WallMeshPartsCfg(
+        WallPartsCfg(
             name=f"wall_s_e_{wall_height}",
             dim=dim,
             wall_height=wall_height,
@@ -172,7 +172,7 @@ def generate_platforms(
                 flips=(),
                 weight=weights[i],
                 use_z_dim_array=use_z_dim_array,
-                wall=WallMeshPartsCfg(
+                wall=WallPartsCfg(
                     dim=dim,
                     wall_edges=wall_pattern,
                     wall_height=wall_height,
@@ -525,7 +525,7 @@ def generate_stair_parts(
                 rotations=(90, 180, 270),
                 flips=("x", "y"),
                 weight=weight,
-                wall=WallMeshPartsCfg(
+                wall=WallPartsCfg(
                     wall_height=wall_height,
                     wall_thickness=wall_thickness,
                     dim=dim,

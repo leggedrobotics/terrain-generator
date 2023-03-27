@@ -1,14 +1,14 @@
 import numpy as np
 import trimesh
-from mesh_parts.basic_parts import create_capsule_mesh, create_floor
-from mesh_parts.mesh_parts_cfg import (
+from trimesh_tiles.mesh_parts.basic_parts import create_capsule_mesh, create_floor
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
     WallMeshPartsCfg,
     CapsuleMeshPartsCfg,
 )
-from mesh_parts.mesh_utils import (
+from utils import (
     merge_meshes,
     merge_two_height_meshes,
     convert_heightfield_to_trimesh,
@@ -23,7 +23,9 @@ def test_capsule():
     transformations = [trimesh.transformations.random_rotation_matrix() for i in range(len(positions))]
     for i in range(len(positions)):
         transformations[i][:3, -1] = positions[i]
-    capsule_cfg = CapsuleMeshPartsCfg(radii=(0.1, 0.2, 0.3), heights=(0.4, 0.3, 0.4), transformations=tuple(transformations))
+    capsule_cfg = CapsuleMeshPartsCfg(
+        radii=(0.1, 0.2, 0.3), heights=(0.4, 0.3, 0.4), transformations=tuple(transformations)
+    )
     capsule_mesh = create_capsule_mesh(capsule_cfg)
     floor = create_floor(capsule_cfg)
     mesh = merge_meshes([floor, capsule_mesh])
@@ -49,7 +51,9 @@ def test_rail():
     # transformations = [np.eye(4) for i in range(len(positions))]
     for i in range(len(positions)):
         transformations[i][:3, -1] = positions[i]
-    capsule_cfg = CapsuleMeshPartsCfg(radii=tuple(radii), heights=tuple(heights), transformations=tuple(transformations), minimal_triangles=False)
+    capsule_cfg = CapsuleMeshPartsCfg(
+        radii=tuple(radii), heights=tuple(heights), transformations=tuple(transformations), minimal_triangles=False
+    )
     print(capsule_cfg)
     capsule_mesh = create_capsule_mesh(capsule_cfg)
     capsule_mesh.show()
@@ -57,5 +61,3 @@ def test_rail():
     mesh = merge_meshes([floor, capsule_mesh], False)
     mesh.show()
     print(get_height_array_of_mesh(capsule_mesh, capsule_cfg.dim, 5))
-
-

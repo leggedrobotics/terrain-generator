@@ -4,7 +4,7 @@ from .mesh_parts_cfg import (
     MeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
-    WallMeshPartsCfg,
+    WallPartsCfg,
     CapsuleMeshPartsCfg,
     BoxMeshPartsCfg,
 )
@@ -26,7 +26,7 @@ def create_floor(cfg: MeshPartsCfg, **kwargs):
     return floor
 
 
-def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom", **kwargs):
+def create_standard_wall(cfg: WallPartsCfg, edge: str = "bottom", **kwargs):
     if edge == "bottom":
         dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
         pos = [
@@ -120,7 +120,7 @@ def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom", **kwargs):
     return wall
 
 
-def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up", **kwargs):
+def create_door(cfg: WallPartsCfg, door_direction: str = "up", **kwargs):
     if door_direction == "bottom" or door_direction == "up":
         dim = [cfg.door_width, 2.0, cfg.door_height]
         pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
@@ -164,7 +164,7 @@ def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up", **kwargs):
     return door
 
 
-def create_wall_mesh(cfg: WallMeshPartsCfg, **kwargs):
+def create_wall_mesh(cfg: WallPartsCfg, **kwargs):
     # Create the vertices of the wall
     floor = create_floor(cfg)
     meshes = [floor]

@@ -1,7 +1,7 @@
 import numpy as np
 import trimesh
 
-from mesh_parts.mesh_utils import flip_mesh, rotate_mesh, get_height_array_of_mesh, merge_meshes
+from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh, merge_meshes
 
 
 def test_flip_mesh():

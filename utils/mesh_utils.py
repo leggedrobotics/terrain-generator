@@ -13,12 +13,14 @@ CACHE_DIR = "mesh_cache"
 # ENGINE = "scad"
 
 
-def merge_meshes(meshes: List[trimesh.Trimesh], minimal_triangles: bool = False, engine: str = "blender"):
+def merge_meshes(
+    meshes: List[trimesh.Trimesh], minimal_triangles: bool = False, engine: str = "blender"
+) -> trimesh.Trimesh:
     if minimal_triangles:
-        meshes = trimesh.boolean.union(meshes, engine=engine)
+        mesh = trimesh.boolean.union(meshes, engine=engine)
     else:
-        meshes = trimesh.util.concatenate(meshes)
-    return meshes
+        mesh = trimesh.util.concatenate(meshes)
+    return mesh
 
 
 def flip_mesh(mesh: trimesh.Trimesh, direction: Literal["x", "y"]):
@@ -75,7 +77,9 @@ def get_heights_from_mesh(mesh: trimesh.Trimesh, origins: np.ndarray):
     return array
 
 
-def get_height_array_of_mesh(mesh: trimesh.Trimesh, dim: Tuple[int, int, int], num_points: int, offset: float = 0.01):
+def get_height_array_of_mesh(
+    mesh: trimesh.Trimesh, dim: Tuple[float, float, float], num_points: int, offset: float = 0.01
+):
     """
     Get the height array of a mesh.
     Args:

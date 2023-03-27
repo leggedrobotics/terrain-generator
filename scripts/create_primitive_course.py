@@ -6,15 +6,15 @@ import inspect
 
 from wfc.wfc import WFCSolver
 
-from mesh_parts.create_tiles import create_mesh_pattern
-from mesh_parts.mesh_utils import visualize_mesh
-from mesh_parts.mesh_parts_cfg import MeshPartsCfg, MeshPattern
+from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
+from utils import visualize_mesh
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPartsCfg, MeshPattern
 
 from configs.indoor_cfg import IndoorPattern, IndoorPatternLevels
 from configs.navigation_cfg import IndoorNavigationPatternLevels
 from alive_progress import alive_bar
 
-from primitive_course.steps import *
+from trimesh_tiles.primitive_course.steps import *
 
 
 def generate_tiles(

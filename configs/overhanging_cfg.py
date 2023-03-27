@@ -7,7 +7,7 @@ from numpy.random import f
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPattern,
     MeshPartsCfg,
-    WallMeshPartsCfg,
+    WallPartsCfg,
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
@@ -36,7 +36,7 @@ class OverhangingPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
-        (WallMeshPartsCfg(name=f"floor", dim=dim, wall_edges=(), weight=0.01),)
+        (WallPartsCfg(name=f"floor", dim=dim, wall_edges=(), weight=0.01),)
         # + tuple(
         #     generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=1.0)
         # )
@@ -208,6 +208,7 @@ class OverhangingPattern(MeshPattern):
 
 if __name__ == "__main__":
     from utils import get_height_array_of_mesh
+
     cfg = OverhangingPattern()
     # print(cfg)
     keywords = ["mesh"]

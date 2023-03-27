@@ -7,13 +7,13 @@ from utils import (
     get_height_array_of_mesh,
 )
 from .mesh_parts_cfg import (
-    WallMeshPartsCfg,
+    WallPartsCfg,
     StairMeshPartsCfg,
 )
 from .basic_parts import create_floor
 
 
-def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
+def create_standard_wall(cfg: WallPartsCfg, edge: str = "bottom"):
     if edge == "bottom":
         dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
         pos = [
@@ -107,7 +107,7 @@ def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom"):
     return wall
 
 
-def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up"):
+def create_door(cfg: WallPartsCfg, door_direction: str = "up"):
     if door_direction == "bottom" or door_direction == "up":
         dim = [cfg.door_width, 2.0, cfg.door_height]
         pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
@@ -151,7 +151,7 @@ def create_door(cfg: WallMeshPartsCfg, door_direction: str = "up"):
     return door
 
 
-def create_wall_mesh(cfg: WallMeshPartsCfg):
+def create_wall_mesh(cfg: WallPartsCfg):
     # Create the vertices of the wall
     floor = create_floor(cfg)
     mesh = floor

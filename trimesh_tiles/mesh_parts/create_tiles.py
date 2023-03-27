@@ -15,7 +15,7 @@ from .basic_parts import (
 )
 from .mesh_parts_cfg import (
     MeshPartsCfg,
-    WallMeshPartsCfg,
+    WallPartsCfg,
     MeshPattern,
     StairMeshPartsCfg,
     PlatformMeshPartsCfg,
@@ -30,7 +30,7 @@ from utils import get_height_array_of_mesh, get_cached_mesh_gen, merge_meshes
 
 
 def get_mesh_gen(cfg: MeshPartsCfg) -> Callable:
-    if isinstance(cfg, WallMeshPartsCfg):
+    if isinstance(cfg, WallPartsCfg):
         mesh_gen = create_wall_mesh
     elif isinstance(cfg, StairMeshPartsCfg):
         mesh_gen = create_stairs_mesh
