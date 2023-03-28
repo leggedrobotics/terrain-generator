@@ -9,6 +9,7 @@ from utils.mesh_utils import visualize_mesh
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPattern
 
 from configs.navigation_cfg import IndoorNavigationPatternLevels
+from configs.overhanging_cfg import OverhangingPattern
 from alive_progress import alive_bar
 
 
@@ -45,6 +46,7 @@ def create_mesh_from_cfg(
     # Add tiles to the solver
     for tile in tiles.values():
         wfc_solver.register_tile(*tile.get_dict_tile())
+        # print(f"Tile: {tile.name}, {tile.array}")
 
     # Place initial tile in the center.
     init_tiles = [(initial_tile_name, (wfc_solver.shape[0] // 2, wfc_solver.shape[1] // 2))]
@@ -99,5 +101,8 @@ def create_mesh_from_cfg(
 
 
 if __name__ == "__main__":
-    cfg = IndoorNavigationPatternLevels(wall_height=3.0)
-    create_mesh_from_cfg(cfg, mesh_name="test_mesh.obj", mesh_dir="results/test", visualize=True, enable_history=False)
+    # cfg = IndoorNavigationPatternLevels(wall_height=3.0)
+    cfg = OverhangingPattern()
+    create_mesh_from_cfg(
+        cfg, mesh_name="test_mesh.obj", mesh_dir="results/test_overhanging", visualize=True, enable_history=False
+    )

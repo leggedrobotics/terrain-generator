@@ -885,6 +885,47 @@ def generate_overhanging_platforms(name, dim, max_h=1.0, min_h=0.0, h=0.75, thic
     return cfgs
 
 
+def generate_random_box_platform(name, dim, n=6, height_diff=0.5, height_std=0.1, offset=0.0, weight=1.0):
+    types = ["slope", "corner", "half", "corner_flipped"]
+    cfgs = []
+    for slope_type in types:
+        array = np.zeros((n, n)) + offset
+        if slope_type == "slope":
+            array[:] += np.linspace(0, height_diff, n)
+        elif slope_type == "half":
+            array[: n // 2, :] += np.linspace(0, height_diff, n)
+        elif slope_type == "corner":
+            for i in range(n):
+                for j in range(n):
+                    if j <= i:
+                        array[i, j] += height_diff - i * height_diff / n
+                    elif i <= j:
+                        array[i, j] += height_diff - j * height_diff / n
+        elif slope_type == "corner_flipped":
+            for i in range(n):
+                for j in range(n):
+                    if j <= i:
+                        array[i, j] += height_diff - j * height_diff / n
+                    elif i <= j:
+                        array[i, j] += height_diff - i * height_diff / n
+
+        array = array.T
+
+        array[1:-1, 1:-1] += np.random.normal(0, height_std, size=[array.shape[0] - 2, array.shape[1] - 2])
+        # array[5, :] = height_diff
+        cfg = PlatformMeshPartsCfg(
+            name=f"{name}_{slope_type}",
+            dim=dim,
+            array=array,
+            rotations=(90, 180, 270),
+            flips=("x", "y"),
+            weight=weight,
+            minimal_triangles=False,
+        )
+        cfgs.append(cfg)
+    return cfgs
+
+
 # def generate_confined_boxes(
 #     name,
 #     dim,
@@ -943,19 +984,20 @@ if __name__ == "__main__":
     # cfgs = generate_random_boxes(
     #     "boxes", [2, 2, 2], n=10, max_h=0.5, min_h=0.1, min_w=0.10, max_w=0.5, max_n_per_tile=15, weight=1.0, seed=1234
     # )
-    cfgs = generate_overhanging_platforms("boxes", [2, 2, 2], max_h=0.5, min_h=0.1, weight=1.0, seed=1234)
+    # cfgs = generate_overhanging_platforms("boxes", [2, 2, 2], max_h=0.5, min_h=0.1, weight=1.0, seed=1234)
+    cfgs = generate_random_box_platform("random_boxes", [2, 2, 2], n=6, height_diff=0.5, offset=1.0)
     # print("cfg", cfgs)
     # print("cfg", cfgs)
 
-    from mesh_parts.create_tiles import create_mesh_tile
+    from trimesh_tiles.mesh_parts.create_tiles import create_mesh_tile
 
     visualize_keywords = ["boxes"]
     # for mesh_part in cfg.mesh_parts:
     for cfg in cfgs:
-        print("cfg ", cfg)
+        # print("cfg ", cfg)
         cfg.load_from_cache = False
         mesh_tile = create_mesh_tile(cfg)
-        print("mesh part ", mesh_tile)
+        # print("mesh part ", mesh_tile)
         for keyword in visualize_keywords:
             # print(mesh_part.edges)
             if keyword in mesh_tile.name:

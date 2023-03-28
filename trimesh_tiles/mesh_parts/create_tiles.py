@@ -80,7 +80,7 @@ def create_mesh_tile(cfg: MeshPartsCfg) -> MeshTile:
     if cfg.use_generator:
         return MeshTile(name, cached_mesh_gen, array=cfg.edge_array, mesh_dim=cfg.dim, weight=cfg.weight)
     else:
-        return MeshTile(name, mesh, array=array, mesh_dim=cfg.dim, weight=cfg.weight)
+        return MeshTile(name, mesh, array=cfg.edge_array, mesh_dim=cfg.dim, weight=cfg.weight)
 
 
 def create_mesh_pattern(cfg: MeshPattern):

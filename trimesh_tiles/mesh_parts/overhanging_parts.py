@@ -17,6 +17,18 @@ from .mesh_parts_cfg import (
 )
 
 
+def create_wall(width, height, depth):
+    mesh = trimesh.creation.box([width, height, depth])
+    return mesh
+
+
+# TODO: finish this.
+def create_horizontal_bar(width, height, depth):
+    # mesh = trimesh.creation.box([width, height, depth])
+    mesh = trimesh.creation.cylinder()
+    return mesh
+
+
 def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
     """generate wall mesh from connection array.
     Args: connection_array (np.ndarray) shape=(3, 3)
@@ -25,17 +37,18 @@ def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
     assert cfg.connection_array.shape[0] == 3 and cfg.connection_array.shape[1] == 3
     grid_size = cfg.dim[0] / cfg.connection_array.shape[0]
     meshes = []
+    wall_fn = create_wall
     for y in range(cfg.connection_array.shape[1]):
         for x in range(cfg.connection_array.shape[0]):
             if cfg.connection_array[x, y] > 0:
                 pos = np.array([x * grid_size, y * grid_size, 0])
                 pos[:2] += grid_size / 2.0 - cfg.dim[0] / 2.0
                 if np.abs(pos[0]) > 1.0e-4 and np.abs(pos[1]) < 1.0e-4:
-                    mesh = trimesh.creation.box([grid_size, cfg.wall_thickness, cfg.wall_height])
+                    mesh = wall_fn(grid_size, cfg.wall_thickness, cfg.wall_height)
                     mesh.apply_translation(pos)
                     meshes.append(mesh)
                 elif np.abs(pos[0]) < 1.0e-4 and np.abs(pos[1]) > 1.0e-4:
-                    mesh = trimesh.creation.box([cfg.wall_thickness, grid_size, cfg.wall_height])
+                    mesh = wall_fn(cfg.wall_thickness, grid_size, cfg.wall_height)
                     mesh.apply_translation(pos)
                     meshes.append(mesh)
                 elif np.abs(pos[0]) < 1.0e-4 and np.abs(pos[1]) < 1.0e-4:
@@ -78,11 +91,11 @@ def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
                         else:
                             continue
 
-                        mesh = trimesh.creation.box([width, height, depth])
+                        mesh = wall_fn(width, height, depth)
                         mesh.apply_translation(p)
                         meshes.append(mesh)
                 else:
-                    mesh = trimesh.creation.box([grid_size, grid_size, cfg.wall_height])
+                    mesh = wall_fn(grid_size, grid_size, cfg.wall_height)
                     meshes.append(mesh)
     mesh = merge_meshes(meshes, minimal_triangles=cfg.minimal_triangles, engine=ENGINE)
     mesh = rotate_mesh(mesh, 270)  # This was required to match the connection array
