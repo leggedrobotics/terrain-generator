@@ -18,19 +18,33 @@ from .mesh_parts_cfg import (
 from .basic_parts import create_floor
 
 
-def generate_perlin_tile_configs(name, dim, weight, height=0.5, offset=0.1, seed=0, shape=(128, 128), res=(8, 8)):
+def generate_perlin_tile_configs(
+    name,
+    dim,
+    weight,
+    height=0.5,
+    offset=0.0,
+    seed=0,
+    shape=(128, 128),
+    res=(4, 4),
+    base_weight=0.3,
+    fractal_weight=0.2,
+    target_num_faces=4000,
+):
 
     np.random.seed(seed)
-    noise = generate_perlin_noise_2d(shape, res, tileable=(True, True))
+    noise = generate_perlin_noise_2d(shape, res, tileable=(True, True)) * base_weight
+    noise += generate_fractal_noise_2d(shape, res, 3, tileable=(True, True)) * fractal_weight
+    noise += offset
     xx = np.linspace(-1, 1, shape[0])
     yy = np.linspace(-1, 1, shape[1])
     x, y = np.meshgrid(xx, yy)
-    base_edge_array = np.clip(1.0 - (x**8 + y**8), 0.0, 1.0)
+    base_edge_array = np.clip(1.0 - (x**6 + y**6), 0.0, 1.0)
     noise *= base_edge_array
     cfgs = []
 
     def generate_cfgs(noise, name):
-        noise = noise * 0.1 + 0.1
+        # noise = noise * 0.1 + 0.1
 
         # edge_array = np.zeros(shape)
         # xx = np.linspace(-1, 1, shape[0])
@@ -39,25 +53,27 @@ def generate_perlin_tile_configs(name, dim, weight, height=0.5, offset=0.1, seed
 
         step_height = 1.0 / (shape[1] - 2)
         arrays = []
-        ramp_patterns = ["flat", "mountain", "wide", "corner", "corner_flipped"]
+        ramp_patterns = ["flat", "wide", "corner", "corner_flipped"]
         for ramp_pattern in ramp_patterns:
             base_edge_array = np.clip(1.0 - (x**8 + y**8), 0.0, 1.0)
 
             if ramp_pattern == "flat":
                 # edge_array = base_edge_array
                 offset_array = np.zeros(shape)
+                n = shape[0] // 10
+                offset_array[n:-n, n:-n] = 0.1 + 0.1 * height
                 # if offset > 0.1:
                 edge_array = np.ones(shape)
 
-                new_array = noise * edge_array + offset + offset_array
+                new_array = noise * edge_array + offset_array
                 arrays.append(new_array)
             elif ramp_pattern == "mountain":
                 edge_array = np.clip(1.0 - (x**2 + y**2), 0.0, 1.0)
-                offset_array = edge_array * height
+                offset_array = edge_array * height * 0.5
                 if offset > 0.1:
                     edge_array = np.ones(shape)
 
-                new_array = noise * edge_array + offset + offset_array
+                new_array = noise * edge_array + offset_array
                 arrays.append(new_array)
             else:
                 array_1 = np.zeros(shape)
@@ -92,11 +108,11 @@ def generate_perlin_tile_configs(name, dim, weight, height=0.5, offset=0.1, seed
                     array_2 = np.ones(shape)
 
                 offset_array = array_1 * height
-                new_array = noise * array_1 + offset + offset_array
+                new_array = noise * array_1 + offset_array
                 arrays.append(new_array)
 
                 offset_array = array_2 * height
-                new_array = noise * array_2 + offset + offset_array
+                new_array = noise * array_2 + offset_array
                 arrays.append(new_array)
 
         weight_per_tile = weight / (len(ramp_patterns))
@@ -111,8 +127,8 @@ def generate_perlin_tile_configs(name, dim, weight, height=0.5, offset=0.1, seed
                 flips=("x", "y"),
                 weight=weight_per_tile,
                 slope_threshold=0.5,
-                target_num_faces=1000,
-                simplify=False,
+                target_num_faces=target_num_faces,
+                simplify=True,
             )
             cfgs.append(cfg)
         return cfgs
@@ -130,7 +146,7 @@ if __name__ == "__main__":
     # generate_perlin_tile_configs("perlin", 1.0)
     cfgs = []
     cfgs += generate_perlin_tile_configs("perlin", [2, 2, 2], weight=1.0)
-    cfgs += generate_perlin_tile_configs("perlin_0.5", [2, 2, 2], weight=1.0, offset=0.5, height=1.0)
+    cfgs += generate_perlin_tile_configs("perlin_0.5", [2, 2, 2], weight=1.0, offset=0.5, height=0.5)
     print(cfgs)
     for cfg in cfgs:
         tile = create_mesh_tile(cfg)

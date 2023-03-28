@@ -102,7 +102,12 @@ def create_mesh_from_cfg(
 
 if __name__ == "__main__":
     # cfg = IndoorNavigationPatternLevels(wall_height=3.0)
-    cfg = OverhangingPattern()
-    create_mesh_from_cfg(
-        cfg, mesh_name="test_mesh.obj", mesh_dir="results/test_overhanging", visualize=True, enable_history=False
-    )
+    for i in range(10):
+        cfg = OverhangingPattern()
+        create_mesh_from_cfg(
+            cfg,
+            mesh_name=f"test_mesh_{i}.obj",
+            mesh_dir="results/test_overhanging",
+            visualize=False,
+            enable_history=False,
+        )

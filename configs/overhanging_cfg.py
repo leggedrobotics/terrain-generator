@@ -38,11 +38,12 @@ class OverhangingPattern(MeshPattern):
     seed: int = 1234
 
     # random box platform
-    random_boxes_cfg = []
+    random_cfgs = []
     n_random_boxes: int = 10
     random_box_weight: float = 0.1
+    perlin_weight: float = 0.1
     for i in range(n_random_boxes):
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_flat_{i}",
             offset=0.0,
             height_diff=0.0,
@@ -51,7 +52,7 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_flat_8_{i}",
             offset=0.0,
             height_diff=0.0,
@@ -60,7 +61,7 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_0.0{i}",
             offset=0.0,
             height_diff=0.5,
@@ -69,7 +70,7 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_0.5{i}",
             offset=0.5,
             height_diff=0.5,
@@ -78,7 +79,7 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_1.0_{i}",
             offset=1.0,
             height_diff=0.5,
@@ -87,7 +88,7 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_1.5_{i}",
             offset=1.5,
             height_diff=0.5,
@@ -96,7 +97,7 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
-        random_boxes_cfg += generate_random_box_platform(
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_diff_1.0_{i}",
             offset=0.0,
             height_diff=1.0,
@@ -105,6 +106,19 @@ class OverhangingPattern(MeshPattern):
             dim=dim,
             weight=random_box_weight / n_random_boxes,
         )
+        random_cfgs += generate_random_box_platform(
+            name=f"box_platform_diff_2.0_{i}",
+            offset=1.0,
+            height_diff=1.0,
+            height_std=0.1,
+            n=6,
+            dim=dim,
+            weight=random_box_weight / n_random_boxes,
+        )
+        random_cfgs += generate_perlin_tile_configs(f"perlin_{i}", [2, 2, 2], weight=perlin_weight / n_random_boxes)
+        random_cfgs += generate_perlin_tile_configs(
+            f"perlin_0.5_{i}", [2, 2, 2], weight=perlin_weight / n_random_boxes, offset=0.5, height=0.5
+        )
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
         (WallPartsCfg(name=f"floor", dim=dim, wall_edges=(), weight=0.01),)
         + tuple(generate_platforms(name="platform_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.5))
@@ -112,7 +126,7 @@ class OverhangingPattern(MeshPattern):
         + tuple(generate_platforms(name="platform_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.5))
         + tuple(generate_platforms(name="platform_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.5))
         + tuple(generate_platforms(name="platform_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.5))
-        + tuple(random_boxes_cfg)
+        + tuple(random_cfgs)
         + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=0.5, depth_num=2))
         + tuple(
             generate_stair_parts(
@@ -160,18 +174,18 @@ class OverhangingPattern(MeshPattern):
                 depth_num=2,
             )
         )
-        # + tuple(
-        #     generate_ramp_parts(
-        #         name="ramp",
-        #         dim=dim,
-        #         seed=seed,
-        #         array_shape=[30, 30],
-        #         total_height=1.0,
-        #         offset=0.00,
-        #         weight=1.0,
-        #         depth_num=1,
-        #     )
-        # )
+        + tuple(
+            generate_ramp_parts(
+                name="ramp",
+                dim=dim,
+                seed=seed,
+                array_shape=[30, 30],
+                total_height=1.0,
+                offset=0.00,
+                weight=0.05,
+                depth_num=1,
+            )
+        )
         + tuple(
             generate_ramp_parts(
                 name="ramp_low",
