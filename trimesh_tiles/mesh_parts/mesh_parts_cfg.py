@@ -1,6 +1,6 @@
 import numpy as np
 import trimesh
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Literal
 from dataclasses import dataclass
 
 
@@ -11,8 +11,8 @@ class MeshPartsCfg:
     floor_thickness: float = 0.1
     minimal_triangles: bool = True
     weight: float = 1.0
-    rotations: Tuple[int, ...] = ()  # (90, 180, 270)
-    flips: Tuple[str, ...] = ()  # ("x", "y")
+    rotations: Tuple[Literal[90, 180, 270], ...] = ()  # (90, 180, 270)
+    flips: Tuple[Literal["x", "y"], ...] = ()  # ("x", "y")
     height_offset: float = 0.0
     edge_array: Optional[np.ndarray] = None  # Array for edge definition. If None, height of the mesh is used.
     use_generator: bool = True
@@ -89,7 +89,6 @@ class OverhangingMeshPartsCfg(MeshPartsCfg):
 class WallMeshPartsCfg(OverhangingMeshPartsCfg):
     wall_thickness: float = 0.4
     wall_height: float = 3.0
-    wall_edges: Tuple[str, ...] = ()  # bottom, up, left, right, middle_left, middle_right, middle_up, middle_bottom
     create_door: bool = False
     door_width: float = 0.8
     door_height: float = 1.5
@@ -102,6 +101,7 @@ class FloatingBoxesPartsCfg(OverhangingMeshPartsCfg):
     box_size: float = 0.5
     box_height: float = 0.5
     box_grid_n: int = 6
+    box_prob: float = 1.0
 
 
 @dataclass

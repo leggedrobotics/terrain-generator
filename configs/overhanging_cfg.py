@@ -16,7 +16,7 @@ from trimesh_tiles.mesh_parts.rough_parts import generate_perlin_tile_configs
 
 from trimesh_tiles.patterns.pattern_generator import (
     generate_random_box_platform,
-    generate_walls,
+    # generate_walls,
     generate_floating_boxes,
     generate_narrow,
     generate_platforms,
@@ -28,12 +28,13 @@ from trimesh_tiles.patterns.pattern_generator import (
     generate_overhanging_platforms,
     add_capsules,
 )
+from trimesh_tiles.patterns.overhanging_patterns import generate_walls
 from trimesh_tiles.mesh_parts.create_tiles import create_mesh_tile
 from trimesh_tiles.mesh_parts.basic_parts import create_from_height_map
 
 
 @dataclass
-class OverhangingPattern(MeshPattern):
+class OverhangingTerrainPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
 
@@ -236,10 +237,16 @@ class OverhangingPattern(MeshPattern):
     )
 
 
+@dataclass
+class OverhangingPattern(MeshPattern):
+    dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
+    mesh_parts: Tuple[MeshPartsCfg, ...] = generate_walls(name="walls", dim=dim, wall_height=3.0, wall_thickness=0.4)
+
+
 if __name__ == "__main__":
     from utils import get_height_array_of_mesh
 
-    cfg = OverhangingPattern()
+    cfg = OverhangingTerrainPattern()
     # print(cfg)
     keywords = ["mesh"]
     for mesh_part in cfg.mesh_parts:

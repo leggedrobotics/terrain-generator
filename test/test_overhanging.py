@@ -9,6 +9,17 @@ from utils import get_height_array_of_mesh
 
 
 def test_generate_wall_from_array(visualize):
+    array = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+    cfg = WallMeshPartsCfg(connection_array=array, wall_thickness=0.1, wall_height=2.0)
+    mesh = generate_wall_from_array(cfg)
+
+    height_array = (get_height_array_of_mesh(mesh, cfg.dim, 3) > 0).astype(np.float32)
+    assert np.allclose(height_array, array)
+    if visualize:
+        print("array ", array)
+        print("height array ", height_array)
+        # mesh.show()
+
     array = np.array([[0, 1, 0], [0, 1, 1], [0, 0, 0]])
     cfg = WallMeshPartsCfg(connection_array=array, wall_thickness=0.1, wall_height=2.0)
     mesh = generate_wall_from_array(cfg)

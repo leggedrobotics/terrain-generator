@@ -35,6 +35,10 @@ def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
     Return: trimesh.Trimesh
     """
     assert cfg.connection_array.shape[0] == 3 and cfg.connection_array.shape[1] == 3
+    # If all connection is 0, return empty mesh
+    if cfg.connection_array.sum() == 0:
+        return trimesh.Trimesh()
+
     grid_size = cfg.dim[0] / cfg.connection_array.shape[0]
     meshes = []
     wall_fn = create_wall
@@ -43,6 +47,7 @@ def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
             if cfg.connection_array[x, y] > 0:
                 pos = np.array([x * grid_size, y * grid_size, 0])
                 pos[:2] += grid_size / 2.0 - cfg.dim[0] / 2.0
+                pos[2] += cfg.wall_height / 2.0 - cfg.dim[2] / 2.0
                 if np.abs(pos[0]) > 1.0e-4 and np.abs(pos[1]) < 1.0e-4:
                     mesh = wall_fn(grid_size, cfg.wall_thickness, cfg.wall_height)
                     mesh.apply_translation(pos)

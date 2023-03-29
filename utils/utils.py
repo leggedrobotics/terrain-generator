@@ -75,16 +75,18 @@ def get_cached_mesh_gen(
     else:
         name = ""
 
+    mesh_name = f"{name}_{code}.obj"
+
     def mesh_gen() -> trimesh.Trimesh:
-        if os.path.exists(os.path.join(CACHE_DIR, code + ".obj")) and use_cache:
+        if os.path.exists(os.path.join(CACHE_DIR, mesh_name)) and use_cache:
             if verbose:
-                print(f"Loading mesh {name} from cache {code}.obj ...")
-            mesh = trimesh.load_mesh(os.path.join(CACHE_DIR, code + ".obj"))
+                print(f"Loading mesh {name} from cache {mesh_name} ...")
+            mesh = trimesh.load_mesh(os.path.join(CACHE_DIR, mesh_name))
         else:
             # if verbose:
-            print(f"Not loading {name} from cache, creating {code}.obj ...")
+            # print(f"Not loading {name} from cache, creating {code}.obj ...")
             mesh = mesh_gen_fn(cfg)
-            mesh.export(os.path.join(CACHE_DIR, code + ".obj"))
+            mesh.export(os.path.join(CACHE_DIR, mesh_name))
         return mesh
 
     return mesh_gen

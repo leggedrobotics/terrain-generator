@@ -91,6 +91,9 @@ def get_height_array_of_mesh(
         The height array.
     """
     # intersects_location requires origins to be the same shape as vectors
+    array = np.zeros((num_points * num_points))
+    if mesh.is_empty:
+        return array.reshape((num_points, num_points))
     x = np.linspace(-dim[0] / 2.0 + offset, dim[0] / 2.0 - offset, num_points)
     y = np.linspace(dim[1] / 2.0 - offset, -dim[1] / 2.0 + offset, num_points)
     xv, yv = np.meshgrid(x, y)
@@ -100,7 +103,6 @@ def get_height_array_of_mesh(
     vectors = np.stack([np.zeros_like(xv), np.zeros_like(yv), -np.ones_like(xv)], axis=-1)
     # # do the actual ray- mesh queries
     points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=False)
-    array = np.zeros((num_points * num_points))
     if len(points) > 0:
         array[index_ray] = points[:, 2] + dim[2] / 2.0
         array = np.round(array, 1)

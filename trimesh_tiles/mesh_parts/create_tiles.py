@@ -13,6 +13,7 @@ from .basic_parts import (
     create_capsule_mesh,
     create_box_mesh,
 )
+from .overhanging_parts import generate_wall_from_array
 from .mesh_parts_cfg import (
     MeshPartsCfg,
     WallPartsCfg,
@@ -23,6 +24,7 @@ from .mesh_parts_cfg import (
     CapsuleMeshPartsCfg,
     BoxMeshPartsCfg,
     CombinedMeshPartsCfg,
+    WallMeshPartsCfg,
 )
 from utils import get_height_array_of_mesh, get_cached_mesh_gen, merge_meshes
 
@@ -42,8 +44,9 @@ def get_mesh_gen(cfg: MeshPartsCfg) -> Callable:
         mesh_gen = create_capsule_mesh
     elif isinstance(cfg, BoxMeshPartsCfg):
         mesh_gen = create_box_mesh
+    elif isinstance(cfg, WallMeshPartsCfg):
+        mesh_gen = generate_wall_from_array
     elif isinstance(cfg, CombinedMeshPartsCfg):
-        # print("getting CombinedMeshPartsCfg gen")
         mesh_gens = [get_mesh_gen(c) for c in cfg.cfgs]
 
         def mesh_gen(cfg):
@@ -83,7 +86,7 @@ def create_mesh_tile(cfg: MeshPartsCfg) -> MeshTile:
         return MeshTile(name, mesh, array=cfg.edge_array, mesh_dim=cfg.dim, weight=cfg.weight)
 
 
-def create_mesh_pattern(cfg: MeshPattern):
+def create_mesh_pattern(cfg: MeshPattern) -> dict:
     import ray
 
     ray.init(ignore_reinit_error=True)
