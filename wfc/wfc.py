@@ -366,7 +366,7 @@ class ConnectionManager:
         self.edge_types_of_tiles = {}  # dict of edges. key: tile_name, value: dict of edges
         self.all_tiles_of_edge_type = {}  # dict of edges for each tile key: edge_type, value: (direction, tile_name)
         self.dimension = dimension
-        self.cache_dir = "connection_cache"
+        self.cache_dir = "__cache__/connection_cache"
         self.load_from_cache = load_from_cache
 
     def register_tile(

@@ -9,7 +9,7 @@ import copy
 
 
 ENGINE = "blender"
-CACHE_DIR = "__mesh_cache__"
+CACHE_DIR = "__cache__/mesh_cache"
 # ENGINE = "scad"
 
 

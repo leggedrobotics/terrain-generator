@@ -59,7 +59,7 @@ def create_mesh_from_cfg(
         enable_history: save the history of the solver or not
     """
     os.makedirs(mesh_dir, exist_ok=True)
-    mesh_name = os.path.join(mesh_dir, mesh_name)
+    save_name = os.path.join(mesh_dir, mesh_name)
 
     tiles, wave, wave_order, wave_names = solve_with_wfc(cfg, shape, initial_tile_name)
 
@@ -70,17 +70,18 @@ def create_mesh_from_cfg(
 
     # Save the history of the solver
     if enable_history:
-        np.save(os.path.join(mesh_dir, "wave.npy"), wave)
-        np.save(os.path.join(mesh_dir, "wave_order.npy"), wave_order)
+        history_dir = os.path.join(mesh_dir, f"{mesh_name}_history")
+        os.makedirs(history_dir, exist_ok=True)
+        np.save(os.path.join(history_dir, "wave.npy"), wave)
+        np.save(os.path.join(history_dir, "wave_order.npy"), wave_order)
 
-    print("Converting to mesh...")
-    # If history is enabled, we can visualize the wave propagation. We save the mesh for each step.
-    if enable_history:
-        parts_dir = os.path.join(mesh_dir, "parts")
+        # We can visualize the wave propagation. We save the mesh for each step.
+        parts_dir = os.path.join(history_dir, "parts")
         os.makedirs(parts_dir, exist_ok=True)
-        translated_parts_dir = os.path.join(mesh_dir, "translated_parts")
+        translated_parts_dir = os.path.join(history_dir, "translated_parts")
         os.makedirs(translated_parts_dir, exist_ok=True)
 
+    print("Converting to mesh...")
     # Compose the whole mesh from the tiles
     result_mesh = trimesh.Trimesh()
     with alive_bar(len(wave.flatten())) as bar:
@@ -114,8 +115,8 @@ def create_mesh_from_cfg(
     # Translate the mesh to the center of the bounding box.
     result_mesh = result_mesh.apply_translation(-center)
 
-    print("saving mesh to ", mesh_name)
-    result_mesh.export(mesh_name)
+    print("saving mesh to ", save_name)
+    result_mesh.export(save_name)
     if visualize:
         visualize_mesh(result_mesh)
 

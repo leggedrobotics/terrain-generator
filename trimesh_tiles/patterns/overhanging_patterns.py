@@ -1,27 +1,7 @@
 import numpy as np
-from typing import Tuple, Optional
-from dataclasses import dataclass
-import trimesh
-
-from numpy.random import f
-from scipy.spatial.transform import Rotation
 
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
-    # MeshPattern,
-    # MeshPartsCfg,
-    # WallPartsCfg,
-    # StairMeshPartsCfg,
-    # PlatformMeshPartsCfg,
-    # HeightMapMeshPartsCfg,
-    # CapsuleMeshPartsCfg,
-    # BoxMeshPartsCfg,
-    # CombinedMeshPartsCfg,
-    # FloatingBoxesPartsCfg,
     WallMeshPartsCfg,
-    OverhangingMeshPartsCfg,
-    FloatingBoxesPartsCfg,
-    PlatformMeshPartsCfg,
-    # StairMeshPartsCfg,
 )
 
 
@@ -29,7 +9,7 @@ def generate_walls(name, dim, wall_height=3.0, wall_thickness=0.4, weight=1.0):
     arrays = [
         np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]),
         np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]]),
-        np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]]),
+        np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 0.0]]),
         np.array([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]),
     ]
     prefix = ["empty", "straight", "corner", "left"]

@@ -8,11 +8,6 @@ import open3d as o3d
 import copy
 
 
-ENGINE = "blender"
-CACHE_DIR = "mesh_cache"
-# ENGINE = "scad"
-
-
 def merge_meshes(
     meshes: List[trimesh.Trimesh], minimal_triangles: bool = False, engine: str = "blender"
 ) -> trimesh.Trimesh:
