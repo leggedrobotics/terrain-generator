@@ -2,7 +2,7 @@ import trimesh
 import numpy as np
 
 
-from mesh_parts.mesh_parts_cfg import (
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPartsCfg,
     PlatformMeshPartsCfg,
     HeightMapMeshPartsCfg,
