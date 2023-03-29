@@ -8,5 +8,3 @@ def pytest_addoption(parser):
 @pytest.fixture
 def visualize(request):
     return request.config.getoption("--visualize")
-
-
