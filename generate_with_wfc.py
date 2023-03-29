@@ -1,4 +1,5 @@
 import os
+import argparse
 import numpy as np
 import trimesh
 from typing import Optional
@@ -63,11 +64,9 @@ def create_mesh_from_cfg(
     tiles, wave, wave_order, wave_names = solve_with_wfc(cfg, shape, initial_tile_name)
 
     if overhanging_cfg is not None:
-        print("overhanging_cfg ", overhanging_cfg)
         over_tiles, over_wave, over_wave_order, over_wave_names = solve_with_wfc(
             overhanging_cfg, shape, overhanging_initial_tile_name
         )
-        print("over_wave ", over_wave)
 
     # Save the history of the solver
     if enable_history:
@@ -122,15 +121,50 @@ def create_mesh_from_cfg(
 
 
 if __name__ == "__main__":
-    # cfg = IndoorNavigationPatternLevels(wall_height=3.0)
-    for i in range(10):
+    parser = argparse.ArgumentParser(description="Create mesh from configuration")
+    parser.add_argument(
+        "--cfg", type=str, choices=["indoor", "overhanging"], default="indoor", help="Which configuration to use"
+    )
+    parser.add_argument("--over_cfg", action="store_true", help="Whether to use overhanging configuration")
+    parser.add_argument("--visualize", action="store_true", help="Whether to visualize the generated mesh")
+    parser.add_argument("--enable_history", action="store_true", help="Whether to enable mesh history")
+    parser.add_argument(
+        "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated mesh files"
+    )
+    parser.add_argument("--mesh_name", type=str, default="mesh", help="Base name of the generated mesh files")
+    args = parser.parse_args()
+
+    if args.cfg == "indoor":
+        cfg = IndoorNavigationPatternLevels(wall_height=3.0)
+    elif args.cfg == "overhanging":
         cfg = OverhangingTerrainPattern()
+    else:
+        raise ValueError(f"Unknown configuration: {args.cfg}")
+
+    if args.over_cfg:
         over_cfg = OverhangingPattern()
+    else:
+        over_cfg = None
+
+    for i in range(10):
+        mesh_name = f"{args.mesh_name}_{i}.obj"
         create_mesh_from_cfg(
             cfg,
             over_cfg,
-            mesh_name=f"test_mesh_{i}.obj",
-            mesh_dir="results/test_overhanging",
-            visualize=False,
-            enable_history=False,
+            mesh_name=mesh_name,
+            mesh_dir=args.mesh_dir,
+            visualize=args.visualize,
+            enable_history=args.enable_history,
         )
+    # cfg = IndoorNavigationPatternLevels(wall_height=3.0)
+    # # cfg = OverhangingTerrainPattern()
+    # # over_cfg = OverhangingPattern()
+    # for i in range(10):
+    #     create_mesh_from_cfg(
+    #         cfg,
+    #         over_cfg,
+    #         mesh_name=f"test_mesh_{i}.obj",
+    #         mesh_dir="results/test_overhanging",
+    #         visualize=False,
+    #         enable_history=False,
+    #     )
