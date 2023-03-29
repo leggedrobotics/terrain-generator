@@ -124,7 +124,7 @@ def generate_stepping_stones_stairs(dim):
 
 
 def generate_platforms(
-    name, dim, max_h=1.0, min_h=0.0, weight=1.0, wall_weight=0.1, wall_height=3.0, wall_thickness=0.4, seed=1234
+    name, dim, max_h=1.0, min_h=0.0, weight=1.0, enable_wall=True, wall_weight=0.1, wall_height=3.0, wall_thickness=0.4, seed=1234
 ):
     platform_types = ["1100", "1110", "1111", "1111_f"]
     cfgs = []
@@ -148,17 +148,13 @@ def generate_platforms(
             z_dim_array = np.ones((5, 5)) * 0.1
             use_z_dim_array = True
 
-        wall_patterns = [
-            (),
-            ("middle_left", "middle_right"),
-            ("middle_bottom", "middle_right"),
-            # ("middle_left", "middle_bottom"),
-        ]
-        weights = [
-            weight,
-            wall_weight,
-            wall_weight,
-        ]
+        if enable_wall:
+            wall_patterns = [ (), ("middle_left", "middle_right"), ("middle_bottom", "middle_right")]
+            weights = [weight, wall_weight, wall_weight]
+        else:
+            wall_patterns = [ () ]
+            weights = [ weight]
+
         for i, wall_pattern in enumerate(wall_patterns):
             new_name = f"{name}_{platform_type}"
             if len(wall_pattern) > 0:
@@ -407,6 +403,7 @@ def generate_stair_parts(
     offset=0.0,
     step_thickness=0.1,
     depth_num=1,
+    enable_wall=True,
     wall_height=3.0,
     wall_thickness=0.4,
     weight=1.0,
@@ -419,15 +416,18 @@ def generate_stair_parts(
     n_steps = int(total_height // step_height)
     # residual = total_height - step_height * n_steps
     stair_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped", "turn"]
-    wall_patterns = [
-        [(), ("middle_left", "middle_right")],
-        [(), ("middle_left", "middle_right")],
-        [(), ("middle_left", "middle_right")],
-        [(), ("middle_left", "middle_right")],
-        [()],
-        [()],
-        [(), ("middle_left", "middle_bottom"), ("up", "right")],
-    ]
+    if enable_wall:
+        wall_patterns = [
+            [(), ("middle_left", "middle_right")],
+            [(), ("middle_left", "middle_right")],
+            [(), ("middle_left", "middle_right")],
+            [(), ("middle_left", "middle_right")],
+            [()],
+            [()],
+            [(), ("middle_left", "middle_bottom"), ("up", "right")],
+        ]
+    else:
+        wall_patterns = [[()] for _ in range(len(stair_types))]
     for stair_type in stair_types:
         h_1 = 0.0 + offset
         h_2 = total_height + offset
@@ -607,7 +607,7 @@ def generate_ramp_parts(
             rotations=(90, 180, 270),
             flips=("x", "y"),
             weight=weight_per_tile,
-            slope_threshold=0.5,
+            slope_threshold=1.5,
             target_num_faces=1000,
             simplify=False,
         )
@@ -985,13 +985,14 @@ if __name__ == "__main__":
     #     "boxes", [2, 2, 2], n=10, max_h=0.5, min_h=0.1, min_w=0.10, max_w=0.5, max_n_per_tile=15, weight=1.0, seed=1234
     # )
     # cfgs = generate_overhanging_platforms("boxes", [2, 2, 2], max_h=0.5, min_h=0.1, weight=1.0, seed=1234)
-    cfgs = generate_random_box_platform("random_boxes", [2, 2, 2], n=6, height_diff=0.5, offset=1.0)
+    # cfgs = generate_random_box_platform("random_boxes", [2, 2, 2], n=6, height_diff=0.5, offset=1.0)
+    cfgs = generate_ramp_parts("ramp", [2, 2, 2], array_shape=[30, 30])
     # print("cfg", cfgs)
     # print("cfg", cfgs)
 
     from trimesh_tiles.mesh_parts.create_tiles import create_mesh_tile
 
-    visualize_keywords = ["boxes"]
+    visualize_keywords = ["ramp"]
     # for mesh_part in cfg.mesh_parts:
     for cfg in cfgs:
         # print("cfg ", cfg)
