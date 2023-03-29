@@ -15,6 +15,7 @@ def visualize_history(
     rotate_z: float = 0.0,
     zoom: float = 1.5,
     sleep_time: float = 0.05,
+    export_meshes_in_order: bool = False,
     output_dir: str = "mesh_parts",
     output_prefix: str = "mesh_part",
 ):
@@ -27,7 +28,9 @@ def visualize_history(
     for file in glob.glob(os.path.join(result_dir, "translated_parts/*.obj")):
         meshes[os.path.basename(file)] = trimesh.load(file)
 
-    os.makedirs(output_dir, exist_ok=True)
+    if export_meshes_in_order:
+        output_dir = os.path.join(result_dir, output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
     vis = o3d.visualization.Visualizer()
     vis.create_window()
@@ -39,7 +42,8 @@ def visualize_history(
             if all(x in key for x in keywords):
                 mesh = meshes[key]
 
-        mesh.export(os.path.join(output_dir, f"{output_prefix}_{i:05d}.obj"))
+        if export_meshes_in_order:
+            mesh.export(os.path.join(output_dir, f"{output_prefix}_{i:05d}.obj"))
 
         o3d_mesh = mesh.as_open3d
         R = o3d.geometry.get_rotation_matrix_from_xyz([rotate_x, rotate_y, rotate_z])
@@ -78,6 +82,9 @@ if __name__ == "__main__":
         default="mesh_part",
         help="Prefix to use for the generated mesh parts during visualization",
     )
+    parser.add_argument(
+        "--save", action="store_true", help="enable saving of the generated mesh parts to the output directory"
+    )
     args = parser.parse_args()
     visualize_history(
         args.result_dir,
@@ -86,6 +93,7 @@ if __name__ == "__main__":
         args.rotate_z,
         args.zoom,
         args.sleep_time,
+        args.save,
         args.output_dir,
         args.output_prefix,
     )
