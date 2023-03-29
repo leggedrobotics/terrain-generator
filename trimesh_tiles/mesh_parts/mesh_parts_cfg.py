@@ -98,10 +98,9 @@ class WallMeshPartsCfg(OverhangingMeshPartsCfg):
 class FloatingBoxesPartsCfg(OverhangingMeshPartsCfg):
     gap_mean: float = 0.8
     gap_std: float = 0.2
-    box_size: float = 0.5
     box_height: float = 0.5
     box_grid_n: int = 6
-    box_prob: float = 1.0
+    # box_prob: float = 1.0
 
 
 @dataclass

@@ -1,14 +1,19 @@
 import os
 import argparse
 import numpy as np
+from pyglet.window.key import W
 import trimesh
 from typing import Optional
+import random
 
 from wfc.wfc import WFCSolver
 
-from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
+from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern, get_mesh_gen
+
+# from trimesh_tiles.mesh_parts.overhanging_parts import FloorOverhangingParts
 from utils.mesh_utils import visualize_mesh
-from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPattern, OverhangingMeshPartsCfg
+from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPattern, OverhangingMeshPartsCfg, FloatingBoxesPartsCfg
+from trimesh_tiles.mesh_parts.overhanging_parts import create_overhanging_boxes
 
 from configs.navigation_cfg import IndoorNavigationPatternLevels
 from configs.overhanging_cfg import OverhangingTerrainPattern, OverhangingPattern
@@ -38,7 +43,7 @@ def solve_with_wfc(cfg: MeshPattern, shape, initial_tile_name):
 
 def create_mesh_from_cfg(
     cfg: MeshPattern,
-    overhanging_cfg: Optional[MeshPattern] = None,
+    overhanging_cfg: Optional[OverhangingPattern] = None,
     mesh_name="result_mesh.obj",
     mesh_dir="results/result",
     shape=[20, 20],
@@ -84,28 +89,66 @@ def create_mesh_from_cfg(
     print("Converting to mesh...")
     # Compose the whole mesh from the tiles
     result_mesh = trimesh.Trimesh()
+    if overhanging_cfg is not None:
+        result_terrain_mesh = trimesh.Trimesh()
+        result_overhanging_mesh = trimesh.Trimesh()
     with alive_bar(len(wave.flatten())) as bar:
         for y in range(wave.shape[0]):
             for x in range(wave.shape[1]):
-                mesh = tiles[wave_names[wave[y, x]]].get_mesh().copy()
+                terrain_mesh = tiles[wave_names[wave[y, x]]].get_mesh().copy()
+                mesh = terrain_mesh.copy()
 
                 if overhanging_cfg is not None:
-                    over_mesh = over_tiles[over_wave_names[over_wave[y, x]]].get_mesh().copy()
+                    over_mesh = trimesh.Trimesh()
+                    # terrain_mesh += mesh
+                    if np.random.rand() < overhanging_cfg.overhanging_prob:
+                        mesh_cfg = random.choice(overhanging_cfg.overhanging_cfg_list)
+                        mesh_cfg.mesh = mesh
+                        over_box_mesh_cfg = create_overhanging_boxes(mesh_cfg)
+                        over_box_mesh = get_mesh_gen(over_box_mesh_cfg)(over_box_mesh_cfg)
+                        over_mesh += over_box_mesh
+                    over_mesh += over_tiles[over_wave_names[over_wave[y, x]]].get_mesh().copy()
                     mesh += over_mesh
 
                 # save original parts for visualization
                 if enable_history:
                     mesh.export(os.path.join(parts_dir, f"{wave[y, x]}_{y}_{x}_{wave_names[wave[y, x]]}.obj"))
+                    if overhanging_cfg is not None:
+                        over_mesh.export(
+                            os.path.join(parts_dir, f"{over_wave[y, x]}_{y}_{x}_{over_wave_names[over_wave[y, x]]}.obj")
+                        )
+                        terrain_mesh.export(
+                            os.path.join(parts_dir, f"{wave[y, x]}_{y}_{x}_{wave_names[wave[y, x]]}_terrain.obj")
+                        )
                 # Translate to the position of the tile
                 xy_offset = np.array([x * cfg.dim[0], -y * cfg.dim[1], 0.0])
                 mesh.apply_translation(xy_offset)
+                if overhanging_cfg is not None:
+                    over_mesh.apply_translation(xy_offset)
+                    terrain_mesh.apply_translation(xy_offset)
                 if enable_history:
                     mesh.export(
                         os.path.join(
                             translated_parts_dir, f"{wave[y, x]}_{y}_{x}_{wave_names[wave[y, x]]}_translated.obj"
                         )
                     )
+                    if overhanging_cfg is not None:
+                        over_mesh.export(
+                            os.path.join(
+                                translated_parts_dir,
+                                f"{over_wave[y, x]}_{y}_{x}_{over_wave_names[over_wave[y, x]]}_translated.obj",
+                            )
+                        )
+                        terrain_mesh.export(
+                            os.path.join(
+                                translated_parts_dir,
+                                f"{wave[y, x]}_{y}_{x}_{wave_names[wave[y, x]]}_terrain_translated.obj",
+                            )
+                        )
                 result_mesh += mesh
+                if overhanging_cfg is not None:
+                    result_terrain_mesh += terrain_mesh
+                    result_overhanging_mesh += over_mesh
                 bar()
 
     bbox = result_mesh.bounding_box.bounds
@@ -117,6 +160,9 @@ def create_mesh_from_cfg(
 
     print("saving mesh to ", save_name)
     result_mesh.export(save_name)
+    if overhanging_cfg is not None:
+        result_terrain_mesh.export(save_name + "_terrain.obj")
+        result_overhanging_mesh.export(save_name + "_overhanging.obj")
     if visualize:
         visualize_mesh(result_mesh)
 

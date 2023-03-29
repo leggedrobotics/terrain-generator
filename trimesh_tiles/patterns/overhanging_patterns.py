@@ -5,7 +5,7 @@ from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
 )
 
 
-def generate_walls(name, dim, wall_height=3.0, wall_thickness=0.4, weight=1.0):
+def generate_walls(name, dim, wall_height=3.0, wall_thickness=0.4, weight=1.0, wall_weights=[20.0, 0.5, 0.5, 0.1]):
     arrays = [
         np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]),
         np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]]),
@@ -13,9 +13,8 @@ def generate_walls(name, dim, wall_height=3.0, wall_thickness=0.4, weight=1.0):
         np.array([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]),
     ]
     prefix = ["empty", "straight", "corner", "left"]
-    weights = [30.0, 0.1, 0.1, 0.1]
     cfgs = []
-    for array, prefix, w in zip(arrays, prefix, weights):
+    for array, prefix, w in zip(arrays, prefix, wall_weights):
         if prefix == "empty":
             load_from_cache = False
             rotations = ()

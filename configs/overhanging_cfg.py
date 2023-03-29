@@ -1,10 +1,12 @@
 import numpy as np
 from typing import Tuple, Optional
 from dataclasses import dataclass
+from itertools import product
 
 from numpy.random import f
 
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import (
+    FloatingBoxesPartsCfg,
     MeshPattern,
     MeshPartsCfg,
     WallPartsCfg,
@@ -241,10 +243,25 @@ class OverhangingTerrainPattern(MeshPattern):
 class OverhangingPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     mesh_parts: Tuple[MeshPartsCfg, ...] = generate_walls(name="walls", dim=dim, wall_height=3.0, wall_thickness=0.4)
+    overhanging_prob: float = 0.4
+    gap_means = [0.6, 0.8, 1.0, 1.2]
+    gap_std = [0.05, 0.1, 0.1, 0.2]
+    box_height = [0.1, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0]
+    box_grid_n = [3, 4, 6]
+    overhanging_cfg_list: Tuple[FloatingBoxesPartsCfg, ...] = tuple(
+        FloatingBoxesPartsCfg(gap_mean=gap_mean, gap_std=gap_std, box_height=box_height, box_grid_n=box_grid_n)
+        for gap_mean, gap_std, box_height, box_grid_n in product(gap_means, gap_std, box_height, box_grid_n)
+    )
 
 
 if __name__ == "__main__":
     from utils import get_height_array_of_mesh
+
+    cfg = OverhangingPattern()
+    print(cfg)
+    # print(len(cfg.overhanging_cfg_list))
+
+    # exit(0)
 
     cfg = OverhangingTerrainPattern()
     # print(cfg)
