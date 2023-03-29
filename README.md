@@ -11,6 +11,10 @@ conda env create -f environment.yaml
 To run a testing script run as follows.
 ```bash
 conda activate wfc
-cd wave_function_collapse
-python3 create_indoor_mesh.py
+python3 generate_with_wfc.py
 ```
+
+You can make your own config to generate different terrians.
+
+# Config
+TODO
