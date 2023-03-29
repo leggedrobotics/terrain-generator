@@ -35,7 +35,7 @@ def generate_perlin_tile_configs(
     np.random.seed(seed)
     noise = generate_perlin_noise_2d(shape, res, tileable=(True, True)) * base_weight
     noise += generate_fractal_noise_2d(shape, res, 3, tileable=(True, True)) * fractal_weight
-    noise += offset
+    # noise += offset
     xx = np.linspace(-1, 1, shape[0])
     yy = np.linspace(-1, 1, shape[1])
     x, y = np.meshgrid(xx, yy)
@@ -59,11 +59,15 @@ def generate_perlin_tile_configs(
 
             if ramp_pattern == "flat":
                 # edge_array = base_edge_array
-                offset_array = np.zeros(shape)
-                n = shape[0] // 10
-                offset_array[n:-n, n:-n] = 0.1 + 0.1 * height
+                # offset_array = np.zeros(shape)
+                offset_array = np.ones(shape) * offset
+                # n = shape[0] // 10
+                n = 3
+                if offset < 0.1:
+                    offset_array[n:-n, n:-n] += 0.1
                 # if offset > 0.1:
-                edge_array = np.ones(shape)
+                edge_array = np.zeros(shape)
+                edge_array[n:-n, n:-n] = 1.0
 
                 new_array = noise * edge_array + offset_array
                 arrays.append(new_array)
@@ -103,15 +107,17 @@ def generate_perlin_tile_configs(
                         h_2 = max(h_2 - step_height, 0.0)
                 # edge_array = array_1
 
-                if offset > 0.1:
-                    array_1 = np.ones(shape)
-                    array_2 = np.ones(shape)
+                # if offset > 0.1:
+                #     array_1 += offset
+                #     array_2 += offset
+                # array_1 = np.ones(shape)
+                # array_2 = np.ones(shape)
 
-                offset_array = array_1 * height
+                offset_array = array_1 * height + offset
                 new_array = noise * array_1 + offset_array
                 arrays.append(new_array)
 
-                offset_array = array_2 * height
+                offset_array = array_2 * height + offset
                 new_array = noise * array_2 + offset_array
                 arrays.append(new_array)
 

@@ -37,6 +37,8 @@ class OverhangingPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     seed: int = 1234
 
+    enable_wall: bool = False
+
     # random box platform
     random_cfgs = []
     n_random_boxes: int = 10
@@ -121,21 +123,51 @@ class OverhangingPattern(MeshPattern):
         )
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
         (WallPartsCfg(name=f"floor", dim=dim, wall_edges=(), weight=0.01),)
-        + tuple(generate_platforms(name="platform_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.5))
-        + tuple(generate_platforms(name="platform_2", dim=dim, max_h=2.0, min_h=0.0, weight=0.5))
-        + tuple(generate_platforms(name="platform_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.5))
-        + tuple(generate_platforms(name="platform_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.5))
-        + tuple(generate_platforms(name="platform_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.5))
+        + tuple(
+            generate_platforms(name="platform_1", dim=dim, max_h=1.0, min_h=0.0, weight=0.5, enable_wall=enable_wall)
+        )
+        + tuple(
+            generate_platforms(name="platform_2", dim=dim, max_h=2.0, min_h=0.0, weight=0.5, enable_wall=enable_wall)
+        )
+        + tuple(
+            generate_platforms(name="platform_2_1", dim=dim, max_h=2.0, min_h=1.0, weight=0.5, enable_wall=enable_wall)
+        )
+        + tuple(
+            generate_platforms(name="platform_0.5", dim=dim, max_h=0.5, min_h=0.0, weight=0.5, enable_wall=enable_wall)
+        )
+        + tuple(
+            generate_platforms(
+                name="platform_1_0.5", dim=dim, max_h=1.0, min_h=0.5, weight=0.5, enable_wall=enable_wall
+            )
+        )
         + tuple(random_cfgs)
-        + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=0.5, depth_num=2))
         + tuple(
             generate_stair_parts(
-                name="stair_offset", dim=dim, seed=seed, array_shape=[15, 15], weight=2.0, depth_num=2, offset=1.0
+                name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=0.5, depth_num=2, enable_wall=enable_wall
             )
         )
         + tuple(
             generate_stair_parts(
-                name="stair_low", dim=dim, total_height=0.5, seed=seed, array_shape=[15, 15], weight=0.5, depth_num=2
+                name="stair_offset",
+                dim=dim,
+                seed=seed,
+                array_shape=[15, 15],
+                weight=2.0,
+                depth_num=2,
+                offset=1.0,
+                enable_wall=enable_wall,
+            )
+        )
+        + tuple(
+            generate_stair_parts(
+                name="stair_low",
+                dim=dim,
+                total_height=0.5,
+                seed=seed,
+                array_shape=[15, 15],
+                weight=0.5,
+                depth_num=2,
+                enable_wall=enable_wall,
             )
         )
         + tuple(
@@ -148,6 +180,7 @@ class OverhangingPattern(MeshPattern):
                 array_shape=[15, 15],
                 weight=0.5,
                 depth_num=2,
+                enable_wall=enable_wall,
             )
         )
         + tuple(
@@ -160,6 +193,7 @@ class OverhangingPattern(MeshPattern):
                 array_shape=[15, 15],
                 weight=0.5,
                 depth_num=2,
+                enable_wall=enable_wall,
             )
         )
         + tuple(
@@ -172,6 +206,7 @@ class OverhangingPattern(MeshPattern):
                 array_shape=[15, 15],
                 weight=0.5,
                 depth_num=2,
+                enable_wall=enable_wall,
             )
         )
         + tuple(
