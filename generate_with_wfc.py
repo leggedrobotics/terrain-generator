@@ -157,15 +157,3 @@ if __name__ == "__main__":
             visualize=args.visualize,
             enable_history=args.enable_history,
         )
-    # cfg = IndoorNavigationPatternLevels(wall_height=3.0)
-    # # cfg = OverhangingTerrainPattern()
-    # # over_cfg = OverhangingPattern()
-    # for i in range(10):
-    #     create_mesh_from_cfg(
-    #         cfg,
-    #         over_cfg,
-    #         mesh_name=f"test_mesh_{i}.obj",
-    #         mesh_dir="results/test_overhanging",
-    #         visualize=False,
-    #         enable_history=False,
-    #     )
