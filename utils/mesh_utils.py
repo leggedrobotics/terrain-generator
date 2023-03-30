@@ -2,7 +2,7 @@ import os
 import numpy as np
 from pyglet.window.key import P
 import trimesh
-from typing import Callable, Any, Optional, Union, Tuple, List, Literal
+from typing import Callable, Any, Optional, Union, Tuple, List, Literal, Iterable
 from dataclasses import asdict, is_dataclass
 import open3d as o3d
 import copy
@@ -242,8 +242,44 @@ def visualize_mesh(mesh: Union[trimesh.Trimesh, o3d.geometry.TriangleMesh], save
     # Visualize meshes one by one with Open3D
     o3d_mesh.compute_vertex_normals()
     R = o3d.geometry.get_rotation_matrix_from_xyz([-1.0, 0.0, 0.2])
-    print("R ", R)
     o3d_mesh.rotate(R, center=[0, 0, 0])
     o3d.visualization.draw_geometries([o3d_mesh])
     vis = o3d.visualization.Visualizer()
     vis.capture_screen_image(save_path)
+
+
+def compute_signed_distance_and_closest_geometry(scene: o3d.t.geometry.RaycastingScene, query_points: np.ndarray):
+    closest_points = scene.compute_closest_points(query_points)
+    distance = np.linalg.norm(query_points - closest_points["points"].numpy(), axis=-1)
+    rays = np.concatenate([query_points, np.ones_like(query_points)], axis=-1)
+    intersection_counts = scene.count_intersections(rays).numpy()
+    is_inside = intersection_counts % 2 == 1
+    distance[is_inside] *= -1
+    return distance, closest_points["geometry_ids"].numpy()
+
+
+def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: int = 32):
+
+    # To prevent weird behavior when two surfaces are exactly at the same positions
+    mesh.vertices += np.random.uniform(-1e-4, 1e-4, size=mesh.vertices.shape)
+    # Convert mesh to Open3D TriangleMesh
+    mesh_o3d = mesh.as_open3d
+    mesh_o3d = o3d.t.geometry.TriangleMesh.from_legacy(mesh_o3d)
+
+    # Create RaycastingScene and add mesh
+    scene = o3d.t.geometry.RaycastingScene()
+    _ = scene.add_triangles(mesh_o3d)
+
+    # Compute grid coordinates and query points
+    bbox = mesh.bounds
+    dim = np.array(dim)
+    xyz_range = np.linspace(-dim / 2, dim / 2, num=resolution)
+    query_points = np.stack(np.meshgrid(*xyz_range.T), axis=-1).astype(np.float32)
+
+    # Compute signed distance and occupancy
+    sdf, _ = compute_signed_distance_and_closest_geometry(scene, query_points)
+
+    # Reshape to a 3D grid
+    sdf = sdf.reshape((resolution, resolution, resolution))
+
+    return sdf

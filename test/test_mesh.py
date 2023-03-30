@@ -1,7 +1,7 @@
 import numpy as np
 import trimesh
 
-from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh, merge_meshes
+from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh, merge_meshes, compute_sdf
 
 
 def test_flip_mesh():
@@ -94,3 +94,36 @@ def test_get_height_array():
     )
     assert height_array.shape == (5, 5)
     assert np.allclose(height_array, array)
+
+
+def test_compute_sdf(visualize):
+    box = trimesh.creation.box([0.5, 0.5, 0.5], trimesh.transformations.translation_matrix([0.0, 0.0, 0.0]))
+    box2 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.0, 0.35]))
+    box3 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.35, 0.0]))
+    box += box2
+    box += box3
+    sdf = compute_sdf(mesh=box, resolution=64)
+    if visualize:
+        import matplotlib.pyplot as plt
+        from matplotlib.animation import FuncAnimation
+
+        box.show()
+
+        print("sdf ", sdf, sdf.shape)
+        # We can visualize a slice of the grids directly with matplotlib
+        fig, axes = plt.subplots(1, 1)
+        # Create the initial image and color bar
+        im = axes.imshow(sdf[:, :, 0], origin="lower")
+        colorbar = fig.colorbar(im, ax=axes)
+
+        # Define the animation function
+        def update(frame):
+            axes.clear()
+            im = axes.imshow(sdf[:, :, frame], origin="lower")
+            axes.set_title(f"Slice {frame+1} of {sdf.shape[2]}")
+
+        # Create the animation
+        anim = FuncAnimation(fig, update, frames=sdf.shape[2], interval=100, repeat=True)
+
+        # Display the animation
+        plt.show()
