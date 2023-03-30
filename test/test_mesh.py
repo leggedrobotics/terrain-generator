@@ -102,7 +102,7 @@ def test_compute_sdf(visualize):
     box3 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.35, 0.0]))
     box4 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.00, 0.0]))
     box += box2 + box3 + box4
-    sdf = compute_sdf(mesh=box, resolution=64)
+    sdf = compute_sdf(mesh=box, dim=[2, 2, 1], resolution=0.1)
     if visualize:
         import matplotlib.pyplot as plt
         from matplotlib.animation import FuncAnimation

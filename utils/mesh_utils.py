@@ -7,6 +7,8 @@ from dataclasses import asdict, is_dataclass
 import open3d as o3d
 import copy
 
+from trimesh.exchange import xyz
+
 
 def merge_meshes(
     meshes: List[trimesh.Trimesh], minimal_triangles: bool = False, engine: str = "blender"
@@ -258,7 +260,7 @@ def compute_signed_distance_and_closest_geometry(scene: o3d.t.geometry.Raycastin
     return distance, closest_points["geometry_ids"].numpy()
 
 
-def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: int = 32) -> np.ndarray:
+def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -> np.ndarray:
 
     # To prevent weird behavior when two surfaces are exactly at the same positions
     mesh.vertices += np.random.uniform(-1e-4, 1e-4, size=mesh.vertices.shape)
@@ -273,13 +275,14 @@ def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: int = 32) -> n
     # Compute grid coordinates and query points
     bbox = mesh.bounds
     dim = np.array(dim)
-    xyz_range = np.linspace(-dim / 2, dim / 2, num=resolution)
-    query_points = np.stack(np.meshgrid(*xyz_range.T), axis=-1).astype(np.float32)
+    num_elements = np.ceil(np.array(dim) / 0.1).astype(int)
+    xyz_range = [np.linspace(-dim[i] / 2, dim[i] / 2, num=num_elements[i]) for i in range(len(dim))]
+    query_points = np.stack(np.meshgrid(*xyz_range), axis=-1).astype(np.float32)
 
     # Compute signed distance and occupancy
     sdf, _ = compute_signed_distance_and_closest_geometry(scene, query_points)
 
     # Reshape to a 3D grid
-    sdf = sdf.reshape((resolution, resolution, resolution))
+    sdf = sdf.reshape(*num_elements)
 
     return sdf
