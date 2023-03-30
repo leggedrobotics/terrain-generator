@@ -11,7 +11,7 @@ from wfc.wfc import WFCSolver
 from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern, get_mesh_gen
 
 # from trimesh_tiles.mesh_parts.overhanging_parts import FloorOverhangingParts
-from utils.mesh_utils import visualize_mesh
+from utils.mesh_utils import visualize_mesh, compute_sdf
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPattern, OverhangingMeshPartsCfg, FloatingBoxesPartsCfg
 from trimesh_tiles.mesh_parts.overhanging_parts import create_overhanging_boxes
 
@@ -51,6 +51,8 @@ def create_mesh_from_cfg(
     overhanging_initial_tile_name="walls_empty",
     visualize=False,
     enable_history=False,
+    enable_sdf=False,
+    sdf_resolution=32,
 ):
     """Generate terrain mesh from config.
     It will generate a mesh from the given config and save it to the given path.
@@ -92,6 +94,15 @@ def create_mesh_from_cfg(
     if overhanging_cfg is not None:
         result_terrain_mesh = trimesh.Trimesh()
         result_overhanging_mesh = trimesh.Trimesh()
+
+    if enable_sdf:
+        sdf_dim = np.array(cfg.dim) * 3  # to merge with neighboring tiles
+        sdf_array_dim = (np.array(wave.shape) + 2) * sdf_resolution
+        sdf_array_dim = np.array([sdf_array_dim[0], sdf_array_dim[1], sdf_resolution])
+        sdf_min = np.inf * np.ones(sdf_array_dim, dtype=np.float32)
+        print("SDF array dim: ", sdf_array_dim)
+        print("sdf_min: ", sdf_min.shape)
+
     with alive_bar(len(wave.flatten())) as bar:
         for y in range(wave.shape[0]):
             for x in range(wave.shape[1]):
@@ -109,6 +120,16 @@ def create_mesh_from_cfg(
                         over_mesh += over_box_mesh
                     over_mesh += over_tiles[over_wave_names[over_wave[y, x]]].get_mesh().copy()
                     mesh += over_mesh
+                if enable_sdf:
+                    # Compute SDF around the mesh
+                    mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=sdf_resolution * 3)
+                    print("mesh_sd", mesh_sdf.shape)
+                    x_min = int((x - 1) * sdf_resolution + sdf_resolution)
+                    y_min = int((y - 1) * sdf_resolution + sdf_resolution)
+                    x_max = int((x + 2) * sdf_resolution + sdf_resolution)
+                    y_max = int((y + 2) * sdf_resolution + sdf_resolution)
+                    # Update sdf_min by comparing the relevant part
+                    sdf_min[y_min:y_max, x_min:x_max, :] = np.minimum(sdf_min[y_min:y_max, x_min:x_max, :], mesh_sdf)
 
                 # save original parts for visualization
                 if enable_history:
@@ -163,6 +184,11 @@ def create_mesh_from_cfg(
     if overhanging_cfg is not None:
         result_terrain_mesh.export(save_name + "_terrain.obj")
         result_overhanging_mesh.export(save_name + "_overhanging.obj")
+
+    if enable_sdf:
+        sdf_name = save_name + ".npy"
+        print("saving sdf to ", sdf_name)
+        np.save(sdf_name, sdf_min)
     if visualize:
         visualize_mesh(result_mesh)
 
@@ -175,6 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("--over_cfg", action="store_true", help="Whether to use overhanging configuration")
     parser.add_argument("--visualize", action="store_true", help="Whether to visualize the generated mesh")
     parser.add_argument("--enable_history", action="store_true", help="Whether to enable mesh history")
+    parser.add_argument("--enable_sdf", action="store_true", help="Whether to enable sdf")
     parser.add_argument(
         "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated mesh files"
     )
@@ -202,4 +229,5 @@ if __name__ == "__main__":
             mesh_dir=args.mesh_dir,
             visualize=args.visualize,
             enable_history=args.enable_history,
+            enable_sdf=args.enable_sdf,
         )

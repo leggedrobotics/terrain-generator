@@ -258,7 +258,7 @@ def compute_signed_distance_and_closest_geometry(scene: o3d.t.geometry.Raycastin
     return distance, closest_points["geometry_ids"].numpy()
 
 
-def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: int = 32):
+def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: int = 32) -> np.ndarray:
 
     # To prevent weird behavior when two surfaces are exactly at the same positions
     mesh.vertices += np.random.uniform(-1e-4, 1e-4, size=mesh.vertices.shape)

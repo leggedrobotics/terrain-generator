@@ -100,8 +100,8 @@ def test_compute_sdf(visualize):
     box = trimesh.creation.box([0.5, 0.5, 0.5], trimesh.transformations.translation_matrix([0.0, 0.0, 0.0]))
     box2 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.0, 0.35]))
     box3 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.35, 0.0]))
-    box += box2
-    box += box3
+    box4 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.00, 0.0]))
+    box += box2 + box3 + box4
     sdf = compute_sdf(mesh=box, resolution=64)
     if visualize:
         import matplotlib.pyplot as plt
