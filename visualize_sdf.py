@@ -44,7 +44,7 @@ pcd.points = o3d.utility.Vector3dVector(points)
 
 # Set the point cloud colors based on the SDF values
 cmap = plt.get_cmap("rainbow")
-norm = plt.Normalize(vmin=0.0, vmax=1.0)
+norm = plt.Normalize(vmin=0.0, vmax=2.0)
 sdf_colors = cmap(norm(sdf_values.flatten()))[:, :3]
 print("sdf_colors ", sdf_colors.shape)
 pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
