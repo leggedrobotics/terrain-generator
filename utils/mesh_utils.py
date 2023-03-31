@@ -292,11 +292,15 @@ def visualize_sdf(sdf: np.ndarray):
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
 
-    print("sdf ", sdf, sdf.shape)
+    print("sdf ", sdf.shape)
     # We can visualize a slice of the grids directly with matplotlib
     fig, axes = plt.subplots(1, 1)
     # Create the initial image and color bar
-    im = axes.imshow(sdf[:, :, 0], origin="lower")
+    fake_array = np.zeros_like(sdf[:, :, 0])
+    fake_array[0] = -1.0
+    fake_array[-1] = 2.0
+    im = axes.imshow(fake_array, origin="lower")
+    # im = axes.imshow(sdf[:, :, 0], origin="lower")
     colorbar = fig.colorbar(im, ax=axes)
 
     # Define the animation function

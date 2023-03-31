@@ -97,15 +97,10 @@ def create_mesh_from_cfg(
 
     if enable_sdf:
         sdf_dim = np.array(cfg.dim) * 3  # to merge with neighboring tiles
-        sdf_dim[2] = cfg.dim[2]
-        print("sdf_dim ", sdf_dim)
+        sdf_dim[2] = 3.0 * 2
         sdf_array_dim = (np.array(wave.shape) + 2) * cfg.dim[:2] / sdf_resolution
         sdf_array_dim = np.array([sdf_array_dim[0], sdf_array_dim[1], sdf_dim[2] / sdf_resolution], dtype=int)
         sdf_min = np.inf * np.ones(sdf_array_dim, dtype=np.float32)
-
-        print("wave shape ", wave.shape)
-        print("SDF array dim: ", sdf_array_dim)
-        print("sdf_min: ", sdf_min.shape)
 
     with alive_bar(len(wave.flatten())) as bar:
         for y in range(wave.shape[0]):
@@ -127,12 +122,10 @@ def create_mesh_from_cfg(
                 if enable_sdf:
                     # Compute SDF around the mesh
                     mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=0.1)
-                    print("mesh_sd", mesh_sdf.shape)
                     x_min = int(x * cfg.dim[0] / sdf_resolution)
                     y_min = int(y * cfg.dim[1] / sdf_resolution)
                     x_max = int((x + 2 + 1) * cfg.dim[0] / sdf_resolution)
                     y_max = int((y + 2 + 1) * cfg.dim[1] / sdf_resolution)
-                    print("x_min, x_max, y_min, y_max", x_min, x_max, y_min, y_max)
                     # Update sdf_min by comparing the relevant part
                     sdf_min[y_min:y_max, x_min:x_max, :] = np.minimum(sdf_min[y_min:y_max, x_min:x_max, :], mesh_sdf)
 
@@ -178,6 +171,7 @@ def create_mesh_from_cfg(
                 bar()
 
     bbox = result_mesh.bounding_box.bounds
+    print("bbox = ", bbox)
     # Get the center of the bounding box.
     center = np.mean(bbox, axis=0)
     center[2] = 0.0
@@ -193,7 +187,8 @@ def create_mesh_from_cfg(
     if enable_sdf:
         sdf_name = save_name + ".npy"
         print("saving sdf to ", sdf_name)
-        np.save(sdf_name, sdf_min)
+        sdf_tile_n = (np.array(cfg.dim[:2]) / sdf_resolution).astype(int)
+        np.save(sdf_name, sdf_min[sdf_tile_n[1] : -sdf_tile_n[1], sdf_tile_n[0] : -sdf_tile_n[0], :])
     if visualize:
         visualize_mesh(result_mesh)
 
