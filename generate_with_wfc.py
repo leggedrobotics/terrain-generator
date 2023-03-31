@@ -52,7 +52,7 @@ def create_mesh_from_cfg(
     visualize=False,
     enable_history=False,
     enable_sdf=False,
-    sdf_resolution=32,
+    sdf_resolution=0.1,
 ):
     """Generate terrain mesh from config.
     It will generate a mesh from the given config and save it to the given path.
@@ -97,9 +97,13 @@ def create_mesh_from_cfg(
 
     if enable_sdf:
         sdf_dim = np.array(cfg.dim) * 3  # to merge with neighboring tiles
-        sdf_array_dim = (np.array(wave.shape) + 2) * sdf_resolution
-        sdf_array_dim = np.array([sdf_array_dim[0], sdf_array_dim[1], sdf_resolution])
+        sdf_dim[2] = cfg.dim[2]
+        print("sdf_dim ", sdf_dim)
+        sdf_array_dim = (np.array(wave.shape) + 2) * cfg.dim[:2] / sdf_resolution
+        sdf_array_dim = np.array([sdf_array_dim[0], sdf_array_dim[1], sdf_dim[2] / sdf_resolution], dtype=int)
         sdf_min = np.inf * np.ones(sdf_array_dim, dtype=np.float32)
+
+        print("wave shape ", wave.shape)
         print("SDF array dim: ", sdf_array_dim)
         print("sdf_min: ", sdf_min.shape)
 
@@ -122,12 +126,13 @@ def create_mesh_from_cfg(
                     mesh += over_mesh
                 if enable_sdf:
                     # Compute SDF around the mesh
-                    mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=sdf_resolution * 3)
+                    mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=0.1)
                     print("mesh_sd", mesh_sdf.shape)
-                    x_min = int((x - 1) * sdf_resolution + sdf_resolution)
-                    y_min = int((y - 1) * sdf_resolution + sdf_resolution)
-                    x_max = int((x + 2) * sdf_resolution + sdf_resolution)
-                    y_max = int((y + 2) * sdf_resolution + sdf_resolution)
+                    x_min = int(x * cfg.dim[0] / sdf_resolution)
+                    y_min = int(y * cfg.dim[1] / sdf_resolution)
+                    x_max = int((x + 2 + 1) * cfg.dim[0] / sdf_resolution)
+                    y_max = int((y + 2 + 1) * cfg.dim[1] / sdf_resolution)
+                    print("x_min, x_max, y_min, y_max", x_min, x_max, y_min, y_max)
                     # Update sdf_min by comparing the relevant part
                     sdf_min[y_min:y_max, x_min:x_max, :] = np.minimum(sdf_min[y_min:y_max, x_min:x_max, :], mesh_sdf)
 

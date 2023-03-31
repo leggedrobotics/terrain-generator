@@ -1,7 +1,7 @@
 import numpy as np
 import trimesh
 
-from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh, merge_meshes, compute_sdf
+from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh, merge_meshes, compute_sdf, visualize_sdf
 
 
 def test_flip_mesh():
@@ -104,26 +104,10 @@ def test_compute_sdf(visualize):
     box += box2 + box3 + box4
     sdf = compute_sdf(mesh=box, dim=[2, 2, 1], resolution=0.1)
     if visualize:
-        import matplotlib.pyplot as plt
-        from matplotlib.animation import FuncAnimation
-
         box.show()
+        visualize_sdf(sdf)
 
-        print("sdf ", sdf, sdf.shape)
-        # We can visualize a slice of the grids directly with matplotlib
-        fig, axes = plt.subplots(1, 1)
-        # Create the initial image and color bar
-        im = axes.imshow(sdf[:, :, 0], origin="lower")
-        colorbar = fig.colorbar(im, ax=axes)
 
-        # Define the animation function
-        def update(frame):
-            axes.clear()
-            im = axes.imshow(sdf[:, :, frame], origin="lower")
-            axes.set_title(f"Slice {frame+1} of {sdf.shape[2]}")
-
-        # Create the animation
-        anim = FuncAnimation(fig, update, frames=sdf.shape[2], interval=100, repeat=True)
-
-        # Display the animation
-        plt.show()
+def test_visualize_sdf(sdf_path):
+    sdf = np.load(sdf_path)
+    visualize_sdf(sdf)

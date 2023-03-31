@@ -286,3 +286,27 @@ def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -
     sdf = sdf.reshape(*num_elements)
 
     return sdf
+
+
+def visualize_sdf(sdf: np.ndarray):
+    import matplotlib.pyplot as plt
+    from matplotlib.animation import FuncAnimation
+
+    print("sdf ", sdf, sdf.shape)
+    # We can visualize a slice of the grids directly with matplotlib
+    fig, axes = plt.subplots(1, 1)
+    # Create the initial image and color bar
+    im = axes.imshow(sdf[:, :, 0], origin="lower")
+    colorbar = fig.colorbar(im, ax=axes)
+
+    # Define the animation function
+    def update(frame):
+        axes.clear()
+        im = axes.imshow(sdf[:, :, frame], origin="lower")
+        axes.set_title(f"Slice {frame+1} of {sdf.shape[2]}")
+
+    # Create the animation
+    anim = FuncAnimation(fig, update, frames=sdf.shape[2], interval=100, repeat=True)
+
+    # Display the animation
+    plt.show()
