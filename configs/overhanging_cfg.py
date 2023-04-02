@@ -67,6 +67,15 @@ class OverhangingTerrainPattern(MeshPattern):
             weight=random_box_weight / n_random_boxes,
         )
         random_cfgs += generate_random_box_platform(
+            name=f"box_platform_flat_large_{i}",
+            offset=0.0,
+            height_diff=0.0,
+            height_std=0.5,
+            n=8,
+            dim=dim,
+            weight=random_box_weight / n_random_boxes,
+        )
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_0.0{i}",
             offset=0.0,
             height_diff=0.5,
@@ -112,6 +121,15 @@ class OverhangingTerrainPattern(MeshPattern):
             weight=random_box_weight / n_random_boxes,
         )
         random_cfgs += generate_random_box_platform(
+            name=f"box_platform_diff_1.0_std{i}",
+            offset=0.0,
+            height_diff=1.0,
+            height_std=0.15,
+            n=6,
+            dim=dim,
+            weight=random_box_weight / n_random_boxes,
+        )
+        random_cfgs += generate_random_box_platform(
             name=f"box_platform_diff_2.0_{i}",
             offset=1.0,
             height_diff=1.0,
@@ -123,6 +141,12 @@ class OverhangingTerrainPattern(MeshPattern):
         random_cfgs += generate_perlin_tile_configs(f"perlin_{i}", [2, 2, 2], weight=perlin_weight / n_random_boxes)
         random_cfgs += generate_perlin_tile_configs(
             f"perlin_0.5_{i}", [2, 2, 2], weight=perlin_weight / n_random_boxes, offset=0.5, height=0.5
+        )
+        random_cfgs += generate_perlin_tile_configs(
+            f"perlin_1.0_{i}", [2, 2, 2], weight=perlin_weight / n_random_boxes, offset=0.0, height=1.0
+        )
+        random_cfgs += generate_perlin_tile_configs(
+            f"perlin_1.0_1.0{i}", [2, 2, 2], weight=perlin_weight / n_random_boxes, offset=1.0, height=1.0
         )
     mesh_parts: Tuple[MeshPartsCfg, ...] = (
         (WallPartsCfg(name=f"floor", dim=dim, wall_edges=(), weight=0.01),)
@@ -243,10 +267,10 @@ class OverhangingTerrainPattern(MeshPattern):
 class OverhangingPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     mesh_parts: Tuple[MeshPartsCfg, ...] = generate_walls(name="walls", dim=dim, wall_height=3.0, wall_thickness=0.4)
-    overhanging_prob: float = 0.4
+    overhanging_prob: float = 0.1
     gap_means = [0.6, 0.8, 1.0, 1.2]
     gap_std = [0.05, 0.1, 0.1, 0.2]
-    box_height = [0.1, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0]
+    box_height = [0.1, 0.5, 0.5, 0.5, 1.0, 1.0, 2.0, 2.0]
     box_grid_n = [3, 4, 6]
     overhanging_cfg_list: Tuple[FloatingBoxesPartsCfg, ...] = tuple(
         FloatingBoxesPartsCfg(gap_mean=gap_mean, gap_std=gap_std, box_height=box_height, box_grid_n=box_grid_n)

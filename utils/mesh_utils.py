@@ -276,7 +276,18 @@ def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -
     bbox = mesh.bounds
     dim = np.array(dim)
     num_elements = np.ceil(np.array(dim) / 0.1).astype(int)
-    xyz_range = [np.linspace(-dim[i] / 2, dim[i] / 2, num=num_elements[i]) for i in range(len(dim))]
+    x_min = -dim[0] / 2
+    x_max = dim[0] / 2
+    y_min = -dim[1] / 2
+    y_max = dim[1] / 2
+    z_min = -dim[2] / 2
+    z_max = dim[2] / 2
+    xyz_range = [
+        np.linspace(y_min, y_max, num_elements[1]),
+        np.linspace(x_max, x_min, num_elements[0]),
+        np.linspace(z_min, z_max, num_elements[2]),
+    ]
+    # xyz_range = [np.linspace(-dim[i] / 2, dim[i] / 2, num=num_elements[i]) for i in range(len(dim))]
     query_points = np.stack(np.meshgrid(*xyz_range), axis=-1).astype(np.float32)
 
     # Compute signed distance and occupancy

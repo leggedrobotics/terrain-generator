@@ -4,8 +4,8 @@ import trimesh
 import matplotlib.pyplot as plt
 
 # Load SDF array
-sdf_array = np.load("results/generated_terrain/mesh_0.obj.npy")
-mesh = trimesh.load("results/generated_terrain/mesh_0.obj")
+sdf_array = np.load("results/overhanging_with_sdf/mesh_0.obj.npy")
+mesh = trimesh.load("results/overhanging_with_sdf/mesh_0.obj")
 
 # Define voxel size (the spacing between SDF grid points)
 voxel_size = 0.10
