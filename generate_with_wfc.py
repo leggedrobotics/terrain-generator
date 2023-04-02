@@ -123,11 +123,11 @@ def create_mesh_from_cfg(
                     # Compute SDF around the mesh
                     mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=0.1)
                     x_min = int(x * cfg.dim[0] / sdf_resolution)
-                    y_min = int(y * cfg.dim[1] / sdf_resolution)
+                    y_min = int((wave.shape[0] - y - 1) * cfg.dim[1] / sdf_resolution)
                     x_max = int((x + 2 + 1) * cfg.dim[0] / sdf_resolution)
-                    y_max = int((y + 2 + 1) * cfg.dim[1] / sdf_resolution)
+                    y_max = int((wave.shape[0] - y + 2) * cfg.dim[1] / sdf_resolution)
                     # Update sdf_min by comparing the relevant part
-                    sdf_min[y_min:y_max, x_min:x_max, :] = np.minimum(sdf_min[y_min:y_max, x_min:x_max, :], mesh_sdf)
+                    sdf_min[x_min:x_max, y_min:y_max, :] = np.minimum(sdf_min[x_min:x_max, y_min:y_max, :], mesh_sdf)
 
                 # save original parts for visualization
                 if enable_history:
