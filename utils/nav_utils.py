@@ -2,6 +2,7 @@ import numpy as np
 import trimesh
 import networkx as nx
 import open3d as o3d
+from typing import Union
 
 import matplotlib.pyplot as plt
 
@@ -9,7 +10,7 @@ from utils import get_height_array_of_mesh, get_heights_from_mesh
 import cv2
 
 
-def create_spawnable_locations_on_terrain(
+def calc_spawnable_locations_on_terrain(
     mesh: trimesh.Trimesh,
     num_points=1000,
     filter_size=(7, 7),
@@ -112,9 +113,23 @@ def filter_spawnable_locations_with_sdf(
     # get sdf values for spawnable locations
     spawnable_locations[:, 2] += height_offset
     sdf_values = get_sdf_of_points(spawnable_locations, sdf_array, np.array([0, 0, 0]), sdf_resolution)
-    print("sdf_values", sdf_values)
     # filter spawnable locations
     spawnable_locations = spawnable_locations[sdf_values > sdf_threshold]
+    return spawnable_locations
+
+
+def calc_spawnable_locations_with_sdf(
+    terrain_mesh: trimesh.Trimesh,
+    sdf_array: np.ndarray,
+    visualize: bool = False,
+    height_offset: float = 0.5,
+    sdf_resolution: float = 0.1,
+    sdf_threshold: float = 0.4,
+):
+    spawnable_locations = calc_spawnable_locations_on_terrain(terrain_mesh, visualize=visualize)
+    spawnable_locations = filter_spawnable_locations_with_sdf(
+        spawnable_locations, sdf_array, height_offset, sdf_resolution, sdf_threshold
+    )
     return spawnable_locations
 
 
@@ -144,10 +159,12 @@ def locations_to_graph(positions):
     return G
 
 
-def visualize_mesh_and_graphs(mesh: trimesh.Trimesh, G: nx.Graph):
+def visualize_mesh_and_graphs(mesh: trimesh.Trimesh, points: Union[nx.Graph, np.ndarray]):
 
-    points = nx.get_node_attributes(G, "pos")
-    points = np.array(list(points.values()))
+    if isinstance(points, nx.Graph):
+        points = nx.get_node_attributes(points, "pos")
+        points = np.array(list(points.values()))
+
     print("points ", points, points.shape)
 
     # Create a point cloud where the points are the occupied SDF grid points

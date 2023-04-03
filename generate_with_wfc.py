@@ -12,6 +12,7 @@ from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern, get_mesh_
 
 # from trimesh_tiles.mesh_parts.overhanging_parts import FloorOverhangingParts
 from utils.mesh_utils import visualize_mesh, compute_sdf
+from utils import calc_spawnable_locations_with_sdf
 from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPattern, OverhangingMeshPartsCfg, FloatingBoxesPartsCfg
 from trimesh_tiles.mesh_parts.overhanging_parts import create_overhanging_boxes
 
@@ -191,6 +192,12 @@ def create_mesh_from_cfg(
         print("saving sdf to ", sdf_name)
         sdf_tile_n = (np.array(cfg.dim[:2]) / sdf_resolution).astype(int)
         np.save(sdf_name, sdf_min[sdf_tile_n[1] : -sdf_tile_n[1], sdf_tile_n[0] : -sdf_tile_n[0], :])
+        spawnable_locations = calc_spawnable_locations_with_sdf(
+            result_terrain_mesh, sdf_min, height_offset=0.5, sdf_resolution=0.1, sdf_threshold=0.4
+        )
+        locations_name = save_name + "spawnable_locations.npy"
+        print("saving locations to ", locations_name)
+        np.save(locations_name, spawnable_locations)
     if visualize:
         visualize_mesh(result_mesh)
 

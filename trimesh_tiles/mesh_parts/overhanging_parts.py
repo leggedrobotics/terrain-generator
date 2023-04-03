@@ -134,156 +134,60 @@ def create_overhanging_boxes(cfg: FloatingBoxesPartsCfg, **kwargs):
     return overhanging_cfg
 
 
-# def create_standard_wall(cfg: WallMeshPartsCfg, edge: str = "bottom", **kwargs):
-#     if edge == "bottom":
-#         dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
-#         pos = [
-#             0,
-#             -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "up":
-#         dim = [cfg.dim[0], cfg.wall_thickness, cfg.wall_height]
-#         pos = [
-#             0,
-#             cfg.dim[1] / 2.0 - cfg.wall_thickness / 2.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "left":
-#         dim = [cfg.wall_thickness, cfg.dim[1], cfg.wall_height]
-#         pos = [
-#             -cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0,
-#             0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "right":
-#         dim = [cfg.wall_thickness, cfg.dim[1], cfg.wall_height]
-#         pos = [
-#             cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
-#             0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "middle_bottom":
-#         dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
-#         pos = [
-#             0,
-#             -cfg.dim[1] / 4.0 + cfg.wall_thickness / 4.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "middle_up":
-#         dim = [cfg.wall_thickness, cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_height]
-#         pos = [
-#             0,
-#             cfg.dim[1] / 4.0 - cfg.wall_thickness / 4.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "middle_left":
-#         dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
-#         pos = [
-#             -cfg.dim[0] / 4.0 + cfg.wall_thickness / 4.0,
-#             0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "middle_right":
-#         dim = [cfg.dim[0] / 2.0 + cfg.wall_thickness / 2.0, cfg.wall_thickness, cfg.wall_height]
-#         pos = [
-#             cfg.dim[0] / 4.0 - cfg.wall_thickness / 4.0,
-#             0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "bottom_left":
-#         dim = [cfg.dim[0] / 2.0, cfg.wall_thickness, cfg.wall_height]
-#         pos = [
-#             -cfg.dim[0] / 4.0,  # + cfg.wall_thickness / 2.0,
-#             -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "bottom_right":
-#         dim = [cfg.dim[0] / 2.0, cfg.wall_thickness, cfg.wall_height]
-#         pos = [
-#             cfg.dim[0] / 4.0,  # - cfg.wall_thickness / 2.0,
-#             -cfg.dim[1] / 2.0 + cfg.wall_thickness / 2.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "right_bottom":
-#         dim = [cfg.wall_thickness, cfg.dim[1] / 2.0, cfg.wall_height]
-#         pos = [
-#             cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
-#             -cfg.dim[1] / 4.0,  # + cfg.wall_thickness / 2.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     elif edge == "right_up":
-#         dim = [cfg.wall_thickness, cfg.dim[1] / 2.0, cfg.wall_height]
-#         pos = [
-#             cfg.dim[0] / 2.0 - cfg.wall_thickness / 2.0,
-#             cfg.dim[1] / 4.0,  # - cfg.wall_thickness / 2.0,
-#             -cfg.dim[2] / 2.0 + cfg.wall_height / 2.0,
-#         ]
-#     else:
-#         raise ValueError(f"Edge {edge} is not defined.")
+def create_table_mesh(top_size=(1.0, 1.0, 0.05), leg_size=(0.05, 0.05, 0.5), leg_positions=None):
+    if leg_positions is None:
+        leg_positions = [(-0.45, -0.45), (0.45, -0.45), (0.45, 0.45), (-0.45, 0.45)]
+
+    table_top = trimesh.creation.box(extents=top_size)
+    table_top.visual.face_colors = [100, 100, 255, 150]
+
+    table_legs = []
+    for pos in leg_positions:
+        leg = trimesh.creation.box(extents=leg_size)
+        leg.visual.face_colors = [100, 100, 255, 50]
+        leg.apply_translation((pos[0], pos[1], -leg_size[2] / 2))
+        table_legs.append(leg)
+
+    table = trimesh.util.concatenate([table_top, *table_legs])
+    table = table.apply_translation((0, 0, leg_size[2] + top_size[2] / 2))
+
+    return table
+
+
+# def create_archway_mesh(width=1.0, height=1.0, thickness=0.2, radius=None):
+#     if radius is None:
+#         radius = height / 2
 #
-#     pose = np.eye(4)
-#     pose[:3, -1] = pos
-#     wall = trimesh.creation.box(dim, pose)
-#     return wall
+#     box = trimesh.creation.box(extents=(width, thickness, height))
+#     cylinder = trimesh.creation.cylinder(radius=radius, height=thickness)
 #
-#
-# def create_door(cfg: WallPartsCfg, door_direction: str = "up", **kwargs):
-#     if door_direction == "bottom" or door_direction == "up":
-#         dim = [cfg.door_width, 2.0, cfg.door_height]
-#         pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
-#     elif door_direction == "left" or door_direction == "right":
-#         dim = [2.0, cfg.door_width, cfg.door_height]
-#         pos = [0, 0, -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0]
-#     elif door_direction == "middle_bottom":
-#         dim = [2.0, cfg.door_width, cfg.door_height]
-#         pos = [
-#             0,
-#             -cfg.dim[1] / 4.0 + cfg.wall_thickness / 4.0,
-#             -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.door_height / 2.0,
-#         ]
-#     elif door_direction == "middle_up":
-#         dim = [2.0, cfg.door_width, cfg.door_height]
-#         pos = [
-#             0,
-#             cfg.dim[1] / 4.0 - cfg.wall_thickness / 4.0,
-#             -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
-#         ]
-#     elif door_direction == "middle_left":
-#         dim = [cfg.door_width, 2.0, cfg.door_height]
-#         pos = [
-#             -cfg.dim[0] / 4.0 + cfg.wall_thickness / 4.0,
-#             0,
-#             -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
-#         ]
-#     elif door_direction == "middle_right":
-#         dim = [cfg.door_width, 2.0, cfg.door_height]
-#         pos = [
-#             cfg.dim[0] / 4.0 - cfg.wall_thickness / 4.0,
-#             0,
-#             -cfg.dim[2] / 2.0 + cfg.floor_thickness + cfg.wall_height / 2.0,
-#         ]
-#     else:
-#         return trimesh.Trimesh()
-#
-#     pose = np.eye(4)
-#     pose[:3, -1] = pos
-#     door = trimesh.creation.box(dim, pose)
-#     return door
-#
-#
-# def create_wall_mesh(cfg: WallPartsCfg, **kwargs):
-#     # Create the vertices of the wall
-#     floor = create_floor(cfg)
-#     meshes = [floor]
-#     # mesh = floor
-#     for wall_edges in cfg.wall_edges:
-#         wall = create_standard_wall(cfg, wall_edges)
-#         # wall = get_wall_with_door(cfg, wall_edges)
-#         meshes.append(wall)
-#         # mesh = merge_meshes([mesh, wall], cfg.minimal_triangles)
-#     mesh = merge_meshes(meshes, cfg.minimal_triangles)
-#     if cfg.create_door:
-#         door = create_door(cfg, cfg.door_direction)
-#         mesh = trimesh.boolean.difference([mesh, door], engine=ENGINE)
-#     return mesh
+#     archway = trimesh.boolean.difference([box, cylinder])
+#     archway.apply_translation((0, -thickness / 2, 0))
+#     return archway
+
+
+def create_archway(radius=0.5, height=1.0, num_segments=10):
+    arch = trimesh.creation.cylinder(radius=radius, height=height, sections=num_segments)
+    arch.apply_scale([1, height / (2 * radius), height / (2 * radius)])
+    arch.apply_translation([0, 0, height / 2])
+    # arch.apply_rotation([0, 0, np.pi / 2], point=[0, 0, 0])
+    return arch
+
+
+def create_irregular_overhang_mesh(vertices, height=0.5):
+    irregular_overhang = trimesh.creation.convex_hull(vertices)
+    irregular_overhang.apply_translation((0, 0, height))
+    return irregular_overhang
+
+
+if __name__ == "__main__":
+    # table = create_table_mesh()
+    # table.show()
+
+    # vertices = [(-0.5, 0, 0), (0.5, 0, 0), (0.2, 0.2, 0.2), (-0.2, 0.2, 0.2), (0, 0.4, 0.3)]
+    #
+    # irregular_overhang = create_irregular_overhang_mesh(vertices, height=0.5)
+    # irregular_overhang.show()
+
+    archway = create_archway()
+    archway.show()
