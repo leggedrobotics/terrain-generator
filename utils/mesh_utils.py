@@ -76,7 +76,7 @@ def get_heights_from_mesh(mesh: trimesh.Trimesh, origins: np.ndarray):
 
 
 def get_height_array_of_mesh(
-    mesh: trimesh.Trimesh, dim: Tuple[float, float, float], num_points: int, offset: float = 0.01
+    mesh: trimesh.Trimesh, dim: Optional[Tuple[float, float, float]] = None, num_points: int = 100, offset: float = 0.01
 ):
     """
     Get the height array of a mesh.
@@ -235,11 +235,8 @@ def merge_two_height_meshes(mesh1: trimesh.Trimesh, mesh2: trimesh.Trimesh):
 
 def visualize_mesh(mesh: Union[trimesh.Trimesh, o3d.geometry.TriangleMesh], save_path=None):
     """Visualize a mesh."""
-    # o3d_mesh = o3d.geometry.TriangleMesh()
     if isinstance(mesh, trimesh.Trimesh):
         o3d_mesh = mesh.as_open3d
-        # mesh.vertices = o3d.utility.Vector3dVector(mesh.vertices)
-        # mesh.triangles = o3d.utility.Vector3iVector(mesh.faces)
     elif isinstance(mesh, o3d.geometry.TriangleMesh):
         o3d_mesh = mesh
     # Visualize meshes one by one with Open3D
@@ -277,17 +274,6 @@ def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -
     bbox = mesh.bounds
     dim = np.array(dim)
     num_elements = np.ceil(np.array(dim) / 0.1).astype(int)
-    # x_min = -dim[0] / 2
-    # x_max = dim[0] / 2
-    # y_min = -dim[1] / 2
-    # y_max = dim[1] / 2
-    # z_min = -dim[2] / 2
-    # z_max = dim[2] / 2
-    # xyz_range = [
-    #     np.linspace(x_max, x_min, num_elements[0]),
-    #     np.linspace(y_min, y_max, num_elements[1]),
-    #     np.linspace(z_min, z_max, num_elements[2]),
-    # ]
     xyz_range = [np.linspace(-dim[i] / 2, dim[i] / 2, num=num_elements[i]) for i in range(len(dim))]
     query_points = np.stack(np.meshgrid(*xyz_range), axis=-1).astype(np.float32)
 
@@ -347,12 +333,10 @@ def visualize_mesh_and_sdf(mesh: trimesh.Trimesh, sdf_array: np.ndarray, voxel_s
         ],
         axis=1,
     )
-    print("sdf_points ", sdf_points.shape)
 
     # # Threshold SDF values to create a binary occupancy grid
     threshold = 0.10
     occupancy = (sdf_array > threshold).flatten()
-    print("occupancy ", occupancy.shape)
     #
     # # Extract the occupied SDF grid points and their SDF values
     points = sdf_points[occupancy]
@@ -368,7 +352,6 @@ def visualize_mesh_and_sdf(mesh: trimesh.Trimesh, sdf_array: np.ndarray, voxel_s
     cmap = plt.get_cmap("rainbow")
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
     sdf_colors = cmap(norm(sdf_values.flatten()))[:, :3]
-    print("sdf_colors ", sdf_colors.shape)
     pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
 
     voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.05)
