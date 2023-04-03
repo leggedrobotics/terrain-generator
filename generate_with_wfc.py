@@ -181,7 +181,9 @@ def create_mesh_from_cfg(
     print("saving mesh to ", save_name)
     result_mesh.export(save_name)
     if overhanging_cfg is not None:
+        result_terrain_mesh = result_terrain_mesh.apply_translation(-center)
         result_terrain_mesh.export(save_name + "_terrain.obj")
+        result_overhanging_mesh = result_overhanging_mesh.apply_translation(-center)
         result_overhanging_mesh.export(save_name + "_overhanging.obj")
 
     if enable_sdf:
