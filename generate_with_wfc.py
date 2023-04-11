@@ -118,7 +118,7 @@ def create_mesh_from_cfg(
                         over_box_mesh_cfg = create_overhanging_boxes(mesh_cfg)
                         over_box_mesh = get_mesh_gen(over_box_mesh_cfg)(over_box_mesh_cfg)
                         over_mesh += over_box_mesh
-                    over_mesh += over_tiles[over_wave_names[over_wave[y, x]]].get_mesh().copy()
+                    # over_mesh += over_tiles[over_wave_names[over_wave[y, x]]].get_mesh().copy()
                     mesh += over_mesh
                 if enable_sdf:
                     # Compute SDF around the mesh

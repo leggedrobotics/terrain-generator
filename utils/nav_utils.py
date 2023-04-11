@@ -13,9 +13,10 @@ import cv2
 def calc_spawnable_locations_on_terrain(
     mesh: trimesh.Trimesh,
     num_points=1000,
-    filter_size=(7, 7),
+    filter_size=(5, 5),
     spawnable_threshold=0.1,
     border_offset=1.0,
+    n_points_per_tile=5,
     visualize=False,
 ):
     """
@@ -31,7 +32,7 @@ def calc_spawnable_locations_on_terrain(
 
     dim = np.array([b_max[0] - b_min[0], b_max[1] - b_min[1], b_max[2] - b_min[2]])
 
-    n_points = int((b_max[0] - b_min[0]) * 5)
+    n_points = int((b_max[0] - b_min[0]) * n_points_per_tile)
 
     x = np.linspace(b_min[0] + border_offset, b_max[0] - border_offset, n_points)
     y = np.linspace(b_min[1] + border_offset, b_max[1] - border_offset, n_points)

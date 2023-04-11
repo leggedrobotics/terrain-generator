@@ -267,7 +267,7 @@ class OverhangingTerrainPattern(MeshPattern):
 class OverhangingPattern(MeshPattern):
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     mesh_parts: Tuple[MeshPartsCfg, ...] = generate_walls(name="walls", dim=dim, wall_height=3.0, wall_thickness=0.4)
-    overhanging_prob: float = 0.1
+    overhanging_prob: float = 0.5
     gap_means = [0.6, 0.8, 1.0, 1.2]
     gap_std = [0.05, 0.1, 0.1, 0.2]
     box_height = [0.1, 0.5, 0.5, 0.5, 1.0, 1.0, 2.0, 2.0]

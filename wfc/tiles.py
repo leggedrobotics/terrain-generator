@@ -4,7 +4,7 @@ import functools
 from typing import Dict, Optional, Any, Callable, Tuple, Union
 
 from .wfc import Direction2D, Direction3D
-from utils import flip_mesh, rotate_mesh, get_height_array_of_mesh
+from utils import flip_mesh, yaw_rotate_mesh, get_height_array_of_mesh
 
 
 class Tile:
@@ -183,7 +183,7 @@ class MeshTile(ArrayTile):
     def get_rotated_tile(self, deg):
         if deg not in self.directions.directions:
             raise ValueError(f"Rotation degree {deg} is not defined.")
-        mesh_gen = lambda: rotate_mesh(self.mesh_gen(), deg)
+        mesh_gen = lambda: yaw_rotate_mesh(self.mesh_gen(), deg)
         tile = super().get_rotated_tile(deg)
         return MeshTile(
             name=tile.name,

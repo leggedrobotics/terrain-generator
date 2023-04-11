@@ -2,7 +2,7 @@ import trimesh
 import numpy as np
 from utils import (
     merge_meshes,
-    rotate_mesh,
+    yaw_rotate_mesh,
     ENGINE,
     get_height_array_of_mesh,
 )
@@ -209,12 +209,12 @@ def create_stairs(cfg: StairMeshPartsCfg.Stair):
     if cfg.direction == "front":
         mesh = mesh
     elif cfg.direction == "left":
-        mesh = rotate_mesh(mesh, 90)
+        mesh = yaw_rotate_mesh(mesh, 90)
         dim = dim[np.array([1, 0, 2])]
     elif cfg.direction == "back":
-        mesh = rotate_mesh(mesh, 180)
+        mesh = yaw_rotate_mesh(mesh, 180)
     elif cfg.direction == "right":
-        mesh = rotate_mesh(mesh, 270)
+        mesh = yaw_rotate_mesh(mesh, 270)
         dim = dim[np.array([1, 0, 2])]
 
     if "left" in cfg.attach_side:

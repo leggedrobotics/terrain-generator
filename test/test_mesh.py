@@ -3,7 +3,7 @@ import trimesh
 
 from utils import (
     flip_mesh,
-    rotate_mesh,
+    yaw_rotate_mesh,
     get_height_array_of_mesh,
     merge_meshes,
     compute_sdf,
@@ -33,17 +33,17 @@ def test_rotate_mesh():
     mesh = merge_meshes([mesh, box])
     # mesh.show()
 
-    rotated_mesh = rotate_mesh(mesh, 90)
+    rotated_mesh = yaw_rotate_mesh(mesh, 90)
     # rotated_mesh.show()
     # assert np.allclose(rotated_mesh.vertices[:, 0], mesh.vertices[:, 1])
     # assert np.allclose(rotated_mesh.vertices[:, 1], -mesh.vertices[:, 0])
 
-    rotated_mesh = rotate_mesh(mesh, 180)
+    rotated_mesh = yaw_rotate_mesh(mesh, 180)
     # rotated_mesh.show()
     # assert np.allclose(rotated_mesh.vertices[:, 0], -mesh.vertices[:, 0])
     # assert np.allclose(rotated_mesh.vertices[:, 1], -mesh.vertices[:, 1])
 
-    rotated_mesh = rotate_mesh(mesh, 270)
+    rotated_mesh = yaw_rotate_mesh(mesh, 270)
     # rotated_mesh.show()
     # assert np.allclose(rotated_mesh.vertices[:, 0], -mesh.vertices[:, 1])
     # assert np.allclose(rotated_mesh.vertices[:, 1], mesh.vertices[:, 0])

@@ -6,7 +6,7 @@ from perlin_numpy import generate_perlin_noise_2d, generate_fractal_noise_2d
 
 from utils import (
     merge_meshes,
-    rotate_mesh,
+    yaw_rotate_mesh,
     ENGINE,
     get_height_array_of_mesh,
 )

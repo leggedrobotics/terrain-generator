@@ -2,6 +2,7 @@ import trimesh
 import numpy as np
 from utils import (
     merge_meshes,
+    yaw_rotate_mesh,
     rotate_mesh,
     ENGINE,
     get_height_array_of_mesh,
@@ -103,7 +104,7 @@ def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
                     mesh = wall_fn(grid_size, grid_size, cfg.wall_height)
                     meshes.append(mesh)
     mesh = merge_meshes(meshes, minimal_triangles=cfg.minimal_triangles, engine=ENGINE)
-    mesh = rotate_mesh(mesh, 270)  # This was required to match the connection array
+    mesh = yaw_rotate_mesh(mesh, 270)  # This was required to match the connection array
     return mesh
 
 
@@ -136,15 +137,21 @@ def create_overhanging_boxes(cfg: FloatingBoxesPartsCfg, **kwargs):
 
 def create_table_mesh(top_size=(1.0, 1.0, 0.05), leg_size=(0.05, 0.05, 0.5), leg_positions=None):
     if leg_positions is None:
-        leg_positions = [(-0.45, -0.45), (0.45, -0.45), (0.45, 0.45), (-0.45, 0.45)]
+        leg_positions = [
+            (-top_size[0] / 2.0 + leg_size[0] / 2.0, -top_size[1] / 2.0 + leg_size[1] / 2.0),
+            (-top_size[0] / 2.0 + leg_size[0] / 2.0, top_size[1] / 2.0 - leg_size[1] / 2.0),
+            (top_size[0] / 2.0 - leg_size[0] / 2.0, -top_size[1] / 2.0 + leg_size[1] / 2.0),
+            (top_size[0] / 2.0 - leg_size[0] / 2.0, top_size[1] / 2.0 - leg_size[1] / 2.0),
+        ]
+        # leg_positions = [(-0.45, -0.45), (0.45, -0.45), (0.45, 0.45), (-0.45, 0.45)]
 
     table_top = trimesh.creation.box(extents=top_size)
-    table_top.visual.face_colors = [100, 100, 255, 150]
+    # table_top.visual.face_colors = [100, 100, 255, 150]
 
     table_legs = []
     for pos in leg_positions:
         leg = trimesh.creation.box(extents=leg_size)
-        leg.visual.face_colors = [100, 100, 255, 50]
+        # leg.visual.face_colors = [100, 100, 255, 50]
         leg.apply_translation((pos[0], pos[1], -leg_size[2] / 2))
         table_legs.append(leg)
 
@@ -154,24 +161,53 @@ def create_table_mesh(top_size=(1.0, 1.0, 0.05), leg_size=(0.05, 0.05, 0.5), leg
     return table
 
 
-# def create_archway_mesh(width=1.0, height=1.0, thickness=0.2, radius=None):
-#     if radius is None:
-#         radius = height / 2
-#
-#     box = trimesh.creation.box(extents=(width, thickness, height))
-#     cylinder = trimesh.creation.cylinder(radius=radius, height=thickness)
-#
-#     archway = trimesh.boolean.difference([box, cylinder])
-#     archway.apply_translation((0, -thickness / 2, 0))
-#     return archway
+def create_archway_mesh(
+    array=np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]]),
+    width=2.0,
+    depth=2.0,
+    height=1.0,
+    # thickness=0.2,
+    radius=None,
+):
+    if radius is None:
+        radius = height / 2
+
+    mesh = trimesh.creation.box(extents=(width, depth, height))
+    if array[0, 1] > 0.0:
+        cylinder = trimesh.creation.cylinder(radius=radius, height=width / 2.0 + radius / 2.0)
+        cylinder = rotate_mesh(cylinder, 90, [1, 0, 0])
+        cylinder.apply_translation((0, -width / 4.0, -height / 2))
+        mesh = trimesh.boolean.difference([mesh, cylinder])
+    if array[-1, 1] > 0.0:
+        cylinder = trimesh.creation.cylinder(radius=radius, height=width / 2.0 + 0.1 + radius / 2.0)
+        cylinder = rotate_mesh(cylinder, 90, [1, 0, 0])
+        cylinder.apply_translation((0.0, width / 4.0, -height / 2))
+        mesh = trimesh.boolean.difference([mesh, cylinder])
+    if array[1, 0] > 0.0:
+        cylinder = trimesh.creation.cylinder(radius=radius, height=width / 2.0 + 0.1 + radius / 2.0)
+        cylinder = rotate_mesh(cylinder, 90, [1, 0, 0])
+        cylinder = rotate_mesh(cylinder, 90, [0, 0, 1])
+        cylinder.apply_translation((-width / 4.0, 0, -height / 2))
+        mesh = trimesh.boolean.difference([mesh, cylinder])
+    if array[1, -1] > 0.0:
+        cylinder = trimesh.creation.cylinder(radius=radius, height=width / 2.0 + 0.1 + radius / 2.0)
+        cylinder = rotate_mesh(cylinder, 90, [1, 0, 0])
+        cylinder = rotate_mesh(cylinder, 90, [0, 0, 1])
+        cylinder.apply_translation((width / 4.0, 0, -height / 2))
+        mesh = trimesh.boolean.difference([mesh, cylinder])
+
+    # archway = trimesh.boolean.difference([box, cylinder])
+    # archway.apply_translation((0, -thickness / 2, 0))
+    # archway.apply_translation((0, -thickness / 2, 0))
+    return mesh
 
 
-def create_archway(radius=0.5, height=1.0, num_segments=10):
-    arch = trimesh.creation.cylinder(radius=radius, height=height, sections=num_segments)
-    arch.apply_scale([1, height / (2 * radius), height / (2 * radius)])
-    arch.apply_translation([0, 0, height / 2])
-    # arch.apply_rotation([0, 0, np.pi / 2], point=[0, 0, 0])
-    return arch
+# def create_archway(radius=0.5, height=1.0, num_segments=10):
+#     arch = trimesh.creation.cylinder(radius=radius, height=height, sections=num_segments)
+#     arch.apply_scale([1, height / (2 * radius), height / (2 * radius)])
+#     arch.apply_translation([0, 0, height / 2])
+#     # arch.apply_rotation([0, 0, np.pi / 2], point=[0, 0, 0])
+#     return arch
 
 
 def create_irregular_overhang_mesh(vertices, height=0.5):
@@ -189,5 +225,8 @@ if __name__ == "__main__":
     # irregular_overhang = create_irregular_overhang_mesh(vertices, height=0.5)
     # irregular_overhang.show()
 
-    archway = create_archway()
+    archway = create_archway_mesh(array=np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]]))
+    archway.show()
+
+    archway = create_archway_mesh(array=np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 0.0]]))
     archway.show()
