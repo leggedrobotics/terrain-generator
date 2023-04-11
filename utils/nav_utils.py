@@ -2,7 +2,7 @@ import numpy as np
 import trimesh
 import networkx as nx
 import open3d as o3d
-from typing import Union
+from typing import Union, Tuple
 
 import matplotlib.pyplot as plt
 
@@ -10,20 +10,7 @@ from utils import get_height_array_of_mesh, get_heights_from_mesh
 import cv2
 
 
-def calc_spawnable_locations_on_terrain(
-    mesh: trimesh.Trimesh,
-    num_points=1000,
-    filter_size=(5, 5),
-    spawnable_threshold=0.1,
-    border_offset=1.0,
-    n_points_per_tile=5,
-    visualize=False,
-):
-    """
-    Create spawnable locations from a mesh.
-    Args :param mesh: Mesh to create spawnable locations from.
-    Returns: Spawnable locations.
-    """
+def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset=0.0):
     # Get the bounding box of the mesh.
     bbox = mesh.bounding_box.bounds
     # Get the minimum and maximum of the bounding box.
@@ -32,7 +19,7 @@ def calc_spawnable_locations_on_terrain(
 
     dim = np.array([b_max[0] - b_min[0], b_max[1] - b_min[1], b_max[2] - b_min[2]])
 
-    n_points = int((b_max[0] - b_min[0]) * n_points_per_tile)
+    n_points = int((b_max[0] - b_min[0]) / resolution)
 
     x = np.linspace(b_min[0] + border_offset, b_max[0] - border_offset, n_points)
     y = np.linspace(b_min[1] + border_offset, b_max[1] - border_offset, n_points)
@@ -43,6 +30,44 @@ def calc_spawnable_locations_on_terrain(
 
     heights = get_heights_from_mesh(mesh, origins)
     array = heights.reshape(n_points, n_points)
+    return array
+
+
+def calc_spawnable_locations_on_terrain(
+    mesh: trimesh.Trimesh,
+    # num_points=1000,
+    filter_size=(5, 5),
+    spawnable_threshold=0.1,
+    # border_offset=1.0,
+    resolution=0.4,
+    # n_points_per_tile=5,
+    visualize=False,
+):
+    """
+    Create spawnable locations from a mesh.
+    Args :param mesh: Mesh to create spawnable locations from.
+    Returns: Spawnable locations.
+    """
+    # Get the bounding box of the mesh.
+    # bbox = mesh.bounding_box.bounds
+    # # Get the minimum and maximum of the bounding box.
+    # b_min = np.min(bbox, axis=0)
+    # b_max = np.max(bbox, axis=0)
+    #
+    # dim = np.array([b_max[0] - b_min[0], b_max[1] - b_min[1], b_max[2] - b_min[2]])
+    #
+    # n_points = int((b_max[0] - b_min[0]) * n_points_per_tile)
+    #
+    # x = np.linspace(b_min[0] + border_offset, b_max[0] - border_offset, n_points)
+    # y = np.linspace(b_min[1] + border_offset, b_max[1] - border_offset, n_points)
+    # xv, yv = np.meshgrid(x, y)
+    # xv = xv.flatten()
+    # yv = yv.flatten()
+    # origins = np.stack([xv, yv, np.ones_like(xv) * dim[2] * 2], axis=-1)
+    #
+    # heights = get_heights_from_mesh(mesh, origins)
+    # array = heights.reshape(n_points, n_points)
+    array = get_height_array_of_mesh_with_resolution(mesh, resolution=resolution, border_offset=border_offset)
 
     if visualize:
         plt.imshow(array)
@@ -195,3 +220,47 @@ def visualize_mesh_and_graphs(mesh: trimesh.Trimesh, points: Union[nx.Graph, np.
     viewer.run()
     viewer.destroy_window()
     # o3d.visualization.draw_geometries([voxel_grid, o3d_mesh])
+
+
+def create_2d_graph_from_height_array(height_array: np.ndarray, graph_ratio: int = 4, height_threshold: float = 0.4):
+    # height_array = get_height_array_of_mesh_with_resolution(mesh, resolution=height_array_resolution)
+
+    # graph_height_ratio = graph_resolution / height_array_resolution
+    graph_shape = (np.array(height_array.shape) // graph_ratio).astype(int)
+    print("graph shape", graph_shape)
+
+    G = nx.grid_2d_graph(*graph_shape)
+    print("G ", G)
+    print("G.nodes():", G.nodes())
+    # Add cost map to edges
+    for (u, v) in G.edges():
+        print("u, v: ", u, v)
+        # cost = cost_map[u[0], u[1]] + cost_map[v[0], v[1]]
+        cost = height_map_cost(u, v, height_array, graph_ratio, height_threshold)
+        print("cost: ", cost)
+        G[u][v]["weight"] = cost
+    return G
+
+
+def height_map_cost(
+    u: Tuple[int, int],
+    v: Tuple[int, int],
+    height_array: np.ndarray,
+    ratio: int,
+    height_threshold: float = 0.4,
+    invalid_cost: float = 10000.0,
+):
+    # sample heights between u and v in height array.
+    # number of points is determined by ratio
+    ratio = int(ratio)
+    um = np.array(u) * ratio
+    vm = np.array(v) * ratio
+    idx = np.linspace(um, vm, num=ratio + 1).astype(int)
+    print("idx ", idx)
+    heights = height_array[idx[:, 0], idx[:, 1]]
+    print("heights: ", heights)
+    diffs = np.abs(heights[1:] - heights[:-1])
+    # costs = diffs + invalid_cost * (diffs > height_threshold)
+    costs = 1.0 + invalid_cost * (diffs > height_threshold)
+    print("costs: ", costs)
+    return costs.sum()

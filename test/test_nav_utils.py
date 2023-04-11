@@ -10,7 +10,10 @@ from utils import (
     locations_to_graph,
     visualize_mesh_and_graphs,
     filter_spawnable_locations_with_sdf,
+    get_height_array_of_mesh_with_resolution,
+    create_2d_graph_from_height_array,
 )
+from utils.mesh_utils import get_height_array_of_mesh
 
 
 def test_spawnable_location(visualize):
@@ -31,3 +34,52 @@ def test_spawnable_location(visualize):
         print("new spawnable_locations", new_spawnable_locations, new_spawnable_locations.shape)
         # graph = locations_to_graph(new_spawnable_locations)
         visualize_mesh_and_graphs(all_mesh, new_spawnable_locations)
+
+
+def test_create_2d_graph_from_height_array(visualize, load_mesh=True):
+    # import numpy as np
+    import networkx as nx
+    from scipy.sparse import csr_matrix
+    from scipy.sparse.csgraph import shortest_path
+    import matplotlib.pyplot as plt
+
+    if load_mesh:
+        mesh = trimesh.load("results/overhanging_with_sdf_no_wall/mesh_0.obj_terrain.obj")
+        height_array = get_height_array_of_mesh_with_resolution(mesh, resolution=0.1)
+        plt.imshow(height_array)
+        plt.show()
+    else:
+        height_array = np.zeros((80, 80))
+        height_array[20, :60] = 2.0
+        height_array[40, 20:] = 2.0
+        height_array[60, :50] = 2.0
+
+    G = create_2d_graph_from_height_array(height_array, graph_ratio=4)
+
+    if visualize:
+        grid_size = np.array(height_array.shape) // 4
+
+        # Compute adjacency matrix
+        adj_mtx = nx.adjacency_matrix(G)
+        print("adj_mtx", adj_mtx, adj_mtx.shape)
+
+        graph = csr_matrix(adj_mtx)
+
+        # Compute shortest path distances using Dijkstra's algorith
+        dist_matrix, predecessors = shortest_path(csgraph=graph, directed=False, return_predecessors=True)
+
+        # dist_mtx, _ = dijkstra(csgraph=adj_mtx, directed=False, return_predecessors=False)
+
+        # Print results
+        print("Distance matrix:")
+        print(dist_matrix, dist_matrix.shape)
+        print("d(10, 25) = ", dist_matrix[10, 25])
+        nodes_list = np.array(list(G.nodes()))
+        print("node (10, 25) = ", nodes_list[10], nodes_list[100])
+        dist_from_10 = dist_matrix[5000, :]
+        print("dist_from_10", dist_from_10.shape)
+        img = dist_from_10.reshape(grid_size)
+        print("img", img.shape)
+        plt.imshow(img, vmax=1000)
+        # maximum value in the img is 300
+        plt.show()
