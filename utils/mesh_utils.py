@@ -267,6 +267,7 @@ def compute_signed_distance_and_closest_geometry(scene: o3d.t.geometry.Raycastin
 
 
 def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -> np.ndarray:
+    """compute sdf array of a mesh."""
 
     # To prevent weird behavior when two surfaces are exactly at the same positions
     mesh.vertices += np.random.uniform(-1e-4, 1e-4, size=mesh.vertices.shape)
@@ -281,7 +282,7 @@ def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -
     # Compute grid coordinates and query points
     bbox = mesh.bounds
     dim = np.array(dim)
-    num_elements = np.ceil(np.array(dim) / 0.1).astype(int)
+    num_elements = np.ceil(np.array(dim) / resolution).astype(int)
     xyz_range = [np.linspace(-dim[i] / 2, dim[i] / 2, num=num_elements[i]) for i in range(len(dim))]
     query_points = np.stack(np.meshgrid(*xyz_range), axis=-1).astype(np.float32)
 
@@ -300,7 +301,6 @@ def visualize_sdf(sdf: np.ndarray):
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
 
-    print("sdf ", sdf.shape)
     # We can visualize a slice of the grids directly with matplotlib
     fig, axes = plt.subplots(1, 1)
     # Create the initial image and color bar

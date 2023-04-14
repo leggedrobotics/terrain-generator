@@ -3,11 +3,13 @@ import trimesh
 import networkx as nx
 import open3d as o3d
 from typing import Union, Tuple
-
 import matplotlib.pyplot as plt
 
-from utils import get_height_array_of_mesh, get_heights_from_mesh
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import shortest_path
 import cv2
+
+from utils import get_heights_from_mesh
 
 
 def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset=0.0):
@@ -48,25 +50,6 @@ def calc_spawnable_locations_on_terrain(
     Args :param mesh: Mesh to create spawnable locations from.
     Returns: Spawnable locations.
     """
-    # Get the bounding box of the mesh.
-    # bbox = mesh.bounding_box.bounds
-    # # Get the minimum and maximum of the bounding box.
-    # b_min = np.min(bbox, axis=0)
-    # b_max = np.max(bbox, axis=0)
-    #
-    # dim = np.array([b_max[0] - b_min[0], b_max[1] - b_min[1], b_max[2] - b_min[2]])
-    #
-    # n_points = int((b_max[0] - b_min[0]) * n_points_per_tile)
-    #
-    # x = np.linspace(b_min[0] + border_offset, b_max[0] - border_offset, n_points)
-    # y = np.linspace(b_min[1] + border_offset, b_max[1] - border_offset, n_points)
-    # xv, yv = np.meshgrid(x, y)
-    # xv = xv.flatten()
-    # yv = yv.flatten()
-    # origins = np.stack([xv, yv, np.ones_like(xv) * dim[2] * 2], axis=-1)
-    #
-    # heights = get_heights_from_mesh(mesh, origins)
-    # array = heights.reshape(n_points, n_points)
     array = get_height_array_of_mesh_with_resolution(mesh, resolution=resolution, border_offset=border_offset)
 
     if visualize:
@@ -106,6 +89,7 @@ def calc_spawnable_locations_on_terrain(
 
 
 def get_sdf_of_points(points, sdf_array, center, resolution):
+    """Deplicated"""
     point = points
     point = point - center
     point = point / resolution
@@ -121,8 +105,6 @@ def get_sdf_of_points(points, sdf_array, center, resolution):
     point[:, 0] = np.clip(point[:, 0], 0, sdf_array.shape[0] - 1)
     point[:, 1] = np.clip(point[:, 1], 0, sdf_array.shape[1] - 1)
     point[:, 2] = np.clip(point[:, 2], 0, sdf_array.shape[2] - 1)
-
-    print("is valid", is_valid)
 
     sdf = np.ones(point.shape[0]) * 1000.0
     sdf[is_valid] = sdf_array[point[is_valid, 0], point[is_valid, 1], point[is_valid, 2]]
@@ -222,24 +204,56 @@ def visualize_mesh_and_graphs(mesh: trimesh.Trimesh, points: Union[nx.Graph, np.
     # o3d.visualization.draw_geometries([voxel_grid, o3d_mesh])
 
 
-def create_2d_graph_from_height_array(height_array: np.ndarray, graph_ratio: int = 4, height_threshold: float = 0.4):
+def create_2d_graph_from_height_array(
+    height_array: np.ndarray,
+    graph_ratio: int = 4,
+    height_threshold: float = 0.4,
+    invalid_cost=1000.0,
+    use_diagonal: bool = True,
+):
     # height_array = get_height_array_of_mesh_with_resolution(mesh, resolution=height_array_resolution)
 
     # graph_height_ratio = graph_resolution / height_array_resolution
     graph_shape = (np.array(height_array.shape) // graph_ratio).astype(int)
-    print("graph shape", graph_shape)
 
     G = nx.grid_2d_graph(*graph_shape)
-    print("G ", G)
-    print("G.nodes():", G.nodes())
+    # Add diagonal edges
+    if use_diagonal:
+        G.add_edges_from(
+            [((x, y), (x + 1, y + 1)) for x in range(graph_shape[0] - 1) for y in range(graph_shape[1] - 1)]
+            + [((x + 1, y), (x, y + 1)) for x in range(graph_shape[0] - 1) for y in range(graph_shape[1] - 1)]
+        )
     # Add cost map to edges
     for (u, v) in G.edges():
-        print("u, v: ", u, v)
-        # cost = cost_map[u[0], u[1]] + cost_map[v[0], v[1]]
-        cost = height_map_cost(u, v, height_array, graph_ratio, height_threshold)
-        print("cost: ", cost)
+        cost = height_map_cost(u, v, height_array, graph_ratio, height_threshold, invalid_cost)
         G[u][v]["weight"] = cost
     return G
+
+
+def distance_matrix_from_graph(graph: nx.Graph):
+    # Compute adjacency matrix
+    adj_mtx = nx.adjacency_matrix(graph)
+
+    g_mat = csr_matrix(adj_mtx)
+
+    # Compute shortest path distances using Dijkstra's algorithm
+    dist_matrix, _ = shortest_path(csgraph=g_mat, directed=False, return_predecessors=True)
+    return dist_matrix
+
+
+def compute_distance_matrix(
+    mesh: trimesh.Trimesh,
+    graph_ratio: int = 4,
+    height_threshold: float = 0.4,
+    invalid_cost: float = 1000.0,
+    height_map_resolution: float = 0.1,
+):
+    height_array = get_height_array_of_mesh_with_resolution(mesh, resolution=height_map_resolution)
+    G = create_2d_graph_from_height_array(
+        height_array, graph_ratio=graph_ratio, invalid_cost=invalid_cost, height_threshold=height_threshold
+    )
+    dist_matrix = distance_matrix_from_graph(G)
+    return dist_matrix
 
 
 def height_map_cost(
@@ -248,7 +262,7 @@ def height_map_cost(
     height_array: np.ndarray,
     ratio: int,
     height_threshold: float = 0.4,
-    invalid_cost: float = 10000.0,
+    invalid_cost: float = 1000.0,
 ):
     # sample heights between u and v in height array.
     # number of points is determined by ratio
@@ -256,11 +270,45 @@ def height_map_cost(
     um = np.array(u) * ratio
     vm = np.array(v) * ratio
     idx = np.linspace(um, vm, num=ratio + 1).astype(int)
-    print("idx ", idx)
     heights = height_array[idx[:, 0], idx[:, 1]]
-    print("heights: ", heights)
     diffs = np.abs(heights[1:] - heights[:-1])
-    # costs = diffs + invalid_cost * (diffs > height_threshold)
-    costs = 1.0 + invalid_cost * (diffs > height_threshold)
-    print("costs: ", costs)
+    distance = np.linalg.norm(vm - um) / ratio
+    costs = distance + invalid_cost * (diffs > height_threshold)
     return costs.sum()
+
+
+def visualize_distance(height_array, distance_matrix, graph_ratio, goal_pos, height_array_resolution=0.1):
+
+    distance_shape = (np.array(height_array.shape) // graph_ratio).astype(int)
+    grid_x, grid_y = np.meshgrid(np.arange(distance_shape[0]), np.arange(distance_shape[1]), indexing="ij")
+    grid_z = height_array[grid_x * graph_ratio, grid_y * graph_ratio]
+    distance_points = np.stack(
+        [
+            grid_x.flatten() * graph_ratio * height_array_resolution,
+            grid_y.flatten() * graph_ratio * height_array_resolution,
+            grid_z.flatten(),
+        ],
+        axis=1,
+    )
+    goal_idx = goal_pos[0] * distance_shape[0] + goal_pos[1]
+    distances = distance_matrix[goal_idx, :]
+    # Create a point cloud where the points are the occupied SDF grid points
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(distance_points)
+
+    # Set the point cloud colors based on the SDF values
+    cmap = plt.get_cmap("rainbow")
+    norm = plt.Normalize(vmin=0.0, vmax=150.0)
+    distance_colors = cmap(norm(distances.flatten()))[:, :3]
+    pcd.colors = o3d.utility.Vector3dVector(distance_colors)
+
+    voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.20)
+
+    # Visualize the point cloud and the mesh
+    viewer = o3d.visualization.Visualizer()
+    viewer.create_window()
+    viewer.add_geometry(voxel_grid)
+    opt = viewer.get_render_option()
+    opt.show_coordinate_frame = True
+    viewer.run()
+    viewer.destroy_window()
