@@ -1,9 +1,11 @@
 import os
 import numpy as np
+import torch
 from pyglet.window.key import P
 import trimesh
-from typing import Callable, Any, Optional
+from typing import Callable, Any, Optional, Union, Tuple
 from dataclasses import asdict, is_dataclass
+from itertools import product
 import open3d as o3d
 import copy
 
@@ -91,3 +93,75 @@ def get_cached_mesh_gen(
         return mesh
 
     return mesh_gen
+
+
+def check_validity(shape: Tuple[int], indices: Union[np.ndarray, torch.Tensor]):
+    """Check if indices are valid for a given shape."""
+    if isinstance(indices, np.ndarray):
+        indices = torch.from_numpy(indices)
+    if len(shape) == 2:
+        is_valid = torch.logical_and(
+            torch.logical_and(indices[:, 0] >= 0, indices[:, 0] < shape[0]),
+            torch.logical_and(indices[:, 1] >= 0, indices[:, 1] < shape[1]),
+        )
+    elif len(shape) == 3:
+        is_valid = torch.logical_and(
+            torch.logical_and(
+                torch.logical_and(indices[:, 0] >= 0, indices[:, 0] < shape[0]),
+                torch.logical_and(indices[:, 1] >= 0, indices[:, 1] < shape[1]),
+            ),
+            torch.logical_and(indices[:, 2] >= 0, indices[:, 2] < shape[2]),
+        )
+    else:
+        raise ValueError(f"Invalid shape. shape: {shape}. shape dimension must be 2 or 3.")
+    return is_valid
+
+
+def sample_interpolated(
+    grid: Union[np.ndarray, torch.Tensor],
+    indices: Union[np.ndarray, torch.Tensor],
+    invalid_value: float = 0.0,
+    round_decimals: int = 5,
+):
+    """Sample a grid at given indices. If the indices are not integers, interpolate.
+    Args:
+        grid: (np.ndarray or torch.Tensor) of shape (H, W) or (H, W, D).
+        indices: (np.ndarray or torch.Tensor) of shape (N, 2) or (N, 3).
+        invalid_value: (float) value to return if the indices are invalid.
+        round_decimals: (int) number of decimals to round the indices to.
+    Returns:
+        (np.ndarray or torch.Tensor) of shape (N,).
+    """
+
+    use_pytorch = isinstance(grid, torch.Tensor)
+
+    if isinstance(grid, np.ndarray):
+        grid = torch.from_numpy(grid)
+    if isinstance(indices, np.ndarray):
+        indices = torch.from_numpy(indices)
+
+    indices = torch.round(indices, decimals=round_decimals)
+    # convert the float indices to integer indices
+    floor_indices = torch.floor(indices - 0.0).long()
+    is_valid = check_validity(grid.shape, floor_indices)
+    values = torch.zeros_like(indices[:, 0])
+    weights = torch.zeros_like(indices[:, 0])
+    for delta in product(*[[0, 1] for _ in range(floor_indices.shape[-1])]):
+        delta = torch.tensor(delta, dtype=torch.long).to(floor_indices.device)
+        # neighboring_indices.append(floor_indices[:, i])
+        idx = floor_indices.clone()
+        idx += delta
+        # Trilinear interpolation
+        w = (1.0 - (indices - idx.float()).abs()).prod(dim=-1)
+        # neighboring_indices.append(idx)
+        valid = check_validity(grid.shape, idx)
+        is_valid = torch.logical_or(is_valid, valid)
+        v = torch.ones_like(w) * invalid_value
+        v[valid] = grid[[idx[valid, i] for i in range(idx.shape[-1])]].to(v.dtype)
+        values[valid] += w[valid] * v[valid]
+        weights[valid] += w[valid]
+    values /= weights + 1e-6
+    values[~is_valid] = invalid_value
+    if not use_pytorch:
+        values = values.cpu().numpy()
+    return values
