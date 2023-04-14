@@ -160,7 +160,7 @@ class SDFArray(object):
         transformation = transformation.to(self.device)
         self.center = transformation.dot(torch.cat([self.center, torch.tensor([1])], 0))[:3]
 
-    def get_sdf(self, point: Union[np.ndarray, torch.Tensor]) -> torch.Tensor:
+    def get_sdf(self, point: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
         """Get the SDF value at a point in space.
         Args: point (np.ndarray or torch.Tensor): A point in space.
         Returns: sdf (torch.Tensor): The SDF value at the point.

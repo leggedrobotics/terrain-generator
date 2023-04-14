@@ -267,7 +267,6 @@ def compute_signed_distance_and_closest_geometry(scene: o3d.t.geometry.Raycastin
 
 
 def compute_sdf(mesh: trimesh.Trimesh, dim=[2, 2, 2], resolution: float = 0.1) -> np.ndarray:
-    """compute sdf array of a mesh."""
 
     # To prevent weird behavior when two surfaces are exactly at the same positions
     mesh.vertices += np.random.uniform(-1e-4, 1e-4, size=mesh.vertices.shape)
@@ -360,6 +359,35 @@ def visualize_mesh_and_sdf(mesh: trimesh.Trimesh, sdf_array: np.ndarray, voxel_s
     cmap = plt.get_cmap("rainbow")
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
     sdf_colors = cmap(norm(sdf_values.flatten()))[:, :3]
+    pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
+
+    voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.05)
+    # o3d.visualization.draw_geometries([voxel_grid])
+
+    # Visualize the point cloud and the mesh
+    o3d_mesh = mesh.as_open3d
+    o3d_mesh.compute_vertex_normals()
+
+    viewer = o3d.visualization.Visualizer()
+    viewer.create_window()
+    viewer.add_geometry(voxel_grid)
+    viewer.add_geometry(o3d_mesh)
+    opt = viewer.get_render_option()
+    opt.show_coordinate_frame = True
+    viewer.run()
+    viewer.destroy_window()
+    # o3d.visualization.draw_geometries([voxel_grid, o3d_mesh])
+
+
+def visualize_mesh_and_sdf_values(mesh: trimesh.Trimesh, pos: np.ndarray, sdf: np.ndarray, vmin=0.0, vmax=1.0):
+    # Create a point cloud where the points are the occupied SDF grid points
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(pos)
+
+    # Set the point cloud colors based on the SDF values
+    cmap = plt.get_cmap("rainbow")
+    norm = plt.Normalize(vmin=vmin, vmax=vmax)
+    sdf_colors = cmap(norm(sdf.flatten()))[:, :3]
     pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
 
     voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.05)
