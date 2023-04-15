@@ -200,3 +200,46 @@ def test_nav_distance(visualize=False):
 
     # expected_values = torch.Tensor([5.0, 9.0, 7.0])
     # assert torch.allclose(distances, expected_values)
+
+
+def test_nav_distance_batch(visualize):
+    height_array = np.zeros((80, 100))
+    height_array[20, :60] = 2.0
+    height_array[40, 20:] = 2.0
+    height_array[60, :50] = 2.0
+    G = create_2d_graph_from_height_array(height_array, graph_ratio=4, invalid_cost=1000)
+    dist_matrix = distance_matrix_from_graph(G)
+
+    nav_distance = NavDistance(dist_matrix, shape=(20, 25), resolution=0.4)
+
+    # points = torch.Tensor([[0.0, 0.0], [0.1, 0.1], [0.05, 0.05]])
+    # get points from mesh grid
+    x = np.linspace(-4.00, 4.00, 2)
+    y = np.linspace(-4.00, 4.00, 2)
+    xv, yv = np.meshgrid(x, y)
+    points = np.stack([xv, yv], axis=2).reshape(-1, 2)
+    goal_pos = torch.Tensor([0.0, -1.5])
+    points = torch.from_numpy(points).float()
+    d = nav_distance.get_distance(points, goal_pos)
+    expected_d = torch.Tensor([97.94102602, 57.94106602, 1000.0, 1000.0])
+    assert torch.allclose(d, expected_d)
+
+    if visualize:
+        print("d ", d)
+        print("dist_matrix", dist_matrix.shape)
+        print("nav_distance", nav_distance)
+        import matplotlib.pyplot as plt
+
+        # first visualize the distance map
+        distance_map = dist_matrix[120, :].reshape((20, 25))
+        plt.imshow(distance_map, vmax=300)
+        plt.show()
+
+        print("points", points, points.shape)
+        print("d", d, d.shape)
+        img = d.reshape((2, 2))
+        plt.imshow(img, vmax=300)
+        plt.show()
+
+    # expected_values = torch.Tensor([5.0, 9.0, 7.0])
+    # assert torch.allclose(distances, expected_values)
