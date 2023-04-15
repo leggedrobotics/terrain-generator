@@ -133,6 +133,14 @@ class MeshTerrain(object):
         mesh = trimesh.load(mesh_path)
         return mesh
 
+    def to(self, device: torch.device):
+        """Move the array to a new device.
+        Args: device (torch.device): New device.
+        """
+        self.sdf.to(device)
+        self.nav_distance.to(device)
+        return self
+
     # def load_sdf(self, sdf_path: Optional[str] = None):
     #     if sdf_path is not None:
     #         sdf = np.load(sdf_path)
