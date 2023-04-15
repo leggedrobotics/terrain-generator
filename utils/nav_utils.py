@@ -18,6 +18,7 @@ def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset
     # Get the minimum and maximum of the bounding box.
     b_min = np.min(bbox, axis=0)
     b_max = np.max(bbox, axis=0)
+    center = (b_min + b_max) / 2
 
     dim = np.array([b_max[0] - b_min[0], b_max[1] - b_min[1], b_max[2] - b_min[2]])
 
@@ -32,7 +33,7 @@ def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset
 
     heights = get_heights_from_mesh(mesh, origins)
     array = heights.reshape(n_points, n_points)
-    return array
+    return array, center[:2]
 
 
 def calc_spawnable_locations_on_terrain(
@@ -248,12 +249,13 @@ def compute_distance_matrix(
     invalid_cost: float = 1000.0,
     height_map_resolution: float = 0.1,
 ):
-    height_array = get_height_array_of_mesh_with_resolution(mesh, resolution=height_map_resolution)
+    height_array, center = get_height_array_of_mesh_with_resolution(mesh, resolution=height_map_resolution)
     G = create_2d_graph_from_height_array(
         height_array, graph_ratio=graph_ratio, invalid_cost=invalid_cost, height_threshold=height_threshold
     )
     dist_matrix = distance_matrix_from_graph(G)
-    return dist_matrix
+    shape = (np.array(height_array.shape) // graph_ratio).astype(int)
+    return dist_matrix, shape, center
 
 
 def height_map_cost(

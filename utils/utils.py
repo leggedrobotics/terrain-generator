@@ -8,6 +8,7 @@ from dataclasses import asdict, is_dataclass
 from itertools import product
 import open3d as o3d
 import copy
+import json
 
 
 ENGINE = "blender"
@@ -15,24 +16,20 @@ CACHE_DIR = "__cache__/mesh_cache"
 # ENGINE = "scad"
 
 
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
 def cfg_to_hash(cfg, exclude_keys=["weight", "load_from_cache"]):
     """MD5 hash of a config."""
     import hashlib
-    import json
-
-    class NpEncoder(json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, np.integer):
-                return int(obj)
-            if isinstance(obj, np.floating):
-                return float(obj)
-            if isinstance(obj, np.ndarray):
-                return obj.tolist()
-            # if isinstance(obj, tuple):
-            #     return str(list(obj))
-            # if isinstance(obj, dict):
-            #     return self.default(obj)
-            return json.JSONEncoder.default(self, obj)
 
     def tuple_to_str(d):
         new_d = {}

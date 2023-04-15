@@ -102,15 +102,46 @@ def test_visualize_distance(visualize):
     visualize_distance(height_array, dist_matrix, ratio, (20, 80), height_array_resolution=0.1)
 
 
-def test_nav_mesh(visualize):
+def test_save_nav_mesh(visualize):
     cfg = MeshTerrainCfg(
         mesh_path="results/overhanging_with_sdf_no_wall/mesh_0.obj_terrain.obj",
-        distance_path="results/overhanging_with_sdf_no_wall/dist_matrix.npy",
-        sdf_path="results/overhanging_with_sdf_no_wall/mesh_0.obj.npy",
+        # mesh_path="results/overhanging_with_sdf_no_wall/tree.obj",
+        # distance_path="results/overhanging_with_sdf_no_wall/dist_matrix.npy",
+        # sdf_path="results/overhanging_with_sdf_no_wall/mesh_0.obj.npy",
     )
     print("cfg", cfg)
     mesh_terrain = MeshTerrain(cfg)
     print("mesh_terrain", mesh_terrain)
+    mesh_terrain.save_to_file("results/overhanging_with_sdf_no_wall/mesh_terrain_0")
+
+
+def test_load_nav_mesh(visualize):
+    cfg = MeshTerrainCfg(
+        mesh_path="results/overhanging_with_sdf_no_wall/mesh_0.obj_terrain.obj",
+        # distance_path="results/overhanging_with_sdf_no_wall/dist_matrix.npy",
+        # sdf_path="results/overhanging_with_sdf_no_wall/mesh_0.obj.npy",
+    )
+    cfg_path = "results/overhanging_with_sdf_no_wall/mesh_terrain_0/mesh_terrain.json"
+    print("cfg", cfg)
+    mesh_terrain = MeshTerrain(cfg_path)
+    print("mesh_terrain", mesh_terrain)
+    mesh_terrain.mesh.show()
+    # sdf_points =
+    # mesh_terrain.save_to_file("results/overhanging_with_sdf_no_wall/mesh_terrain")
+    x = np.linspace(-19.99, 19.99, 200)
+    y = np.linspace(-19.99, 19.99, 200)
+    xv, yv = np.meshgrid(x, y)
+    points = np.stack([xv, yv], axis=2).reshape(-1, 2)
+    goal_pos = torch.Tensor([17.0, -15.0])
+    d = mesh_terrain.get_distance(points, goal_pos)
+    if visualize:
+        import matplotlib.pyplot as plt
+
+        print("points", points, points.shape)
+        print("d", d, d.shape)
+        img = d.reshape((200, 200))
+        plt.imshow(img, vmax=100)
+        plt.show()
 
 
 def test_sdf_array(visualize):
@@ -128,14 +159,16 @@ def test_sdf_array(visualize):
 
 
 def test_nav_distance(visualize):
-    height_array = np.zeros((80, 80))
+    height_array = np.zeros((80, 100))
     height_array[20, :60] = 2.0
     height_array[40, 20:] = 2.0
     height_array[60, :50] = 2.0
     G = create_2d_graph_from_height_array(height_array, graph_ratio=4, invalid_cost=1000)
     dist_matrix = distance_matrix_from_graph(G)
+    print("dist_matrix", dist_matrix.shape)
 
-    nav_distance = NavDistance(dist_matrix, shape=(20, 20), resolution=0.4)
+    nav_distance = NavDistance(dist_matrix, shape=(20, 25), resolution=0.4)
+    print("nav_distance", nav_distance)
 
     # points = torch.Tensor([[0.0, 0.0], [0.1, 0.1], [0.05, 0.05]])
     # get points from mesh grid
@@ -148,10 +181,8 @@ def test_nav_distance(visualize):
     if visualize:
         import matplotlib.pyplot as plt
 
-        print("nav_distance", nav_distance)
-
         # first visualize the distance map
-        distance_map = dist_matrix[120, :].reshape((20, 20))
+        distance_map = dist_matrix[120, :].reshape((20, 25))
         plt.imshow(distance_map.T, vmax=300)
         plt.show()
 

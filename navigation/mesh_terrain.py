@@ -3,9 +3,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import json
+import os
 
 from typing import Optional, Tuple, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 from utils import (
     create_2d_graph_from_height_array,
@@ -13,6 +14,7 @@ from utils import (
     compute_sdf,
     compute_distance_matrix,
     sample_interpolated,
+    NpEncoder,
 )
 
 
@@ -25,7 +27,8 @@ class MeshTerrainCfg:
     # actual mesh files
     mesh: Optional[trimesh.Trimesh] = None
     sdf: Optional[np.ndarray] = None
-    distance: Optional[np.ndarray] = None
+    distance_matrix: Optional[np.ndarray] = None
+    distance_shape: Optional[Tuple[int, int]] = None
     # each params
     mesh_dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)
     sdf_resolution: float = 0.1
@@ -61,21 +64,59 @@ class MeshTerrain(object):
         self.mesh = self.cfg.mesh
         if self.mesh is None:
             self.mesh = self.load_mesh(self.cfg.mesh_path)
+            self.cfg.mesh_dim = self.mesh.bounding_box.extents
+            print("mesh_dim", self.cfg.mesh_dim)
 
         # Load sdf
-        sdf = self.cfg.sdf
-        if sdf is None:
-            sdf = self.load_sdf(self.cfg.sdf_path)
-        self.sdf = SDFArray(
-            sdf, np.array(self.cfg.sdf_center), self.cfg.sdf_resolution, max_value=self.cfg.sdf_max_value, device=device
-        )
-
+        if self.cfg.sdf is None:
+            self.sdf = SDFArray(max_value=self.cfg.sdf_max_value)
+            if self.cfg.sdf_path is not None:
+                print("Loading sdf ...")
+                self.sdf.load(self.cfg.sdf_path)
+            else:
+                print("Computing sdf ...")
+                sdf = compute_sdf(self.mesh, self.cfg.mesh_dim, self.cfg.sdf_resolution)
+                self.sdf = SDFArray(
+                    sdf,
+                    np.array(self.cfg.sdf_center),
+                    self.cfg.sdf_resolution,
+                    max_value=self.cfg.sdf_max_value,
+                    device=device,
+                )
+        else:
+            self.sdf = SDFArray(
+                self.cfg.sdf,
+                np.array(self.cfg.sdf_center),
+                self.cfg.sdf_resolution,
+                max_value=self.cfg.sdf_max_value,
+                device=device,
+            )
         # Load distance
-        self.distance_matrix = self.cfg.distance
-        self.distance_center = np.array(self.cfg.distance_center)
-
-        if self.distance_matrix is None:
-            self.distance_matrix = self.load_distance(self.cfg.distance_path)
+        if self.cfg.distance_matrix is None:
+            if self.cfg.distance_path is not None:
+                self.nav_distance = NavDistance(
+                    resolution=self.cfg.height_map_resolution * self.cfg.graph_ratio, device=device
+                )
+                print("Loading distance ...")
+                self.nav_distance.load(self.cfg.distance_path)
+            else:
+                print("Computing distance ...")
+                matrix, shape, center = compute_distance_matrix(
+                    self.mesh, self.cfg.graph_ratio, self.cfg.height_cost_threshld, self.cfg.height_map_resolution
+                )
+                self.nav_distance = NavDistance(
+                    matrix, shape, center, self.cfg.height_map_resolution * self.cfg.graph_ratio, device=device
+                )
+        else:
+            self.nav_distance = NavDistance(
+                self.cfg.distance_matrix,
+                self.cfg.distance_shape,
+                self.cfg.distance_center,
+                self.cfg.height_map_resolution * self.cfg.graph_ratio,
+                device=device,
+            )
+        # self.cfg.distance_shape = shape
+        # self.cfg.distance_center = distance_center
 
     def load_mesh(self, mesh_path: Optional[str] = None):
         if mesh_path is None:
@@ -83,21 +124,23 @@ class MeshTerrain(object):
         mesh = trimesh.load(mesh_path)
         return mesh
 
-    def load_sdf(self, sdf_path: Optional[str] = None):
-        if sdf_path is not None:
-            sdf = np.load(sdf_path)
-        else:
-            sdf = compute_sdf(self.mesh, self.cfg.mesh_dim, self.cfg.sdf_resolution)
-        return sdf
-
-    def load_distance(self, distance_path: Optional[str] = None):
-        if distance_path is not None:
-            distance_matrix = np.load(distance_path)
-        else:
-            distance_matrix = compute_distance_matrix(
-                self.mesh, self.cfg.graph_ratio, self.cfg.height_cost_threshld, self.cfg.height_map_resolution
-            )
-        return distance_matrix
+    # def load_sdf(self, sdf_path: Optional[str] = None):
+    #     if sdf_path is not None:
+    #         sdf = np.load(sdf_path)
+    #     else:
+    #         sdf = compute_sdf(self.mesh, self.cfg.mesh_dim, self.cfg.sdf_resolution)
+    #     return sdf
+    #
+    # def load_distance(self, distance_path: Optional[str] = None):
+    #     if distance_path is not None:
+    #         distance_matrix = np.load(distance_path)
+    #         shape = self.cfg.distance_shape
+    #         center = self.cfg.distance_center
+    #     else:
+    #         distance_matrix, shape, center = compute_distance_matrix(
+    #             self.mesh, self.cfg.graph_ratio, self.cfg.height_cost_threshld, self.cfg.height_map_resolution
+    #         )
+    #     return distance_matrix, shape, center
 
     def transform(self, transformation: Union[torch.Tensor, np.ndarray]):
         use_torch = isinstance(transformation, torch.Tensor)
@@ -118,11 +161,41 @@ class MeshTerrain(object):
             sdf = sdf.cpu().numpy()
         return sdf
 
+    def get_distance(self, points: Union[torch.Tensor, np.ndarray], goal_pos) -> Union[torch.Tensor, np.ndarray]:
+        """Get distance values at given points.
+        Args: points (np.ndarray): Points to get distance values.
+        Returns: np.ndarray: Distance values.
+        """
+        # use_torch = isinstance(points, torch.Tensor)
+        # if isinstance(points, torch.Tensor):
+        #     points = points.cpu().numpy()
+        distance = self.nav_distance.get_distance(points, goal_pos)
+        # if not use_torch:
+        # distance = distance.cpu().numpy()
+        return distance
+
+    def save_to_file(self, file_prefix):
+        """Save mesh terrain to file.
+        Args: file_path (str): File path to save mesh terrain.
+        """
+        print("Saving to files", file_prefix)
+        os.makedirs(file_prefix, exist_ok=True)
+        file_prefix = os.path.join(file_prefix, "mesh_terrain")
+        # save mesh as obj.
+        self.mesh.export(file_prefix + ".obj")
+        self.cfg.mesh_path = file_prefix + ".obj"
+        # save sdf as npy.
+        self.cfg.sdf_path = self.sdf.save(file_prefix + "_sdf")
+        # save distance as npy.
+        self.cfg.distance_path = self.nav_distance.save(file_prefix + "_distance")
+        # save cfg as json.
+        json.dump(asdict(self.cfg), open(file_prefix + ".json", "w"), cls=NpEncoder)
+
 
 class SDFArray(object):
     def __init__(
         self,
-        array: Union[np.ndarray, torch.Tensor],
+        array: Union[np.ndarray, torch.Tensor] = torch.zeros(1, 1, 1),
         center: Union[np.ndarray, torch.Tensor] = torch.zeros(3),
         resolution: float = 0.1,
         max_value: float = 1000,
@@ -177,14 +250,29 @@ class SDFArray(object):
             sdf = sdf.cpu().numpy()
         return sdf
 
+    def save(self, file_prefix):
+        """Save SDF array to file.
+        Args: file_path (str): File path to save SDF array.
+        """
+        data = {"array": self.array.cpu().numpy(), "center": self.center.cpu().numpy(), "resolution": self.resolution}
+        np.save(file_prefix + ".npy", data)
+        return file_prefix + ".npy"
+
+    def load(self, file_path):
+        """Load SDF array from file.
+        Args: file_path (str): File path to load SDF array.
+        """
+        data = np.load(file_path, allow_pickle=True).item()
+        self.__init__(data["array"], data["center"], data["resolution"])
+
 
 class NavDistance(object):
     """Navigation distance class."""
 
     def __init__(
         self,
-        matrix: Union[np.ndarray, torch.Tensor],
-        shape: Tuple[int, int],
+        matrix: Union[np.ndarray, torch.Tensor] = torch.zeros(1, 1),
+        shape: Tuple[int, int] = (1, 1),
         center: Union[np.ndarray, torch.Tensor] = torch.zeros(2),
         resolution: float = 0.1,
         max_value: float = 1000,
@@ -201,7 +289,7 @@ class NavDistance(object):
         if isinstance(center, np.ndarray):
             center = torch.from_numpy(center)
         self.matrix = matrix.to(device)
-        self.center = center.to(device)
+        self.center = center.to(device)[:2]
         self.resolution = resolution
         self.max_value = max_value
         self.shape = shape
@@ -232,24 +320,49 @@ class NavDistance(object):
         use_torch = isinstance(point, torch.Tensor)
         if isinstance(point, np.ndarray):
             point = torch.from_numpy(point)
+        if isinstance(goal_pos, np.ndarray):
+            goal_pos = torch.from_numpy(goal_pos)
         # Get distance matrix from goal pos
+        goal_pos = (goal_pos.to(self.device) - self.center) / self.resolution
+        goal_pos += torch.tensor(self.shape, device=self.device) // 2
         goal_idx = int(goal_pos[0] * self.shape[0] + goal_pos[1])
-        print("goal_idx", goal_idx)
+        goal_idx = np.clip(goal_idx, 0, self.shape[0] * self.shape[1] - 1)
         distance_map = self.matrix[goal_idx, :].reshape(self.shape[0], self.shape[1])
-        # distance_map = torch.flip(distance_map, [1])
-        # distance_map = torch.flip(distance_map, [0])
-        print("distance_map", distance_map.shape)
 
         point = point.to(self.device)
         point = point - self.center
+        print("point ", point)
         point = point / self.resolution
+        print("point ", point)
         point += torch.tensor(self.shape, device=self.device) // 2
-        print("point", point.T, point.shape)
+        print("center ", self.center)
+        print("point ", point)
+        print("distance_map ", distance_map)
         distances = sample_interpolated(distance_map, point, invalid_value=self.max_value)
-        print("distances", distances.shape)
+        print("distances ", distances)
         if not use_torch:
             distances = distances.cpu().numpy()
         return distances
+
+    def save(self, file_prefix):
+        """Save distance array to file.
+        Args: file_path (str): File path to save SDF array.
+        """
+        data = {
+            "matrix": self.matrix.cpu().numpy(),
+            "center": self.center.cpu().numpy(),
+            "shape": self.shape,
+            "resolution": self.resolution,
+        }
+        np.save(file_prefix + ".npy", data)
+        return file_prefix + ".npy"
+
+    def load(self, file_path):
+        """Load distance array from file.
+        Args: file_path (str): File path to load SDF array.
+        """
+        data = np.load(file_path, allow_pickle=True).item()
+        self.__init__(data["matrix"], data["shape"], data["center"], data["resolution"])
 
     #
     # def get_distance(
