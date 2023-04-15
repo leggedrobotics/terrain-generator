@@ -1,7 +1,13 @@
 import os
 import numpy as np
 import trimesh
-from typing import Callable, Any, Optional, Union, Tuple, List, Literal, Iterable
+from typing import Callable, Any, Optional, Union, Tuple, List, Iterable
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 from dataclasses import asdict, is_dataclass
 import open3d as o3d
 import matplotlib.pyplot as plt

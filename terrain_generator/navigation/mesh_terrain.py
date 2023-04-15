@@ -64,9 +64,13 @@ class MeshTerrain(object):
         # Load mesh
         self.mesh = self.cfg.mesh
         if self.mesh is None:
-            self.mesh = self.load_mesh(self.cfg.mesh_path)
-            self.cfg.mesh_dim = self.mesh.bounding_box.extents
-            print("mesh_dim", self.cfg.mesh_dim)
+            if self.cfg.mesh_path is not None:
+                self.mesh = self.load_mesh(self.cfg.mesh_path)
+                self.cfg.mesh_dim = self.mesh.bounding_box.extents
+            else:
+                self.mesh = trimesh.creation.box([1.0, 1.0, 1.0])
+                print("mesh is not set, use default box")
+            # print("mesh_dim", self.cfg.mesh_dim)
 
         # Load sdf
         if self.cfg.sdf is None:
@@ -153,7 +157,8 @@ class MeshTerrain(object):
             transformation = transformation.cpu().numpy()
         self.mesh.apply_transform(transformation)
         self.sdf.transform(transformation)
-        self.distance_center = transformation.dot(np.append(self.distance_center, 1))[:3]
+        self.nav_distance.transform(transformation)
+        # self.distance_center = transformation.dot(np.append(self.distance_center, 1))[:3]
 
     def translate(self, translation: Union[torch.Tensor, np.ndarray]):
         if isinstance(translation, torch.Tensor):
@@ -241,7 +246,7 @@ class SDFArray(object):
         if isinstance(transformation, np.ndarray):
             transformation = torch.from_numpy(transformation)
         transformation = transformation.to(self.device)
-        self.center = transformation.dot(torch.cat([self.center, torch.tensor([1])], 0))[:3]
+        self.center = transformation.matmul(torch.cat([self.center, torch.tensor([1])], 0))[:3]
 
     def get_sdf(self, point: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
         """Get the SDF value at a point in space.
@@ -298,8 +303,8 @@ class NavDistance(object):
             matrix = torch.from_numpy(matrix)
         if isinstance(center, np.ndarray):
             center = torch.from_numpy(center)
-        self.matrix = matrix.to(device)
-        self.center = center.to(device)[:2]
+        self.matrix = matrix.to(device).float()
+        self.center = center.to(device).float()[:2]
         self.resolution = resolution
         self.max_value = max_value
         self.shape = shape
@@ -316,9 +321,9 @@ class NavDistance(object):
     def transform(self, transformation: Union[np.ndarray, torch.Tensor]):
         # TODO: support rotation
         if isinstance(transformation, np.ndarray):
-            transformation = torch.from_numpy(transformation)
+            transformation = torch.from_numpy(transformation).float()
         transformation = transformation.to(self.device)
-        self.center = transformation.dot(torch.cat([self.center, torch.tensor([1])], 0))[:3]
+        self.center = transformation.matmul(torch.cat([self.center, torch.tensor([0.0, 1.0])], 0))[:2]
 
     def get_distance(
         self, point: Union[np.ndarray, torch.Tensor], goal_pos: Union[np.ndarray, torch.Tensor]
@@ -342,15 +347,15 @@ class NavDistance(object):
 
         point = point.to(self.device)
         point = point - self.center
-        print("point ", point)
+        # print("point ", point)
         point = point / self.resolution
-        print("point ", point)
+        # print("point ", point)
         point += torch.tensor(self.shape, device=self.device) // 2
-        print("center ", self.center)
-        print("point ", point)
-        print("distance_map ", distance_map)
+        # print("center ", self.center)
+        # print("point ", point)
+        # print("distance_map ", distance_map)
         distances = sample_interpolated(distance_map, point, invalid_value=self.max_value)
-        print("distances ", distances)
+        # print("distances ", distances)
         if not use_torch:
             distances = distances.cpu().numpy()
         return distances
