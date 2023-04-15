@@ -2,7 +2,7 @@ import numpy as np
 import trimesh
 import networkx as nx
 import open3d as o3d
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 import matplotlib.pyplot as plt
 
 from scipy.sparse import csr_matrix
@@ -12,7 +12,7 @@ import cv2
 from utils import get_heights_from_mesh
 
 
-def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset=0.0):
+def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset=0.0, return_points: bool = False):
     # Get the bounding box of the mesh.
     bbox = mesh.bounding_box.bounds
     # Get the minimum and maximum of the bounding box.
@@ -33,7 +33,11 @@ def get_height_array_of_mesh_with_resolution(mesh, resolution=0.4, border_offset
 
     heights = get_heights_from_mesh(mesh, origins)
     array = heights.reshape(n_points, n_points)
-    return array, center[:2]
+    origins[:, 2] = heights
+    if return_points:
+        return array, center[:2], origins
+    else:
+        return array, center[:2]
 
 
 def calc_spawnable_locations_on_terrain(
@@ -41,7 +45,7 @@ def calc_spawnable_locations_on_terrain(
     # num_points=1000,
     filter_size=(5, 5),
     spawnable_threshold=0.1,
-    # border_offset=1.0,
+    border_offset=1.0,
     resolution=0.4,
     # n_points_per_tile=5,
     visualize=False,
@@ -51,7 +55,9 @@ def calc_spawnable_locations_on_terrain(
     Args :param mesh: Mesh to create spawnable locations from.
     Returns: Spawnable locations.
     """
-    array = get_height_array_of_mesh_with_resolution(mesh, resolution=resolution, border_offset=border_offset)
+    array, center, origins = get_height_array_of_mesh_with_resolution(
+        mesh, resolution=resolution, border_offset=border_offset, return_points=True
+    )
 
     if visualize:
         plt.imshow(array)
@@ -168,23 +174,28 @@ def locations_to_graph(positions):
     return G
 
 
-def visualize_mesh_and_graphs(mesh: trimesh.Trimesh, points: Union[nx.Graph, np.ndarray]):
+def visualize_mesh_and_graphs(
+    mesh: trimesh.Trimesh, points: Union[nx.Graph, np.ndarray], color_values: Optional[np.ndarray] = None
+):
 
     if isinstance(points, nx.Graph):
         points = nx.get_node_attributes(points, "pos")
         points = np.array(list(points.values()))
 
-    print("points ", points, points.shape)
+    # print("points ", points, points.shape)
 
     # Create a point cloud where the points are the occupied SDF grid points
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
 
-    # Set the point cloud colors based on the SDF values
-    # cmap = plt.get_cmap("rainbow")
-    # norm = plt.Normalize(vmin=vmin, vmax=vmax)
-    # sdf_colors = cmap(norm(sdf_values.flatten()))[:, :3]
-    # pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
+    # Set the point cloud colors based on the color values
+    if color_values is not None:
+        cmap = plt.get_cmap("rainbow")
+        vmin = color_values.min()
+        vmax = color_values.max()
+        norm = plt.Normalize(vmin=vmin, vmax=vmax)
+        sdf_colors = cmap(norm(color_values.flatten()))[:, :3]
+        pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
 
     # voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.05)
     # o3d.visualization.draw_geometries([voxel_grid])
