@@ -39,7 +39,8 @@ class MeshTerrainCfg:
     height_map_resolution: float = 0.1
     distance_center: Tuple[float, float, float] = (0.0, 0.0, 0.0)
     graph_ratio: int = 4
-    height_cost_threshld: float = 0.4
+    height_cost_threshold: float = 0.4
+    invalid_cost: float = 1000.0
 
 
 class MeshTerrain(object):
@@ -102,7 +103,11 @@ class MeshTerrain(object):
             else:
                 print("Computing distance ...")
                 matrix, shape, center = compute_distance_matrix(
-                    self.mesh, self.cfg.graph_ratio, self.cfg.height_cost_threshld, self.cfg.height_map_resolution
+                    self.mesh,
+                    self.cfg.graph_ratio,
+                    height_threshold=self.cfg.height_cost_threshold,
+                    invalid_cost=self.cfg.invalid_cost,
+                    height_map_resolution=self.cfg.height_map_resolution,
                 )
                 self.nav_distance = NavDistance(
                     matrix, shape, center, self.cfg.height_map_resolution * self.cfg.graph_ratio, device=device
@@ -328,6 +333,7 @@ class NavDistance(object):
         goal_idx = int(goal_pos[0] * self.shape[0] + goal_pos[1])
         goal_idx = np.clip(goal_idx, 0, self.shape[0] * self.shape[1] - 1)
         distance_map = self.matrix[goal_idx, :].reshape(self.shape[0], self.shape[1])
+        distance_map = distance_map.T
 
         point = point.to(self.device)
         point = point - self.center
