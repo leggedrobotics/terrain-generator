@@ -24,6 +24,8 @@ class NpEncoder(json.JSONEncoder):
             return float(obj)
         if isinstance(obj, np.ndarray):
             return obj.tolist()
+        if isinstance(obj, trimesh.Trimesh):
+            return None
         return json.JSONEncoder.default(self, obj)
 
 

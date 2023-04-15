@@ -171,15 +171,10 @@ class MeshTerrain(object):
         Args: points (np.ndarray): Points to get distance values.
         Returns: np.ndarray: Distance values.
         """
-        # use_torch = isinstance(points, torch.Tensor)
-        # if isinstance(points, torch.Tensor):
-        #     points = points.cpu().numpy()
         distance = self.nav_distance.get_distance(points, goal_pos)
-        # if not use_torch:
-        # distance = distance.cpu().numpy()
         return distance
 
-    def save_to_file(self, file_prefix):
+    def save(self, file_prefix):
         """Save mesh terrain to file.
         Args: file_path (str): File path to save mesh terrain.
         """
@@ -188,12 +183,15 @@ class MeshTerrain(object):
         file_prefix = os.path.join(file_prefix, "mesh_terrain")
         # save mesh as obj.
         self.mesh.export(file_prefix + ".obj")
-        self.cfg.mesh_path = file_prefix + ".obj"
+        self.cfg.mesh_path = os.path.abspath(file_prefix + ".obj")
         # save sdf as npy.
-        self.cfg.sdf_path = self.sdf.save(file_prefix + "_sdf")
+        self.cfg.sdf_path = os.path.abspath(self.sdf.save(file_prefix + "_sdf"))
         # save distance as npy.
-        self.cfg.distance_path = self.nav_distance.save(file_prefix + "_distance")
+        self.cfg.distance_path = os.path.abspath(self.nav_distance.save(file_prefix + "_distance"))
         # save cfg as json.
+        self.cfg.mesh = None
+        self.cfg.sdf = None
+        self.cfg.distance_matrix = None
         json.dump(asdict(self.cfg), open(file_prefix + ".json", "w"), cls=NpEncoder)
 
 
@@ -355,8 +353,8 @@ class NavDistance(object):
         Args: file_path (str): File path to save SDF array.
         """
         data = {
-            "matrix": self.matrix.cpu().numpy(),
-            "center": self.center.cpu().numpy(),
+            "matrix": self.matrix.float().cpu().numpy(),
+            "center": self.center.float().cpu().numpy(),
             "shape": self.shape,
             "resolution": self.resolution,
         }

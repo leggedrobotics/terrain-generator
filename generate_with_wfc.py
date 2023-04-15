@@ -18,6 +18,7 @@ from trimesh_tiles.mesh_parts.overhanging_parts import create_overhanging_boxes
 
 from configs.navigation_cfg import IndoorNavigationPatternLevels
 from configs.overhanging_cfg import OverhangingTerrainPattern, OverhangingPattern
+from navigation.mesh_terrain import MeshTerrain, MeshTerrainCfg
 from alive_progress import alive_bar
 
 
@@ -45,7 +46,7 @@ def solve_with_wfc(cfg: MeshPattern, shape, initial_tile_name):
 def create_mesh_from_cfg(
     cfg: MeshPattern,
     overhanging_cfg: Optional[OverhangingPattern] = None,
-    mesh_name="result_mesh.obj",
+    prefix="mesh",
     mesh_dir="results/result",
     shape=[20, 20],
     initial_tile_name="floor",
@@ -67,7 +68,8 @@ def create_mesh_from_cfg(
         enable_history: save the history of the solver or not
     """
     os.makedirs(mesh_dir, exist_ok=True)
-    save_name = os.path.join(mesh_dir, mesh_name)
+    save_dir = os.path.join(mesh_dir, prefix)
+    os.makedirs(save_dir, exist_ok=True)
 
     tiles, wave, wave_order, wave_names = solve_with_wfc(cfg, shape, initial_tile_name)
 
@@ -78,7 +80,7 @@ def create_mesh_from_cfg(
 
     # Save the history of the solver
     if enable_history:
-        history_dir = os.path.join(mesh_dir, f"{mesh_name}_history")
+        history_dir = os.path.join(mesh_dir, f"{prefix}_history")
         os.makedirs(history_dir, exist_ok=True)
         np.save(os.path.join(history_dir, "wave.npy"), wave)
         np.save(os.path.join(history_dir, "wave_order.npy"), wave_order)
@@ -179,25 +181,36 @@ def create_mesh_from_cfg(
     # Translate the mesh to the center of the bounding box.
     result_mesh = result_mesh.apply_translation(-center)
 
-    print("saving mesh to ", save_name)
-    result_mesh.export(save_name)
+    print("saving mesh to ", save_dir)
+    result_mesh.export(os.path.join(save_dir, "mesh.obj"))
+    # result_mesh.export(save_dir)
     if overhanging_cfg is not None:
         result_terrain_mesh = result_terrain_mesh.apply_translation(-center)
-        result_terrain_mesh.export(save_name + "_terrain.obj")
+        result_terrain_mesh.export(os.path.join(save_dir, "terrain_mesh.obj"))
+        # result_terrain_mesh.export(save_dir + "_terrain.obj")
         result_overhanging_mesh = result_overhanging_mesh.apply_translation(-center)
-        result_overhanging_mesh.export(save_name + "_overhanging.obj")
+        result_overhanging_mesh.export(os.path.join(save_dir, "overhanging_mesh.obj"))
+        # result_overhanging_mesh.export(save_dir + "_overhanging.obj")
 
     if enable_sdf:
-        sdf_name = save_name + ".npy"
+        # sdf_name = save_dir + ".npy"
+        sdf_name = os.path.join(save_dir, "sdf.npy")
         print("saving sdf to ", sdf_name)
         sdf_tile_n = (np.array(cfg.dim[:2]) / sdf_resolution).astype(int)
-        np.save(sdf_name, sdf_min[sdf_tile_n[1] : -sdf_tile_n[1], sdf_tile_n[0] : -sdf_tile_n[0], :])
+        sdf = sdf_min[sdf_tile_n[1] : -sdf_tile_n[1], sdf_tile_n[0] : -sdf_tile_n[0], :]
+        np.save(sdf_name, sdf)
         spawnable_locations = calc_spawnable_locations_with_sdf(
             result_terrain_mesh, sdf_min, height_offset=0.5, sdf_resolution=0.1, sdf_threshold=0.4
         )
-        locations_name = save_name + "spawnable_locations.npy"
+        # locations_name = save_dir + "spawnable_locations.npy"
+        locations_name = os.path.join(save_dir, "spawnable_locations.npy")
         print("saving locations to ", locations_name)
         np.save(locations_name, spawnable_locations)
+
+        # Save as mesh_terrain
+        mesh_cfg = MeshTerrainCfg(mesh=result_terrain_mesh, sdf=sdf, sdf_resolution=sdf_resolution)
+        mesh_terrain = MeshTerrain(mesh_cfg)
+        mesh_terrain.save(save_dir)
     if visualize:
         visualize_mesh(result_mesh)
 
@@ -230,11 +243,11 @@ if __name__ == "__main__":
         over_cfg = None
 
     for i in range(10):
-        mesh_name = f"{args.mesh_name}_{i}.obj"
+        mesh_prefix = f"{args.mesh_name}_{i}"
         create_mesh_from_cfg(
             cfg,
             over_cfg,
-            mesh_name=mesh_name,
+            prefix=mesh_prefix,
             mesh_dir=args.mesh_dir,
             visualize=args.visualize,
             enable_history=args.enable_history,
