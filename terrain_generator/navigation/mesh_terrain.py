@@ -348,10 +348,10 @@ class NavDistance(object):
         # Get distance matrix from goal pos
         goal_pos = (goal_pos.to(self.device) - self.center) / self.resolution
         goal_pos += torch.tensor(self.shape, device=self.device) // 2
-        goal_idx = int(goal_pos[0] * self.shape[0] + goal_pos[1])
-        goal_idx = np.clip(goal_idx, 0, self.shape[0] * self.shape[1] - 1)
-        distance_map = self.matrix[goal_idx, :].reshape(self.shape[0], self.shape[1])
-        distance_map = distance_map.T
+        goal_idx = (goal_pos[:, 0] * self.shape[0] + goal_pos[:, 1]).long()
+        goal_idx = torch.clip(goal_idx, 0, self.shape[0] * self.shape[1] - 1)
+        distance_map = self.matrix[goal_idx, :].reshape(-1, self.shape[0], self.shape[1])
+        distance_map = distance_map.transpose(1, 2)
 
         point = point.to(self.device)
         point = point - self.center
@@ -360,10 +360,12 @@ class NavDistance(object):
         # print("point ", point)
         point += torch.tensor(self.shape, device=self.device) // 2
         # print("center ", self.center)
-        # print("point ", point)
-        # print("distance_map ", distance_map)
+        x_indices = torch.arange(goal_pos.shape[0], device=self.device).unsqueeze(1).repeat(1, point.shape[0])
+        point = point.repeat(goal_pos.shape[0], 1)
+        point = torch.cat([x_indices.reshape(-1, 1), point], -1)
+
         distances = sample_interpolated(distance_map, point, invalid_value=self.max_value)
-        # print("distances ", distances)
+        distances = distances.reshape(goal_pos.shape[0], -1)
         if not use_torch:
             distances = distances.cpu().numpy()
         return distances

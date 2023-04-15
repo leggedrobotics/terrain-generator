@@ -164,7 +164,7 @@ def test_sdf_array(visualize=False):
     assert torch.allclose(sdf, expected_values)
 
 
-def test_nav_distance(visualize=False):
+def test_nav_distance(visualize):
     height_array = np.zeros((80, 100))
     height_array[20, :60] = 2.0
     height_array[40, 20:] = 2.0
@@ -180,7 +180,7 @@ def test_nav_distance(visualize=False):
     y = np.linspace(-3.99, 3.99, 200)
     xv, yv = np.meshgrid(x, y)
     points = np.stack([xv, yv], axis=2).reshape(-1, 2)
-    goal_pos = torch.Tensor([0.0, -1.5])
+    goal_pos = torch.Tensor([[0.0, -1.5]])
     d = nav_distance.get_distance(points, goal_pos)
     if visualize:
         print("dist_matrix", dist_matrix.shape)
@@ -189,7 +189,7 @@ def test_nav_distance(visualize=False):
 
         # first visualize the distance map
         distance_map = dist_matrix[120, :].reshape((20, 25))
-        plt.imshow(distance_map.T, vmax=300)
+        plt.imshow(distance_map, vmax=300)
         plt.show()
 
         print("points", points, points.shape)
@@ -202,7 +202,7 @@ def test_nav_distance(visualize=False):
     # assert torch.allclose(distances, expected_values)
 
 
-def test_nav_distance_batch(visualize):
+def test_nav_batched_distance(visualize):
     height_array = np.zeros((80, 100))
     height_array[20, :60] = 2.0
     height_array[40, 20:] = 2.0
@@ -218,10 +218,22 @@ def test_nav_distance_batch(visualize):
     y = np.linspace(-4.00, 4.00, 2)
     xv, yv = np.meshgrid(x, y)
     points = np.stack([xv, yv], axis=2).reshape(-1, 2)
-    goal_pos = torch.Tensor([0.0, -1.5])
+
+    goal_pos = torch.Tensor([[0.0, -1.5]])
     points = torch.from_numpy(points).float()
     d = nav_distance.get_distance(points, goal_pos)
-    expected_d = torch.Tensor([97.94102602, 57.94106602, 1000.0, 1000.0])
+    expected_d = torch.Tensor([[97.94102602, 57.94106602, 1000.0, 1000.0]])
+    assert torch.allclose(d, expected_d)
+
+    goal_pos = torch.Tensor([[0.0, 1.5]])
+    d = nav_distance.get_distance(points, goal_pos)
+    expected_d = torch.Tensor([[76.9705, 32.2842, 1000.0, 1000.0]])
+    assert torch.allclose(d, expected_d)
+
+    # Batched goal pos
+    goal_pos = torch.Tensor([[0.0, -1.5], [0.0, 1.5]])
+    d = nav_distance.get_distance(points, goal_pos)
+    expected_d = torch.Tensor([[97.94102602, 57.94106602, 1000.0, 1000.0], [76.9705, 32.2842, 1000.0, 1000.0]])
     assert torch.allclose(d, expected_d)
 
     if visualize:
@@ -237,7 +249,7 @@ def test_nav_distance_batch(visualize):
 
         print("points", points, points.shape)
         print("d", d, d.shape)
-        img = d.reshape((2, 2))
+        img = d[0].reshape((2, 2))
         plt.imshow(img, vmax=300)
         plt.show()
 
