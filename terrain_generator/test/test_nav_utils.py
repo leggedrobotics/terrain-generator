@@ -135,13 +135,32 @@ def test_load_nav_mesh(visualize):
     array, center, mesh_points = get_height_array_of_mesh_with_resolution(
         mesh_terrain.mesh, resolution=0.05, return_points=True
     )
-    # goal_pos = torch.Tensor([-17.0, 15.0])
-    goal_pos = torch.Tensor([[-5.0, 12.0]])
+    goal_pos = torch.Tensor(
+        [
+            [-11.23, 10.26],
+            [-10.00, 10.00],
+            [0.0, 0.0],
+            [0.2, 0.4],
+            [10.0, 0.0],
+            [10.23, 0.234],
+            [-10.0, 0.0],
+            [0.0, 10.0],
+            [0.0, -10.0],
+            [10, 10],
+            [-10, -10],
+        ]
+    )
+    # goal_pos = torch.Tensor([[-5.0, 12.0]])
     d = mesh_terrain.get_distance(mesh_points[:, :2].copy(), goal_pos)
+    print("d ", d.shape)
     d = d.clip(0, 200)
     if visualize:
         print("center ", center)
-        visualize_mesh_and_graphs(mesh_terrain.mesh, mesh_points, color_values=d, goal_pos=goal_pos)
+        for i in range(d.shape[0]):
+            print(i, goal_pos[i])
+            visualize_mesh_and_graphs(mesh_terrain.mesh, mesh_points, color_values=d[i], goal_pos=goal_pos[i])
+            # plt.imshow(d[i, :, :])
+            # plt.show()
 
         # import matplotlib.pyplot as plt
         # plt.imshow(array)

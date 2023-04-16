@@ -351,7 +351,7 @@ class NavDistance(object):
         # Get distance matrix from goal pos
         goal_pos = (goal_pos.to(self.device) - self.center) / self.resolution
         goal_pos += torch.tensor(self.shape, device=self.device) // 2
-        goal_idx = (goal_pos[:, 1] * self.shape[0] + goal_pos[:, 0]).long()
+        goal_idx = (torch.round(goal_pos[:, 1]) * self.shape[0] + torch.round(goal_pos[:, 0])).long()
         goal_idx = torch.clip(goal_idx, 0, self.shape[0] * self.shape[1] - 1)
         distance_map = self.matrix[goal_idx, :].reshape(-1, self.shape[0], self.shape[1])
         distance_map = distance_map.transpose(1, 2)
