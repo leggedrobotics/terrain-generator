@@ -124,6 +124,7 @@ class MeshTerrain(object):
                 self.cfg.height_map_resolution * self.cfg.graph_ratio,
                 device=device,
             )
+        self.device = device
         # self.cfg.distance_shape = shape
         # self.cfg.distance_center = distance_center
 
@@ -139,6 +140,7 @@ class MeshTerrain(object):
         """
         self.sdf.to(device)
         self.nav_distance.to(device)
+        self.device = device
         return self
 
     # def load_sdf(self, sdf_path: Optional[str] = None):
@@ -324,6 +326,7 @@ class NavDistance(object):
         """
         self.matrix = self.matrix.to(device)
         self.center = self.center.to(device)
+        self.device = device
         return self
 
     def transform(self, transformation: Union[np.ndarray, torch.Tensor]):
@@ -348,7 +351,7 @@ class NavDistance(object):
         # Get distance matrix from goal pos
         goal_pos = (goal_pos.to(self.device) - self.center) / self.resolution
         goal_pos += torch.tensor(self.shape, device=self.device) // 2
-        goal_idx = (goal_pos[:, 0] * self.shape[0] + goal_pos[:, 1]).long()
+        goal_idx = (goal_pos[:, 1] * self.shape[0] + goal_pos[:, 0]).long()
         goal_idx = torch.clip(goal_idx, 0, self.shape[0] * self.shape[1] - 1)
         distance_map = self.matrix[goal_idx, :].reshape(-1, self.shape[0], self.shape[1])
         distance_map = distance_map.transpose(1, 2)
@@ -357,9 +360,8 @@ class NavDistance(object):
         point = point - self.center
         # print("point ", point)
         point = point / self.resolution
-        # print("point ", point)
         point += torch.tensor(self.shape, device=self.device) // 2
-        # print("center ", self.center)
+        # print("point ", point)
         if point.shape[0] != goal_pos.shape[0]:
             x_indices = torch.arange(goal_pos.shape[0], device=self.device).unsqueeze(1).repeat(1, point.shape[0])
             point = point.repeat(goal_pos.shape[0], 1)

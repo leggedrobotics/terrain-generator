@@ -175,7 +175,10 @@ def locations_to_graph(positions):
 
 
 def visualize_mesh_and_graphs(
-    mesh: trimesh.Trimesh, points: Union[nx.Graph, np.ndarray], color_values: Optional[np.ndarray] = None
+    mesh: trimesh.Trimesh,
+    points: Union[nx.Graph, np.ndarray],
+    color_values: Optional[np.ndarray] = None,
+    goal_pos: Optional[np.ndarray] = None,
 ):
 
     if isinstance(points, nx.Graph):
@@ -188,6 +191,17 @@ def visualize_mesh_and_graphs(
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
 
+    viewer = o3d.visualization.Visualizer()
+    viewer.create_window()
+
+    viewer.add_geometry(pcd)
+
+    # Mesh
+    o3d_mesh = mesh.as_open3d
+    o3d_mesh.compute_vertex_normals()
+
+    viewer.add_geometry(o3d_mesh)
+
     # Set the point cloud colors based on the color values
     if color_values is not None:
         cmap = plt.get_cmap("rainbow")
@@ -197,18 +211,23 @@ def visualize_mesh_and_graphs(
         sdf_colors = cmap(norm(color_values.flatten()))[:, :3]
         pcd.colors = o3d.utility.Vector3dVector(sdf_colors)
 
+    if goal_pos is not None:
+        goal_pos = goal_pos.reshape(-1)
+        goal_pos = np.array([goal_pos[0], goal_pos[1], -0.5])
+        line_points = [goal_pos, goal_pos + np.array([0, 0, 4])]
+        lines = [[0, 1]]
+        colors = [[1, 0, 0] for i in range(len(lines))]
+        line_set = o3d.geometry.LineSet()
+        line_set.points = o3d.utility.Vector3dVector(line_points)
+        line_set.lines = o3d.utility.Vector2iVector(lines)
+        line_set.colors = o3d.utility.Vector3dVector(colors)
+        viewer.add_geometry(line_set)
+
     # voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size=0.05)
     # o3d.visualization.draw_geometries([voxel_grid])
 
     # Visualize the point cloud and the mesh
-    o3d_mesh = mesh.as_open3d
-    o3d_mesh.compute_vertex_normals()
-
-    viewer = o3d.visualization.Visualizer()
-    viewer.create_window()
     # viewer.add_geometry(voxel_grid)
-    viewer.add_geometry(pcd)
-    viewer.add_geometry(o3d_mesh)
     opt = viewer.get_render_option()
     opt.show_coordinate_frame = True
     viewer.run()

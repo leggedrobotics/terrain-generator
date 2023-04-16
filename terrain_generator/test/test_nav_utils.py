@@ -118,13 +118,13 @@ def test_save_nav_mesh(visualize=False):
     mesh_terrain.save("results/overhanging_with_sdf_no_wall/mesh_terrain_0")
 
 
-def test_load_nav_mesh(visualize=False):
+def test_load_nav_mesh(visualize):
     # cfg = MeshTerrainCfg(
     #     mesh_path="results/overhanging_with_sdf_no_wall/mesh_0.obj_terrain.obj",
     #     # distance_path="results/overhanging_with_sdf_no_wall/dist_matrix.npy",
     #     # sdf_path="results/overhanging_with_sdf_no_wall/mesh_0.obj.npy",
     # )
-    cfg_path = "results/overhanging_with_mesh_terrain/mesh_1/mesh_terrain.json"
+    cfg_path = "results/overhanging_with_mesh_terrain/mesh_0/mesh_terrain.json"
     mesh_terrain = MeshTerrain(cfg_path, device="cuda:0")
     # sdf_points =
     # mesh_terrain.save_to_file("results/overhanging_with_sdf_no_wall/mesh_terrain")
@@ -136,12 +136,12 @@ def test_load_nav_mesh(visualize=False):
         mesh_terrain.mesh, resolution=0.05, return_points=True
     )
     # goal_pos = torch.Tensor([-17.0, 15.0])
-    goal_pos = torch.Tensor([-5.0, 12.0])
+    goal_pos = torch.Tensor([[-5.0, 12.0]])
     d = mesh_terrain.get_distance(mesh_points[:, :2].copy(), goal_pos)
     d = d.clip(0, 200)
     if visualize:
         print("center ", center)
-        visualize_mesh_and_graphs(mesh_terrain.mesh, mesh_points, color_values=d)
+        visualize_mesh_and_graphs(mesh_terrain.mesh, mesh_points, color_values=d, goal_pos=goal_pos)
 
         # import matplotlib.pyplot as plt
         # plt.imshow(array)
