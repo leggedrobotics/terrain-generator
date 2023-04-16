@@ -360,8 +360,12 @@ class NavDistance(object):
         # print("point ", point)
         point += torch.tensor(self.shape, device=self.device) // 2
         # print("center ", self.center)
-        x_indices = torch.arange(goal_pos.shape[0], device=self.device).unsqueeze(1).repeat(1, point.shape[0])
-        point = point.repeat(goal_pos.shape[0], 1)
+        if point.shape[0] != goal_pos.shape[0]:
+            x_indices = torch.arange(goal_pos.shape[0], device=self.device).unsqueeze(1).repeat(1, point.shape[0])
+            point = point.repeat(goal_pos.shape[0], 1)
+        else:
+            x_indices = torch.arange(goal_pos.shape[0], device=self.device).unsqueeze(1).repeat(1, point.shape[1])
+            point = point.reshape(-1, 2)
         point = torch.cat([x_indices.reshape(-1, 1), point], -1)
 
         distances = sample_interpolated(distance_map, point, invalid_value=self.max_value)

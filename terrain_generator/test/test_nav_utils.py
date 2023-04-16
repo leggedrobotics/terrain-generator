@@ -225,6 +225,12 @@ def test_nav_batched_distance(visualize):
     expected_d = torch.Tensor([[97.94102602, 57.94106602, 1000.0, 1000.0]])
     assert torch.allclose(d, expected_d)
 
+    goal_pos = torch.Tensor([[0.0, -1.5]])
+    points_shifted = points.clone() + 1.0
+    d = nav_distance.get_distance(points_shifted, goal_pos)
+    expected_d = torch.Tensor([[555.7985, 63.7989, 1000.0, 1000.0]])
+    assert torch.allclose(d, expected_d)
+
     goal_pos = torch.Tensor([[0.0, 1.5]])
     d = nav_distance.get_distance(points, goal_pos)
     expected_d = torch.Tensor([[76.9705, 32.2842, 1000.0, 1000.0]])
@@ -234,6 +240,13 @@ def test_nav_batched_distance(visualize):
     goal_pos = torch.Tensor([[0.0, -1.5], [0.0, 1.5]])
     d = nav_distance.get_distance(points, goal_pos)
     expected_d = torch.Tensor([[97.94102602, 57.94106602, 1000.0, 1000.0], [76.9705, 32.2842, 1000.0, 1000.0]])
+    assert torch.allclose(d, expected_d)
+
+    # Batched goal pos and points
+    goal_pos = torch.Tensor([[0.0, 1.5], [0.0, -1.5]])
+    points = torch.stack([points, points_shifted], dim=0)
+    d = nav_distance.get_distance(points, goal_pos)
+    expected_d = torch.Tensor([[76.9705, 32.2842, 1000.0, 1000.0], [555.7985, 63.7989, 1000.0, 1000.0]])
     assert torch.allclose(d, expected_d)
 
     if visualize:
