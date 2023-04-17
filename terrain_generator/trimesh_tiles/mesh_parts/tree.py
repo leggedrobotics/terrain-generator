@@ -197,7 +197,7 @@ def add_trees_on_terrain(
     # Merge all the tree meshes into a single mesh
     tree_mesh = trimesh.util.concatenate(tree_meshes)
 
-    return tree_meshes
+    return tree_mesh
 
 
 if __name__ == "__main__":
