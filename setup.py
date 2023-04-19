@@ -7,6 +7,8 @@ setup(
     install_requires=[
         "numpy>=1.19.5",
         "matplotlib>=3.3.3",
+        "open3d",
+        "networkx",
     ],
     entry_points={
         "console_scripts": [
