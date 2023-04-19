@@ -5,3 +5,5 @@ mesh_cache
 *.obj
 *.stl
 *.json
+
+terrain_generator.egg-info
