@@ -78,7 +78,7 @@ class MeshTerrain(object):
             self.sdf = SDFArray(max_value=self.cfg.sdf_max_value)
             if self.cfg.sdf_path is not None:
                 print("Loading sdf ...")
-                self.sdf.load(self.cfg.sdf_path)
+                self.sdf.load(os.path.join(self.root_dir, self.cfg.sdf_path))
             else:
                 print("Computing sdf ...")
                 sdf = compute_sdf(self.mesh, self.cfg.mesh_dim, self.cfg.sdf_resolution)
@@ -104,7 +104,7 @@ class MeshTerrain(object):
                     resolution=self.cfg.height_map_resolution * self.cfg.graph_ratio, device=device
                 )
                 print("Loading distance ...")
-                self.nav_distance.load(self.cfg.distance_path)
+                self.nav_distance.load(os.path.join(self.root_dir, self.cfg.distance_path))
             else:
                 print("Computing distance ...")
                 matrix, shape, center = compute_distance_matrix(
