@@ -54,6 +54,7 @@ class MeshTerrain(object):
 
         if isinstance(cfg, str):
             self.cfg = MeshTerrainCfg(**json.load(open(cfg, "r")))
+            self.root_dir = os.path.dirname(cfg)
         elif isinstance(cfg, dict):
             self.cfg = MeshTerrainCfg(**cfg)
         elif isinstance(cfg, MeshTerrainCfg):
@@ -131,6 +132,7 @@ class MeshTerrain(object):
     def load_mesh(self, mesh_path: Optional[str] = None):
         if mesh_path is None:
             raise ValueError("mesh is not set")
+        mesh_path = os.path.join(self.root_dir, mesh_path)
         mesh = trimesh.load(mesh_path)
         return mesh
 
@@ -142,24 +144,6 @@ class MeshTerrain(object):
         self.nav_distance.to(device)
         self.device = device
         return self
-
-    # def load_sdf(self, sdf_path: Optional[str] = None):
-    #     if sdf_path is not None:
-    #         sdf = np.load(sdf_path)
-    #     else:
-    #         sdf = compute_sdf(self.mesh, self.cfg.mesh_dim, self.cfg.sdf_resolution)
-    #     return sdf
-    #
-    # def load_distance(self, distance_path: Optional[str] = None):
-    #     if distance_path is not None:
-    #         distance_matrix = np.load(distance_path)
-    #         shape = self.cfg.distance_shape
-    #         center = self.cfg.distance_center
-    #     else:
-    #         distance_matrix, shape, center = compute_distance_matrix(
-    #             self.mesh, self.cfg.graph_ratio, self.cfg.height_cost_threshld, self.cfg.height_map_resolution
-    #         )
-    #     return distance_matrix, shape, center
 
     def transform(self, transformation: Union[torch.Tensor, np.ndarray]):
         use_torch = isinstance(transformation, torch.Tensor)
@@ -205,11 +189,11 @@ class MeshTerrain(object):
         file_prefix = os.path.join(file_prefix, "mesh_terrain")
         # save mesh as obj.
         self.mesh.export(file_prefix + ".obj")
-        self.cfg.mesh_path = os.path.abspath(file_prefix + ".obj")
+        self.cfg.mesh_path = os.path.basename(file_prefix + ".obj")
         # save sdf as npy.
-        self.cfg.sdf_path = os.path.abspath(self.sdf.save(file_prefix + "_sdf"))
+        self.cfg.sdf_path = os.path.basename(self.sdf.save(file_prefix + "_sdf"))
         # save distance as npy.
-        self.cfg.distance_path = os.path.abspath(self.nav_distance.save(file_prefix + "_distance"))
+        self.cfg.distance_path = os.path.basename(self.nav_distance.save(file_prefix + "_distance"))
         # save cfg as json.
         self.cfg.mesh = None
         self.cfg.sdf = None
