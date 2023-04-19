@@ -124,7 +124,7 @@ def test_load_nav_mesh(visualize):
     #     # distance_path="results/overhanging_with_sdf_no_wall/dist_matrix.npy",
     #     # sdf_path="results/overhanging_with_sdf_no_wall/mesh_0.obj.npy",
     # )
-    cfg_path = "results/overhanging_with_mesh_terrain/mesh_0/mesh_terrain.json"
+    cfg_path = "results/overhanging/mesh_0/mesh_terrain.json"
     mesh_terrain = MeshTerrain(cfg_path, device="cuda:0")
     # sdf_points =
     # mesh_terrain.save_to_file("results/overhanging_with_sdf_no_wall/mesh_terrain")
