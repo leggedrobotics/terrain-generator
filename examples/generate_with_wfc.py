@@ -202,6 +202,8 @@ def create_mesh_from_cfg(
         sdf_tile_n = (np.array(cfg.dim[:2]) / sdf_resolution).astype(int)
         sdf = sdf_min[sdf_tile_n[1] : -sdf_tile_n[1], sdf_tile_n[0] : -sdf_tile_n[0], :]
         np.save(sdf_name, sdf)
+        if overhanging_cfg is None:
+            result_terrain_mesh = result_mesh
         spawnable_locations = calc_spawnable_locations_with_sdf(
             result_terrain_mesh, sdf_min, height_offset=0.5, sdf_resolution=0.1, sdf_threshold=0.4
         )
