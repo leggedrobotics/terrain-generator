@@ -3,8 +3,8 @@ import numpy as np
 import trimesh
 import matplotlib.pyplot as plt
 
-from utils import visualize_mesh_and_sdf_values
-from navigation.mesh_terrain import MeshTerrain, MeshTerrainCfg, SDFArray, NavDistance
+from terrain_generator.utils import visualize_mesh_and_sdf_values
+from terrain_generator.navigation.mesh_terrain import MeshTerrain, MeshTerrainCfg, SDFArray, NavDistance
 
 # Load SDF array
 sdf_array = np.load("results/overhanging_with_sdf_no_wall/mesh_1.obj.npy")
