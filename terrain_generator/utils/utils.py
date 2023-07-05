@@ -8,6 +8,7 @@ from dataclasses import asdict, is_dataclass
 from itertools import product
 import copy
 import json
+from scipy.spatial.transform import Rotation
 
 
 ENGINE = "blender"
@@ -219,28 +220,18 @@ def sample_interpolated(
         values = values.cpu().numpy()
     return values
 
-    # indices = torch.round(indices, decimals=round_decimals)
-    # # convert the float indices to integer indices
-    # floor_indices = torch.floor(indices - 0.0).long()
-    # is_valid = check_validity(grid.shape, floor_indices)
-    # values = torch.zeros_like(indices[:, 0])
-    # weights = torch.zeros_like(indices[:, 0])
-    # for delta in product(*[[0, 1] for _ in range(floor_indices.shape[-1])]):
-    #     delta = torch.tensor(delta, dtype=torch.long).to(floor_indices.device)
-    #     # neighboring_indices.append(floor_indices[:, i])
-    #     idx = floor_indices.clone()
-    #     idx += delta
-    #     # Trilinear interpolation
-    #     w = (1.0 - (indices - idx.float()).abs()).prod(dim=-1)
-    #     # neighboring_indices.append(idx)
-    #     valid = check_validity(grid.shape, idx)
-    #     is_valid = torch.logical_or(is_valid, valid)
-    #     v = torch.ones_like(w) * invalid_value
-    #     v[valid] = grid[[idx[valid, i] for i in range(idx.shape[-1])]].to(v.dtype)
-    #     values[valid] += w[valid] * v[valid]
-    #     weights[valid] += w[valid]
-    # values /= weights + 1e-6
-    # values[~is_valid] = invalid_value
-    # if not use_pytorch:
-    #     values = values.cpu().numpy()
-    # return values
+
+def euler_angles_to_rotation_matrix(roll: np.ndarray, pitch: np.ndarray, yaw: np.ndarray):
+    """Convert euler angles to rotation matrix.
+    Args:
+        roll: (float) rotation around x-axis.
+        pitch: (float) rotation around y-axis.
+        yaw: (float) rotation around z-axis.
+    Returns:
+        (np.ndarray) of shape (3, 3).
+    """
+    roll = np.expand_dims(roll, axis=-1)
+    pitch = np.expand_dims(pitch, axis=-1)
+    yaw = np.expand_dims(yaw, axis=-1)
+    r = Rotation.from_euler("xyz", np.concatenate([roll, pitch, yaw], axis=-1), degrees=False)
+    return r.as_matrix()
