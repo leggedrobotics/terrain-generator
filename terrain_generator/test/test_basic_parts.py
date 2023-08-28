@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2023, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 import numpy as np
 import trimesh
 from ..trimesh_tiles.mesh_parts.basic_parts import create_capsule_mesh, create_floor

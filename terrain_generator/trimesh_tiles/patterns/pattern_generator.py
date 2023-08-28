@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2023, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 import numpy as np
 from typing import Tuple, Optional
 from dataclasses import dataclass

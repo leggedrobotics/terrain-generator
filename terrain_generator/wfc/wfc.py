@@ -1,17 +1,17 @@
+#
+# Copyright (c) 2023, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 import os
 import pickle
 import random
 import copy
 
-# from ctypes import Array
-# from threading import local
 import numpy as np
 
-# import numpy.typing as npt
 from dataclasses import dataclass
 from typing import Literal, Tuple, Dict, List
 
-# import itertools
 from alive_progress import alive_bar, alive_it
 from ..utils import cfg_to_hash, CACHE_DIR
 
