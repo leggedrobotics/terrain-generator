@@ -12,7 +12,7 @@ from .basic_parts import (
     create_capsule_mesh,
     create_box_mesh,
 )
-from .overhanging_parts import generate_wall_from_array
+from .overhanging_parts import generate_wall_from_array, create_overhanging_boxes, create_floating_boxes
 from .mesh_parts_cfg import (
     MeshPartsCfg,
     WallPartsCfg,
@@ -24,6 +24,8 @@ from .mesh_parts_cfg import (
     BoxMeshPartsCfg,
     CombinedMeshPartsCfg,
     WallMeshPartsCfg,
+    OverhangingMeshPartsCfg,
+    FloatingBoxesPartsCfg,
 )
 from ...wfc.tiles import MeshTile
 from ...utils import get_height_array_of_mesh, get_cached_mesh_gen, merge_meshes
@@ -50,13 +52,8 @@ def get_mesh_gen(cfg: MeshPartsCfg) -> Callable:
         mesh_gens = [get_mesh_gen(c) for c in cfg.cfgs]
 
         def mesh_gen(cfg):
-            # print("Generating CombinedMeshPartsCfg from mesh_gen")
             mesh = trimesh.Trimesh()
             for i, gen in enumerate(mesh_gens):
-                # print("Generating mesh part ", i)
-                # print("gen: ", gen)
-                # print("cfg: ", cfg.cfgs[i])
-                # print("mesh: ", mesh)
                 new_mesh = gen(cfg.cfgs[i], mesh=mesh)
                 # mesh = merge_meshes([mesh, new_mesh], cfg.minimal_triangles)
                 mesh = merge_meshes([mesh, new_mesh], False)

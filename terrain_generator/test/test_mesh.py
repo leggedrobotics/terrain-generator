@@ -9,6 +9,7 @@ from ..utils import (
     compute_sdf,
     visualize_sdf,
     visualize_mesh_and_sdf,
+    clean_mesh,
 )
 
 
@@ -115,6 +116,21 @@ def test_compute_sdf(visualize=False):
         box.show()
         visualize_sdf(sdf)
         visualize_mesh_and_sdf(box, sdf, voxel_size=0.1)
+
+
+def test_clean_mesh(visualize=True):
+    box = trimesh.creation.box([0.5, 0.5, 0.5], trimesh.transformations.translation_matrix([0.0, 0.0, 0.0]))
+    box2 = trimesh.creation.box([0.5, 0.5, 0.5], trimesh.transformations.translation_matrix([0.25, 0.0, 0.0]))
+    # box3 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.0, 0.35, 0.0]))
+    # box4 = trimesh.creation.box([0.2, 0.2, 0.2], trimesh.transformations.translation_matrix([0.3, -0.30, 0.35]))
+    box += box2
+
+    cleaned_box = clean_mesh(box)
+    if visualize:
+        print("box vertices: ", box.vertices.shape, "faces: ", box.faces.shape)
+        print("cleaned_box vertices: ", cleaned_box.vertices.shape, "faces: ", cleaned_box.faces.shape)
+        box.show()
+    # sdf = compute_sdf(mesh=box, dim=[2, 2, 1], resolution=0.1)
 
 
 # def test_visualize_sdf(sdf_path):

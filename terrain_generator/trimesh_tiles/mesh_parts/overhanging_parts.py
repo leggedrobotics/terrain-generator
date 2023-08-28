@@ -1,4 +1,5 @@
 import trimesh
+from typing import Callable
 import numpy as np
 from ...utils import (
     merge_meshes,
@@ -7,13 +8,15 @@ from ...utils import (
     ENGINE,
     get_height_array_of_mesh,
     get_heights_from_mesh,
+    euler_angles_to_rotation_matrix,
 )
 from .mesh_parts_cfg import (
-    FloatingBoxesPartsCfg,
+    OverhangingBoxesPartsCfg,
     WallMeshPartsCfg,
     OverhangingMeshPartsCfg,
     FloatingBoxesPartsCfg,
     PlatformMeshPartsCfg,
+    BoxMeshPartsCfg,
     # StairMeshPartsCfg,
 )
 
@@ -108,7 +111,7 @@ def generate_wall_from_array(cfg: WallMeshPartsCfg) -> trimesh.Trimesh:
     return mesh
 
 
-def create_overhanging_boxes(cfg: FloatingBoxesPartsCfg, **kwargs):
+def create_overhanging_boxes(cfg: OverhangingBoxesPartsCfg, **kwargs):
     if cfg.mesh is not None:
         height_array = get_height_array_of_mesh(cfg.mesh, cfg.dim, cfg.box_grid_n)
     elif cfg.height_array is not None:
@@ -133,6 +136,39 @@ def create_overhanging_boxes(cfg: FloatingBoxesPartsCfg, **kwargs):
         use_z_dim_array=True,
     )
     return overhanging_cfg
+
+
+def create_floating_boxes(cfg: FloatingBoxesPartsCfg, **kwargs):
+    if cfg.mesh is None:
+        raise ValueError("mesh must be provided")
+    # positions
+    x = np.random.uniform(-cfg.dim[0] / 2.0, cfg.dim[0] / 2.0, size=(cfg.n_boxes,))
+    y = np.random.uniform(-cfg.dim[1] / 2.0, cfg.dim[1] / 2.0, size=(cfg.n_boxes,))
+    z = np.random.uniform(cfg.min_height, cfg.max_height, size=(cfg.n_boxes,))
+    terrain_heights = get_heights_from_mesh(cfg.mesh, np.stack([x, y], axis=1))
+    # print("z = ", z)
+    # print("terrain_heights ", terrain_heights)
+    z += terrain_heights
+    z += cfg.dim[2] / 2.0
+    positions = np.stack([x, y, z], axis=1)
+    # rotations
+    roll = np.random.uniform(cfg.roll_pitch_range[0], cfg.roll_pitch_range[1], size=(cfg.n_boxes,))
+    pitch = np.random.uniform(cfg.roll_pitch_range[0], cfg.roll_pitch_range[1], size=(cfg.n_boxes,))
+    yaw = np.random.uniform(cfg.yaw_range[0], cfg.yaw_range[1], size=(cfg.n_boxes,))
+    R = euler_angles_to_rotation_matrix(roll, pitch, yaw)
+    transformations = np.eye(4, dtype=np.float32).reshape(1, 4, 4).repeat(cfg.n_boxes, axis=0)
+    transformations[:, :3, :3] = R
+    transformations[:, :3, 3] = positions
+
+    # box dims
+    box_x = np.random.uniform(cfg.box_dim_min[0], cfg.box_dim_max[0], size=(cfg.n_boxes,))
+    box_y = np.random.uniform(cfg.box_dim_min[1], cfg.box_dim_max[1], size=(cfg.n_boxes,))
+    box_z = np.random.uniform(cfg.box_dim_min[2], cfg.box_dim_max[2], size=(cfg.n_boxes,))
+    box_dims = np.stack([box_x, box_y, box_z], axis=1)
+    # print(box_dims, box_dims.shape)
+    # print(transformations, transformations.shape)
+    box_cfg = BoxMeshPartsCfg(box_dims=tuple(box_dims), transformations=tuple(transformations))
+    return box_cfg
 
 
 def create_table_mesh(top_size=(1.0, 1.0, 0.05), leg_size=(0.05, 0.05, 0.5), leg_positions=None):
@@ -214,6 +250,16 @@ def create_irregular_overhang_mesh(vertices, height=0.5):
     irregular_overhang = trimesh.creation.convex_hull(vertices)
     irregular_overhang.apply_translation((0, 0, height))
     return irregular_overhang
+
+
+def get_cfg_gen(cfg: OverhangingMeshPartsCfg) -> Callable:
+    if isinstance(cfg, OverhangingBoxesPartsCfg):
+        cfg_gen = create_overhanging_boxes
+    elif isinstance(cfg, FloatingBoxesPartsCfg):
+        cfg_gen = create_floating_boxes
+    else:
+        raise NotImplementedError
+    return cfg_gen
 
 
 if __name__ == "__main__":

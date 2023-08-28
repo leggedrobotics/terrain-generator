@@ -15,12 +15,12 @@ from terrain_generator.utils import calc_spawnable_locations_with_sdf
 from terrain_generator.trimesh_tiles.mesh_parts.mesh_parts_cfg import (
     MeshPattern,
     OverhangingMeshPartsCfg,
-    FloatingBoxesPartsCfg,
+    OverhangingBoxesPartsCfg,
 )
-from terrain_generator.trimesh_tiles.mesh_parts.overhanging_parts import create_overhanging_boxes
+from terrain_generator.trimesh_tiles.mesh_parts.overhanging_parts import get_cfg_gen
 
 from configs.navigation_cfg import IndoorNavigationPatternLevels
-from configs.overhanging_cfg import OverhangingTerrainPattern, OverhangingPattern
+from configs.overhanging_cfg import OverhangingTerrainPattern, OverhangingPattern, OverhangingFloorPattern
 from terrain_generator.navigation.mesh_terrain import MeshTerrain, MeshTerrainCfg
 from alive_progress import alive_bar
 
@@ -120,8 +120,10 @@ def create_mesh_from_cfg(
                     if np.random.rand() < overhanging_cfg.overhanging_prob:
                         mesh_cfg = random.choice(overhanging_cfg.overhanging_cfg_list)
                         mesh_cfg.mesh = mesh
-                        over_box_mesh_cfg = create_overhanging_boxes(mesh_cfg)
-                        over_box_mesh = get_mesh_gen(over_box_mesh_cfg)(over_box_mesh_cfg)
+                        # over_box_mesh_cfg = create_overhanging_boxes(mesh_cfg)
+                        cfg_gen = get_cfg_gen(mesh_cfg)
+                        over_mesh_cfg = cfg_gen(mesh_cfg)
+                        over_box_mesh = get_mesh_gen(over_mesh_cfg)(over_mesh_cfg)
                         over_mesh += over_box_mesh
                     # over_mesh += over_tiles[over_wave_names[over_wave[y, x]]].get_mesh().copy()
                     mesh += over_mesh
@@ -202,6 +204,8 @@ def create_mesh_from_cfg(
         sdf_tile_n = (np.array(cfg.dim[:2]) / sdf_resolution).astype(int)
         sdf = sdf_min[sdf_tile_n[1] : -sdf_tile_n[1], sdf_tile_n[0] : -sdf_tile_n[0], :]
         np.save(sdf_name, sdf)
+        if overhanging_cfg is None:
+            result_terrain_mesh = result_mesh
         spawnable_locations = calc_spawnable_locations_with_sdf(
             result_terrain_mesh, sdf_min, height_offset=0.5, sdf_resolution=0.1, sdf_threshold=0.4
         )
@@ -221,12 +225,17 @@ def create_mesh_from_cfg(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create mesh from configuration")
     parser.add_argument(
-        "--cfg", type=str, choices=["indoor", "overhanging"], default="indoor", help="Which configuration to use"
+        "--cfg",
+        type=str,
+        choices=["indoor", "overhanging", "overhanging_floor"],
+        default="indoor",
+        help="Which configuration to use",
     )
     parser.add_argument("--over_cfg", action="store_true", help="Whether to use overhanging configuration")
     parser.add_argument("--visualize", action="store_true", help="Whether to visualize the generated mesh")
     parser.add_argument("--enable_history", action="store_true", help="Whether to enable mesh history")
     parser.add_argument("--enable_sdf", action="store_true", help="Whether to enable sdf")
+    parser.add_argument("--initial_tile_name", type=str, default="floor", help="Whether to enable sdf")
     parser.add_argument(
         "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated mesh files"
     )
@@ -237,6 +246,8 @@ if __name__ == "__main__":
         cfg = IndoorNavigationPatternLevels(wall_height=3.0)
     elif args.cfg == "overhanging":
         cfg = OverhangingTerrainPattern()
+    elif args.cfg == "overhanging_floor":
+        cfg = OverhangingFloorPattern()
     else:
         raise ValueError(f"Unknown configuration: {args.cfg}")
 
@@ -251,6 +262,7 @@ if __name__ == "__main__":
             cfg,
             over_cfg,
             prefix=mesh_prefix,
+            initial_tile_name=args.initial_tile_name,
             mesh_dir=args.mesh_dir,
             visualize=args.visualize,
             enable_history=args.enable_history,
