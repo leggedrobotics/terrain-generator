@@ -6,8 +6,17 @@ import numpy as np
 import trimesh
 
 from ..trimesh_tiles.mesh_parts.create_tiles import create_mesh_tile, get_mesh_gen
-from ..trimesh_tiles.mesh_parts.mesh_parts_cfg import FloatingBoxesPartsCfg, WallMeshPartsCfg, PlatformMeshPartsCfg
-from ..trimesh_tiles.mesh_parts.overhanging_parts import create_overhanging_boxes, generate_wall_from_array
+from ..trimesh_tiles.mesh_parts.mesh_parts_cfg import (
+    OverhangingBoxesPartsCfg,
+    WallMeshPartsCfg,
+    PlatformMeshPartsCfg,
+    FloatingBoxesPartsCfg,
+)
+from ..trimesh_tiles.mesh_parts.overhanging_parts import (
+    create_overhanging_boxes,
+    generate_wall_from_array,
+    create_floating_boxes,
+)
 
 from ..utils import get_height_array_of_mesh
 
@@ -110,10 +119,44 @@ def test_overhanging_boxes(visualize=False):
     )
     mesh_gen = get_mesh_gen(cfg)
     mesh = mesh_gen(cfg)
-    cfg = FloatingBoxesPartsCfg(
+    cfg = OverhangingBoxesPartsCfg(
         name="floating_boxes", mesh=mesh, gap_mean=0.8, gap_std=0.1, box_grid_n=4, box_height=0.6
     )
     box_cfg = create_overhanging_boxes(cfg)
+    box_gen = get_mesh_gen(box_cfg)
+    box_mesh = box_gen(box_cfg)
+    mesh += box_mesh
+    if visualize:
+        mesh.show()
+
+
+def test_floating_boxes(visualize=True):
+    n = 6
+    height_diff = 0.2
+    array = np.zeros((n, n))
+    array[:] = np.linspace(0, height_diff, n)
+    array = array.T
+    array[1:-1, 1:-1] += np.random.normal(0, 0.1, size=[array.shape[0] - 2, array.shape[1] - 2])
+    # array[5, :] = height_diff
+    cfg = PlatformMeshPartsCfg(
+        name="floor",
+        array=array,
+        flips=(),
+        weight=0.1,
+        minimal_triangles=False,
+    )
+    mesh_gen = get_mesh_gen(cfg)
+    mesh = mesh_gen(cfg)
+    cfg = FloatingBoxesPartsCfg(
+        name="floating_boxes",
+        mesh=mesh,
+        n_boxes=2,
+        box_dim_min=(1.0, 0.1, 0.1),
+        box_dim_max=(1.6, 0.1, 0.1),
+        roll_pitch_range=(0.0, np.pi / 6),  # in rad
+        min_height=0.7,
+    )
+    box_cfg = create_floating_boxes(cfg)
     box_gen = get_mesh_gen(box_cfg)
     box_mesh = box_gen(box_cfg)
     mesh += box_mesh

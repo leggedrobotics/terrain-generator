@@ -5,12 +5,14 @@
 import os
 import numpy as np
 import torch
+import torch.nn.functional as F
 import trimesh
 from typing import Callable, Any, Optional, Union, Tuple
 from dataclasses import asdict, is_dataclass
 from itertools import product
 import copy
 import json
+from scipy.spatial.transform import Rotation
 
 
 ENGINE = "blender"
@@ -123,7 +125,7 @@ def check_validity(shape: Tuple[int], indices: Union[np.ndarray, torch.Tensor]):
     return is_valid
 
 
-def sample_interpolated(
+def sample_interpolated_bilinear(
     grid: Union[np.ndarray, torch.Tensor],
     indices: Union[np.ndarray, torch.Tensor],
     invalid_value: float = 0.0,
@@ -171,3 +173,69 @@ def sample_interpolated(
     if not use_pytorch:
         values = values.cpu().numpy()
     return values
+
+
+def sample_interpolated(
+    grid: Union[np.ndarray, torch.Tensor],
+    indices: Union[np.ndarray, torch.Tensor],
+    padding_mode: str = "zeros",
+    invalid_value: float = 0.0,
+    no_grad: bool = True,
+):
+    """Sample a grid at given indices. If the indices are not integers, interpolate.
+    Args:
+        grid: (np.ndarray or torch.Tensor) of shape (B, C, H, W) or (B, C, H, W, D).
+        indices: (np.ndarray or torch.Tensor) of shape (B, N, 2) or (B, N, 3).
+        invalid_value: (float) value to return if the indices are invalid.
+        round_decimals: (int) number of decimals to round the indices to.
+    Returns:
+        (np.ndarray or torch.Tensor) of shape (N,).
+    """
+
+    use_pytorch = isinstance(grid, torch.Tensor)
+
+    if isinstance(grid, np.ndarray):
+        grid = torch.from_numpy(grid)
+    if isinstance(indices, np.ndarray):
+        indices = torch.from_numpy(indices)
+
+    grid = grid.float()
+    indices = indices.float()
+
+    # project the indices to [-1, 1]
+    grid_shape = grid.shape
+    old_indices = indices.clone()
+    if len(grid_shape) == 4:
+        indices[..., 0] = old_indices[..., 1] / (grid_shape[-1] - 1) * 2 - 1
+        indices[..., 1] = old_indices[..., 0] / (grid_shape[-2] - 1) * 2 - 1
+    elif len(grid_shape) == 5:
+        indices[..., 0] = old_indices[..., 2] / (grid_shape[-1] - 1) * 2 - 1
+        indices[..., 1] = old_indices[..., 1] / (grid_shape[-2] - 1) * 2 - 1
+        indices[..., 2] = old_indices[..., 0] / (grid_shape[-3] - 1) * 2 - 1
+
+    if no_grad:
+        with torch.no_grad():
+            values = F.grid_sample(grid, indices, mode="bilinear", padding_mode=padding_mode, align_corners=True)
+    else:
+        values = F.grid_sample(grid, indices, mode="bilinear", padding_mode=padding_mode, align_corners=True)
+    if invalid_value != 0.0:
+        values = torch.where(values == 0.0, torch.tensor(invalid_value), values)
+    if not use_pytorch:
+        values = values.cpu().numpy()
+    return values
+
+
+def euler_angles_to_rotation_matrix(roll: np.ndarray, pitch: np.ndarray, yaw: np.ndarray):
+    """Convert euler angles to rotation matrix.
+    Args:
+        roll: (float) rotation around x-axis.
+        pitch: (float) rotation around y-axis.
+        yaw: (float) rotation around z-axis.
+    Returns:
+        (np.ndarray) of shape (3, 3).
+    """
+    roll = np.expand_dims(roll, axis=-1)
+    pitch = np.expand_dims(pitch, axis=-1)
+    yaw = np.expand_dims(yaw, axis=-1)
+    r = Rotation.from_euler("xyz", np.concatenate([roll, pitch, yaw], axis=-1), degrees=False)
+    return r.as_matrix()

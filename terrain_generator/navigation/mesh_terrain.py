@@ -38,7 +38,7 @@ class MeshTerrainCfg:
     sdf_resolution: float = 0.1
     sdf_threshold: float = 0.4
     sdf_center: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-    sdf_max_value: float = 1000.0
+    sdf_max_value: float = -10.0
     height_offset: float = 0.5
     height_map_resolution: float = 0.1
     distance_center: Tuple[float, float, float] = (0.0, 0.0, 0.0)
@@ -258,7 +258,9 @@ class SDFArray(object):
         point = point - self.center
         point = point / self.resolution
         point += torch.tensor(self.array.shape, device=self.device) // 2
-        sdf = sample_interpolated(self.array, point, invalid_value=self.max_value)
+        array = self.array.reshape(1, 1, *self.array.shape)
+        point = point.reshape(1, -1, 1, 1, 3)
+        sdf = sample_interpolated(array, point, invalid_value=self.max_value)
         if not use_torch:
             sdf = sdf.cpu().numpy()
         return sdf
@@ -358,6 +360,10 @@ class NavDistance(object):
             point = point.reshape(-1, 2)
         point = torch.cat([x_indices.reshape(-1, 1), point], -1)
 
+        distance_map = distance_map.reshape(1, 1, *distance_map.shape)
+        point = point.reshape(1, -1, 1, 1, 3)
+        # print("distance_map ", distance_map.shape)
+        # print("point ", point.shape)
         distances = sample_interpolated(distance_map, point, invalid_value=self.max_value)
         distances = distances.reshape(goal_pos.shape[0], -1)
         if not use_torch:

@@ -99,12 +99,23 @@ class WallMeshPartsCfg(OverhangingMeshPartsCfg):
 
 
 @dataclass
-class FloatingBoxesPartsCfg(OverhangingMeshPartsCfg):
+class OverhangingBoxesPartsCfg(OverhangingMeshPartsCfg):
     gap_mean: float = 0.8
     gap_std: float = 0.2
     box_height: float = 0.5
     box_grid_n: int = 6
     # box_prob: float = 1.0
+
+
+@dataclass
+class FloatingBoxesPartsCfg(OverhangingMeshPartsCfg):
+    n_boxes: int = 5
+    box_dim_min: Tuple[float, float, float] = (0.1, 0.1, 0.1)
+    box_dim_max: Tuple[float, float, float] = (1.0, 1.0, 1.0)
+    roll_pitch_range: Tuple[float, float] = (0.0, np.pi / 3)  # in rad
+    yaw_range: Tuple[float, float] = (0.0, 2 * np.pi)  # in rad
+    min_height: float = 0.5
+    max_height: float = 1.0
 
 
 @dataclass

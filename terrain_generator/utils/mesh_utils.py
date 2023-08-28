@@ -124,6 +124,23 @@ def get_height_array_of_mesh(
     return array
 
 
+def clean_mesh(mesh):
+    new_mesh = mesh
+    internal_faces = trimesh.intersections.mesh_plane(mesh, plane_normal=[1, 0, 0], plane_origin=[0.5, 0, 0])
+    print("internal_faces ", internal_faces)
+    new_mesh.remove_faces(internal_faces)
+    print("new_mesh faces", new_mesh.faces)
+    print("new_mesh vertices", new_mesh.vertices)
+
+    # Remove unused vertices
+    new_mesh.remove_unreferenced_vertices()
+    print("new_mesh faces", new_mesh.faces)
+    print("new_mesh vertices", new_mesh.vertices)
+
+    # new_mesh = pymesh.remove_duplicated_vertices(mesh, 1e-6)
+    return new_mesh
+
+
 def convert_heightfield_to_trimesh(
     height_field_raw: np.ndarray,
     horizontal_scale: float,
