@@ -13,6 +13,10 @@ setup(
         "matplotlib>=3.3.3",
         "open3d",
         "networkx",
+        "trimesh",
+        "torch",
+        "alive-progress",
+        "ray",
     ],
     entry_points={
         "console_scripts": [
@@ -23,5 +27,5 @@ setup(
     description="A Python library for generating terrain meshes",
     author="Takahiro Miki",
     author_email="takahiro.miki1992@gmail.com",
-    url="https://github.com/mktk1117/terrain_generator",
+    url="https://github.com/leggedrobotics/terrain_generator",
 )
