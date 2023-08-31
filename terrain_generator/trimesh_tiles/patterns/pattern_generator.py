@@ -22,6 +22,15 @@ from ..mesh_parts.mesh_parts_cfg import (
     CombinedMeshPartsCfg,
 )
 
+def generate_floor(dim, wall_height=0.0, wall_thickness=0.0):
+    load_from_cache = True
+    cfgs = (
+        WallPartsCfg(
+            name=f"floor", dim=dim, wall_height=wall_height, wall_thickness=wall_thickness, wall_edges=(), weight=13.0
+        ),
+    )
+    return cfgs
+
 
 def generate_walls(dim, wall_height=3.0, wall_thickness=0.4):
     load_from_cache = True

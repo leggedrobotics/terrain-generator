@@ -24,6 +24,7 @@ from terrain_generator.trimesh_tiles.mesh_parts.mesh_parts_cfg import (
 from terrain_generator.trimesh_tiles.mesh_parts.overhanging_parts import get_cfg_gen
 
 from configs.navigation_cfg import IndoorNavigationPatternLevels
+from configs.mcc_cfg import StairAndRamp
 from configs.overhanging_cfg import OverhangingTerrainPattern, OverhangingPattern, OverhangingFloorPattern
 from terrain_generator.navigation.mesh_terrain import MeshTerrain, MeshTerrainCfg
 from alive_progress import alive_bar
@@ -231,8 +232,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--cfg",
         type=str,
-        choices=["indoor", "overhanging", "overhanging_floor"],
-        default="indoor",
+        choices=["indoor", "overhanging", "overhanging_floor", "stair_and_ramp"],
+        default="stair_and_ramp",
         help="Which configuration to use",
     )
     parser.add_argument("--over_cfg", action="store_true", help="Whether to use overhanging configuration")
@@ -252,6 +253,8 @@ if __name__ == "__main__":
         cfg = OverhangingTerrainPattern()
     elif args.cfg == "overhanging_floor":
         cfg = OverhangingFloorPattern()
+    elif args.cfg == "stair_and_ramp":
+        cfg = StairAndRamp()
     else:
         raise ValueError(f"Unknown configuration: {args.cfg}")
 
@@ -260,7 +263,7 @@ if __name__ == "__main__":
     else:
         over_cfg = None
 
-    for i in range(10):
+    for i in range(1):
         mesh_prefix = f"{args.mesh_name}_{i}"
         create_mesh_from_cfg(
             cfg,

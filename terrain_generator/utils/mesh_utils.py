@@ -92,7 +92,7 @@ def get_heights_from_mesh(mesh: trimesh.Trimesh, origins: np.ndarray):
 
 
 def get_height_array_of_mesh(
-    mesh: trimesh.Trimesh, dim: Optional[Tuple[float, float, float]] = None, num_points: int = 100, offset: float = 0.01
+    mesh: trimesh.Trimesh, dim: Optional[Tuple[float, float, float]] = None, num_points: int = 100, offset: float = 0.01, use_round: bool = True
 ):
     """
     Get the height array of a mesh.
@@ -119,7 +119,8 @@ def get_height_array_of_mesh(
     points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=False)
     if len(points) > 0:
         array[index_ray] = points[:, 2] + dim[2] / 2.0
-        array = np.round(array, 1)
+        if use_round:
+            array = np.round(array, 1)
     array = array.reshape(num_points, num_points)
     return array
 

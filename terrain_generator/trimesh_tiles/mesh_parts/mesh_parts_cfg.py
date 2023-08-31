@@ -13,7 +13,7 @@ class MeshPartsCfg:
     name: str = "mesh"
     dim: Tuple[float, float, float] = (2.0, 2.0, 2.0)  # x, y, z
     floor_thickness: float = 0.1
-    minimal_triangles: bool = True
+    minimal_triangles: bool = False
     weight: float = 1.0
     rotations: Tuple[Literal[90, 180, 270], ...] = ()  # (90, 180, 270)
     flips: Tuple[Literal["x", "y"], ...] = ()  # ("x", "y")
