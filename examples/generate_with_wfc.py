@@ -245,6 +245,7 @@ if __name__ == "__main__":
         "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated mesh files"
     )
     parser.add_argument("--mesh_name", type=str, default="mesh", help="Base name of the generated mesh files")
+    parser.add_argument("--num_terrains", type=int, default=1, help="Number of terrains to generate")
     args = parser.parse_args()
 
     if args.cfg == "indoor":
@@ -263,7 +264,7 @@ if __name__ == "__main__":
     else:
         over_cfg = None
 
-    for i in range(1):
+    for i in range(args.num_terrains):
         mesh_prefix = f"{args.mesh_name}_{i}"
         create_mesh_from_cfg(
             cfg,

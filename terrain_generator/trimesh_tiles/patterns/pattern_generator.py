@@ -429,6 +429,7 @@ def generate_stair_parts(
     n_steps = int(total_height // step_height)
     # residual = total_height - step_height * n_steps
     stair_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped", "turn"]
+    # stair_types = ["wide_float"]
     if enable_wall:
         wall_patterns = [
             [(), ("middle_left", "middle_right")],
@@ -564,6 +565,7 @@ def generate_ramp_parts(
     step_height = total_height / (array_shape[1] - 2)
     cfg = HeightMapMeshPartsCfg()
     # residual = total_height - step_height * n_steps
+    # ramp_types = ["wide_float"]
     ramp_types = ["wide", "half", "wide_float", "half_float", "corner", "corner_flipped"]
     for stair_type in ramp_types:
         h_1 = 0.0 + offset

@@ -56,17 +56,18 @@ class StairAndRamp(MeshPattern):
         # + tuple(
         #     generate_floating_boxes(name="floating_boxes", n=30, dim=dim, seed=seed, array_shape=[5, 5], weight=10.0)
         # )
-        # + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2,
-        #                              step_height=0.1, step_thickness=0.05))
+        # + tuple(generate_stair_parts(name="stair", dim=dim, seed=seed, array_shape=[15, 15], weight=100.0, depth_num=2,
+        #                              step_height=0.05, step_thickness=0.05, wall_height=0.0, wall_thickness=0.0)
+        # )
         # + tuple(
         #     generate_stair_parts(
-        #         name="stair_offset", dim=dim, seed=seed, array_shape=[15, 15], weight=2.0, depth_num=2, offset=1.0
+        #         name="stair_offset", dim=dim, seed=seed, array_shape=[15, 15], weight=2.0, depth_num=2, offset=1.0, wall_height=0.0, wall_thickness=0.0
         #     )
         # )
         # + tuple(
         #     generate_stair_parts(
         #         name="stair_low", dim=dim, total_height=0.5, seed=seed, array_shape=[15, 15], weight=1.0, depth_num=2,
-        #         step_height=0.1, step_thickness=0.05
+        #         step_height=0.1, step_thickness=0.05, wall_height=0.0, wall_thickness=0.0
         #     )
         # )
         # + tuple(
@@ -78,7 +79,7 @@ class StairAndRamp(MeshPattern):
         #         seed=seed,
         #         array_shape=[15, 15],
         #         weight=1.0,
-        #         depth_num=2,
+        #         depth_num=2, wall_height=0.0, wall_thickness=0.0
         #     )
         # )
         # + tuple(
@@ -90,7 +91,7 @@ class StairAndRamp(MeshPattern):
         #         seed=seed,
         #         array_shape=[15, 15],
         #         weight=1.0,
-        #         depth_num=2,
+        #         depth_num=2, wall_height=0.0, wall_thickness=0.0
         #     )
         # )
         # + tuple(
@@ -102,7 +103,7 @@ class StairAndRamp(MeshPattern):
         #         seed=seed,
         #         array_shape=[15, 15],
         #         weight=1.0,
-        #         depth_num=2,
+        #         depth_num=2, wall_height=0.0, wall_thickness=0.0
         #     )
         # )
         + tuple(
@@ -113,7 +114,7 @@ class StairAndRamp(MeshPattern):
                 array_shape=[30, 30],
                 total_height=0.5,
                 offset=0.00,
-                weight=1.0,
+                weight=100.0,
                 depth_num=1,
             )
         )
