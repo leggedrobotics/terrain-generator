@@ -44,7 +44,6 @@ dependencies:
     - networkx==2.8.8
     - opencv-python==4.7.0.68
     - ortools==9.5.2237
-    - perlin-numpy==0.0.0
     - pillow==9.3.0
     - protobuf==4.21.12
     - pycollada==0.7.2
