@@ -59,6 +59,5 @@ dependencies:
     - trimesh==3.17.1
     - urllib3==1.26.13
     - virtualenv==20.17.1
-    - wfc-python==0.0.0
     - xxhash==3.2.0
 prefix: /home/takahiro/anaconda3/envs/wfc
