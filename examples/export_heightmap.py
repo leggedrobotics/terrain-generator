@@ -5,7 +5,11 @@ import os
 from terrain_generator.utils.mesh_utils import get_height_array_of_mesh
 
 if __name__ == "__main__":
-    for root, subdirs,_ in os.walk("results/generated_terrain/"):
+    parser = argparse.ArgumentParser(description="Create mesh from configuration")
+    parser.add_argument(
+        "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated heightmap files"
+    )
+    for root, subdirs,_ in os.walk(args.mesh_dir):
         for subdir in subdirs:
             mesh = trimesh.load(os.path.join(root, subdir, "mesh.obj"))
             print("Loaded mesh")
