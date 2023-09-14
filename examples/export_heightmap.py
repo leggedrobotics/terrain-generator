@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from terrain_generator.utils.mesh_utils import get_height_array_of_mesh
+import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create mesh from configuration")
