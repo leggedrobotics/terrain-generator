@@ -10,6 +10,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated heightmap files"
     )
+    args = parser.parse_args()
+    
     for root, subdirs,_ in os.walk(args.mesh_dir):
         for subdir in subdirs:
             mesh = trimesh.load(os.path.join(root, subdir, "mesh.obj"))
