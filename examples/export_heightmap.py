@@ -4,6 +4,7 @@ import numpy as np
 import os
 from terrain_generator.utils.mesh_utils import get_height_array_of_mesh
 from multiprocessing import Process
+import argparse
 
 def save_to_heightmap(name, save_path):
   mesh = trimesh.load(name)
@@ -18,7 +19,12 @@ def save_to_heightmap(name, save_path):
   print("saved CSV")
 
 if __name__ == "__main__":
-  for root, subdirs,_ in os.walk("./"):
+  parser = argparse.ArgumentParser(description="Create mesh from configuration")
+  parser.add_argument(
+      "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated heightmap files"
+  )
+  args = parser.parse_args()
+  for root, subdirs,_ in os.walk(args.mesh_dir):
     for subdir in subdirs:
       name = os.path.join(root, subdir, "mesh.obj")
       save_path = os.path.join(root, subdir, "heightmap.csv")
