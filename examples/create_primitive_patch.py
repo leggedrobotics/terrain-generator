@@ -10,15 +10,15 @@ import inspect
 
 from terrain_generator.wfc.wfc import WFCSolver
 
-from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
-from utils import visualize_mesh
-from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPartsCfg, MeshPattern
+from terrain_generator.trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
+from terrain_generator.utils import visualize_mesh
+from terrain_generator.trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPartsCfg, MeshPattern
 
 from configs.indoor_cfg import IndoorPattern, IndoorPatternLevels
 from configs.navigation_cfg import IndoorNavigationPatternLevels
 from alive_progress import alive_bar
 
-from trimesh_tiles.primitive_course.steps import *
+from terrain_generator.trimesh_tiles.primitive_course.steps import *
 
 
 def generate_tiles(
@@ -36,22 +36,46 @@ def generate_tiles(
     for name, tile in tiles.items():
         if name == "start":
             mesh = tile.get_mesh().copy()
-            xy_offset = np.array([0, 0.0, 0.0])
+            xy_offset = np.array([dim[0], 0.0, 0.0])
+            mesh.apply_translation(xy_offset)
+            result_mesh += mesh
+            mesh = tile.get_mesh().copy()
+            xy_offset = np.array([2 * dim[0], 0.0, 0.0])
+            mesh.apply_translation(xy_offset)
+            result_mesh += mesh
+            mesh = tile.get_mesh().copy()
+            xy_offset = np.array([0.0, 0.0, 0.0])
+            mesh.apply_translation(xy_offset)
+            result_mesh += mesh
+            mesh = tile.get_mesh().copy()
+            xy_offset = np.array([0.0, dim[1], 0.0])
+            mesh.apply_translation(xy_offset)
+            result_mesh += mesh
+            mesh = tile.get_mesh().copy()
+            xy_offset = np.array([2 * dim[0], dim[1], 0.0])
             mesh.apply_translation(xy_offset)
             result_mesh += mesh
         elif name == "goal":
             mesh = tile.get_mesh().copy()
-            xy_offset = np.array([0.0, -2 * dim[1], 0.0])
+            xy_offset = np.array([dim[0], 2 * dim[1], 0.0])
+            mesh.apply_translation(xy_offset)
+            result_mesh += mesh
+            mesh = tile.get_mesh().copy()
+            xy_offset = np.array([2 * dim[0], 2 * dim[1], 0.0])
+            mesh.apply_translation(xy_offset)
+            result_mesh += mesh
+            mesh = tile.get_mesh().copy()
+            xy_offset = np.array([0.0, 2 * dim[1], 0.0])
             mesh.apply_translation(xy_offset)
             result_mesh += mesh
         elif "floating" in name:
             mesh = tile.get_mesh().copy()
-            xy_offset = np.array([0.0, -1 * dim[1], 0.0])
+            xy_offset = np.array([dim[0], dim[1], 0.0])
             mesh.apply_translation(xy_offset)
             floating_mesh += mesh
         else:
             mesh = tile.get_mesh().copy()
-            xy_offset = np.array([0.0, -1 * dim[1], 0.0])
+            xy_offset = np.array([dim[0], dim[1], 0.0])
             mesh.apply_translation(xy_offset)
             result_mesh += mesh
     bbox = result_mesh.bounding_box.bounds
@@ -76,6 +100,13 @@ def generate_tiles(
 def generate_steps(dim, level, mesh_dir):
     height_diff = level * 1.0
     cfgs = create_step(MeshPartsCfg(dim=dim), height_diff=height_diff)
+    cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
+    mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
+    generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
+
+def generate_ramp(dim, level, mesh_dir):
+    height_diff = level * 1.0
+    cfgs = create_ramp(MeshPartsCfg(dim=dim), height_diff=height_diff)
     cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
     generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
@@ -116,33 +147,43 @@ def generate_middle_steps_wide(dim, level, mesh_dir):
     generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 
-def generate_narrows(dim, level, mesh_dir):
+def generate_narrows(dim, level, mesh_dir, rotation):
     width = (1.0 - level) * 0.5 + 0.1
     side_std = 0.0
     height_std = 0.0
-    cfgs = create_narrow(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std)
+    cfgs = create_narrow(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std, rotation=rotation)
+    cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
+    mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
+    generate_tiles(cfg, mesh_name=f"mesh_{rotation[0]}_{level:.1f}.obj", mesh_dir=mesh_dir)
+
+def generate_cylinder(dim, level, mesh_dir):
+    width = (1.0 - level) * 0.5 + 0.1
+    side_std = 0.0
+    height_std = 0.0
+    cfgs = create_cylinder(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std)
     cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
     generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 
-def generate_narrows_with_side(dim, level, mesh_dir):
+def generate_narrows_with_side(dim, level, mesh_dir, rotation):
     width = (1.0 - level) * 0.5 + 0.1
     side_std = 0.1 * level
     height_std = 0.0
-    cfgs = create_narrow(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std)
+    cfgs = create_narrow(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std, rotation=rotation)
     cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
-    generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
+    generate_tiles(cfg, mesh_name=f"mesh_{rotation[0]}_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 
-def generate_narrows_with_side_height(dim, level, mesh_dir):
+def generate_narrows_with_side_height(dim, level, mesh_dir, rotation):
     width = (1.0 - level) * 0.5 + 0.1
     side_std = 0.1 * level
     height_std = 0.05 * level
-    cfgs = create_narrow(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std)
+    cfgs = create_narrow(MeshPartsCfg(dim=dim), width=width, side_std=side_std, height_std=height_std, rotation=rotation)
     cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
+    generate_tiles(cfg, mesh_name=f"mesh_{rotation[0]}_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 
 def generate_stepping(dim, level, mesh_dir):
@@ -157,7 +198,7 @@ def generate_stepping(dim, level, mesh_dir):
     )
     cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
-    generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
+    # generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
     generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 
@@ -279,23 +320,33 @@ if __name__ == "__main__":
 
     dim = (3.0, 3.0, 3.0)
     level = 0.5
-    mesh_dir = "results/primitive_separated"
+    mesh_dir = "results/primitive_patch"
 
     for level in np.arange(0.0, 1.1, 0.1):
         # generate_steps(dim, level, mesh_dir)
+        # generate_ramp(dim, level, mesh_dir)
+
         # generate_gaps(dim, level, mesh_dir)
         # generate_gaps_with_h(dim, level, mesh_dir)
         # generate_middle_steps(dim, level, mesh_dir)
         # generate_middle_steps_wide(dim, level, mesh_dir)
-        # generate_narrows(dim, level, mesh_dir)
-        # generate_narrows_with_side(dim, level, mesh_dir)
-        # generate_narrows_with_side_height(dim, level, mesh_dir)
+
+        generate_narrows(dim, level, mesh_dir, (90, ))
+        generate_narrows(dim, level, mesh_dir, (180, ))
+        generate_narrows(dim, level, mesh_dir, (270, ))
+        generate_narrows_with_side(dim, level, mesh_dir, (90, ))
+        generate_narrows_with_side(dim, level, mesh_dir, (180, ))
+        generate_narrows_with_side(dim, level, mesh_dir, (270, ))
+        generate_narrows_with_side_height(dim, level, mesh_dir, (90, ))
+        generate_narrows_with_side_height(dim, level, mesh_dir, (180, ))
+        generate_narrows_with_side_height(dim, level, mesh_dir, (270, ))
+
         # generate_stepping(dim, level, mesh_dir)
         # generate_box_grid(dim, level, mesh_dir)
         # generate_box_grid_slope(dim, level, mesh_dir)
         # generate_box_grid_small(dim, level, mesh_dir)
-        generate_floating_box_grid(dim, level, mesh_dir)
-        generate_floating_box_grid_slope(dim, level, mesh_dir)
-        generate_random_tunnel(dim, level, mesh_dir)
-        generate_random_tunnel_narrow(dim, level, mesh_dir)
-        generate_random_tunnel_slope(dim, level, mesh_dir)
+        # generate_floating_box_grid(dim, level, mesh_dir)
+        # generate_floating_box_grid_slope(dim, level, mesh_dir)
+        # generate_random_tunnel(dim, level, mesh_dir)
+        # generate_random_tunnel_narrow(dim, level, mesh_dir)
+        # generate_random_tunnel_slope(dim, level, mesh_dir)

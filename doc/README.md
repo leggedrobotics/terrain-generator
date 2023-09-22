@@ -24,6 +24,7 @@ pip3 install git+https://github.com/pvigier/perlin-numpy
 pip3 install ray
 pip3 install rtree
 sudo apt-get install openscad blender
+pip3 install pyyaml
 ```
 
 You can make your own config to generate different terrians.

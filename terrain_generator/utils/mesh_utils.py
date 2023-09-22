@@ -44,10 +44,12 @@ def flip_mesh(mesh: trimesh.Trimesh, direction: Literal["x", "y"]):
     return new_mesh
 
 
-def yaw_rotate_mesh(mesh: trimesh.Trimesh, deg: Literal[90, 180, 270]):
+def yaw_rotate_mesh(mesh: trimesh.Trimesh, deg: Literal[0, 90, 180, 270]):
     """Rotate a mesh in a given degree."""
     new_mesh = mesh.copy()
-    if deg == 90:
+    if deg == 0:
+        transform = trimesh.transformations.rotation_matrix(0, [0, 0, 1])
+    elif deg == 90:
         transform = trimesh.transformations.rotation_matrix(np.pi / 2, [0, 0, 1])
     elif deg == 180:
         transform = trimesh.transformations.rotation_matrix(np.pi, [0, 0, 1])
