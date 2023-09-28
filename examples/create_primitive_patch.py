@@ -323,14 +323,12 @@ if __name__ == "__main__":
     mesh_dir = "results/primitive_patch"
 
     for level in np.arange(0.0, 1.1, 0.1):
-        # generate_steps(dim, level, mesh_dir)
-        # generate_ramp(dim, level, mesh_dir)
-
-        # generate_gaps(dim, level, mesh_dir)
-        # generate_gaps_with_h(dim, level, mesh_dir)
-        # generate_middle_steps(dim, level, mesh_dir)
-        # generate_middle_steps_wide(dim, level, mesh_dir)
-
+        generate_gaps(dim, level, mesh_dir)
+        generate_gaps_with_h(dim, level, mesh_dir)
+        generate_middle_steps(dim, level, mesh_dir)
+        generate_middle_steps_wide(dim, level, mesh_dir)
+        generate_steps(dim, level, mesh_dir)
+        generate_ramp(dim, level, mesh_dir)
         generate_narrows(dim, level, mesh_dir, (90, ))
         generate_narrows(dim, level, mesh_dir, (180, ))
         generate_narrows(dim, level, mesh_dir, (270, ))
