@@ -549,6 +549,90 @@ def create_tunnel(cfg: MeshPartsCfg, height_diff=0.2, **kwargs):
     return cfgs
 
 
+def create_stairs(
+        cfg: MeshPartsCfg, height_diff=1.0, num_stairs: int=1,
+        type: str='straight_up', noise: float=0.0):
+    # * create an array for the stair feature based on the desired number of stairs
+    stairs_array = np.ones((num_stairs, num_stairs))
+    start_array = np.array([[0]])
+    goal_array = np.array([[0]])
+
+    if type == 'straight_up':
+        goal_array = np.array([[1]])
+        for i in range(num_stairs):
+            stairs_array[i, :] = (num_stairs-i)/(num_stairs+1)
+    elif type == 'straight_down':
+        start_array = np.array([[1]])
+        for i in range(num_stairs):
+            stairs_array[i, :] = (i+1)/(num_stairs+1)
+    elif type == 'pyramid_up':
+        for i in range(int(np.ceil((num_stairs-1)/2))):
+            height = (i+1)/(num_stairs+1)
+            stairs_array[i:num_stairs-i, i:num_stairs-i] = height
+    elif type == 'pyramid_down':
+        start_array = np.array([[1]])
+        goal_array = np.array([[1]])
+        for i in range(int(np.ceil((num_stairs-1)/2))):
+            height = (num_stairs-i)/(num_stairs+1)
+            stairs_array[i:num_stairs-i, i:num_stairs-i] = height
+    elif type == 'up_down':
+        for i in range(int(np.ceil((num_stairs)/2))):
+            height = (i+1)/(num_stairs+1)
+            stairs_array[i:num_stairs-i, :] = height
+    elif type == 'down_up':
+        start_array = np.array([[1]])
+        goal_array = np.array([[1]])
+        for i in range(int(np.ceil((num_stairs)/2))):
+            height = (num_stairs-i)/(num_stairs+1)
+            stairs_array[i:num_stairs-i, :] = height
+    elif type == 'plus_up':
+        for i in range(int(np.ceil((num_stairs)/2))):
+            height = (i)/(num_stairs+1)
+            stairs_array[i:num_stairs-i, :] = height
+            stairs_array[:, i:num_stairs-i] = height
+    elif type == 'plus_down':
+        start_array = np.array([[1]])
+        goal_array = np.array([[1]])
+        for i in range(int(np.ceil((num_stairs)/2))):
+            height = (num_stairs-i+1)/(num_stairs+1)
+            stairs_array[i:num_stairs-i, :] = height
+            stairs_array[:, i:num_stairs-i] = height
+    else:
+        print(f'error: type {type} not found')
+        exit()
+
+    if noise != 0.0:
+        noise_array = noise*(2*np.random.rand(num_stairs, num_stairs)-1)
+        stairs_array += noise_array
+
+    cfgs = (
+        PlatformMeshPartsCfg(
+            name="start",
+            dim=cfg.dim,
+            array=((start_array*height_diff)+cfg.floor_thickness),
+            # rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="stairs",
+            dim=cfg.dim,
+            array=((stairs_array*height_diff)+cfg.floor_thickness),
+            # rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+        PlatformMeshPartsCfg(
+            name="goal",
+            dim=cfg.dim,
+            array=((goal_array*height_diff)+cfg.floor_thickness),
+            # rotations=(90, 180, 270),
+            flips=(),
+            weight=0.1,
+        ),
+    )
+    return cfgs
+
 if __name__ == "__main__":
     # cfg = FloorPattern()
     # cfgs = generate_floating_capsules("capsule", [2, 2, 2], n=10, max_l=1.0, min_l=0.5, min_r=0.05, max_r=0.2, max_n_per_tile=10, weight=1.0, seed=1234)

@@ -315,6 +315,21 @@ def generate_random_tunnel_slope(dim, level, mesh_dir):
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
     generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
 
+def generate_stairs(dim, level, mesh_dir):
+    # * max step height for full staircase
+    height_diff = level * 2.0
+    # * sets the number of stairs by size of the array
+    num_stairs = 9
+    # * types = {straight_up, straight_down, pyramid_up, pyramid_down, up_down, down_up, plus_up, plus_down}
+    type = 'straight_up'
+    # * noise adds a max of (-noise,noise) to the stair blocks for randomness
+    noise = 0.0
+
+    cfgs = create_stairs(
+        MeshPartsCfg(dim=dim), height_diff=height_diff, num_stairs=num_stairs, type=type, noise=noise)
+    cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
+    mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
+    generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 if __name__ == "__main__":
 
@@ -325,19 +340,21 @@ if __name__ == "__main__":
     for level in np.arange(0.0, 1.1, 0.1):
         # generate_gaps(dim, level, mesh_dir)
         # generate_gaps_with_h(dim, level, mesh_dir)
-        generate_middle_steps(dim, level, mesh_dir)
-        generate_middle_steps_wide(dim, level, mesh_dir)
-        generate_steps(dim, level, mesh_dir)
-        generate_ramp(dim, level, mesh_dir)
-        generate_narrows(dim, level, mesh_dir, (90, ))
-        generate_narrows(dim, level, mesh_dir, (180, ))
-        generate_narrows(dim, level, mesh_dir, (270, ))
-        generate_narrows_with_side(dim, level, mesh_dir, (90, ))
-        generate_narrows_with_side(dim, level, mesh_dir, (180, ))
-        generate_narrows_with_side(dim, level, mesh_dir, (270, ))
-        generate_narrows_with_side_height(dim, level, mesh_dir, (90, ))
-        generate_narrows_with_side_height(dim, level, mesh_dir, (180, ))
-        generate_narrows_with_side_height(dim, level, mesh_dir, (270, ))
+        # generate_middle_steps(dim, level, mesh_dir)
+        # generate_middle_steps_wide(dim, level, mesh_dir)
+        # generate_steps(dim, level, mesh_dir)
+        # generate_ramp(dim, level, mesh_dir)
+        # generate_narrows(dim, level, mesh_dir, (90, ))
+        # generate_narrows(dim, level, mesh_dir, (180, ))
+        # generate_narrows(dim, level, mesh_dir, (270, ))
+        # generate_narrows_with_side(dim, level, mesh_dir, (90, ))
+        # generate_narrows_with_side(dim, level, mesh_dir, (180, ))
+        # generate_narrows_with_side(dim, level, mesh_dir, (270, ))
+        # generate_narrows_with_side_height(dim, level, mesh_dir, (90, ))
+        # generate_narrows_with_side_height(dim, level, mesh_dir, (180, ))
+        # generate_narrows_with_side_height(dim, level, mesh_dir, (270, ))
+        generate_stairs(dim, level, mesh_dir)
+        # generate_stepping_stones(dim, level, mesh_dir, (90, ))
 
         # generate_stepping(dim, level, mesh_dir)
         # generate_box_grid(dim, level, mesh_dir)
