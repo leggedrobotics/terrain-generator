@@ -1,5 +1,6 @@
 # Terrain Generator
 This is a automated terrain geneartor tool using wave function collapse.
+Still work in progress for the documentation.
 
 # Install
 If you're using conda, create env with the following command.
