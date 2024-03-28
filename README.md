@@ -1,5 +1,10 @@
 # Terrain Generator
-This is a automated terrain geneartor tool using [wave function collapse](https://github.com/mxgmn/WaveFunctionCollapse) method. 
+This is a automated terrain geneartor tool using [wave function collapse](https://github.com/mxgmn/WaveFunctionCollapse) method.
+
+This is used in the paper, [Learning to walk in confined spaces using 3D representation](https://takahiromiki.com/publication-posts/learning-to-walk-in-confined-spaces-using-3d-representation/)
+
+[Project page](https://takahiromiki.com/publication-posts/learning-to-walk-in-confined-spaces-using-3d-representation/), [arxiv](https://arxiv.org/abs/2403.00187), [Youtube](https://youtu.be/QAwBoN55p9I)
+
 ![Confined Terrain Generation](doc/confined-terrain-generation.gif)
 
 ## Tiling meshes
