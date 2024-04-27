@@ -44,7 +44,7 @@ dependencies:
     - networkx==2.8.8
     - opencv-python==4.7.0.68
     - ortools==9.5.2237
-    - perlin-numpy==0.0.0
+    - git+https://github.com/pvigier/perlin-numpy
     - pillow==9.3.0
     - protobuf==4.21.12
     - pycollada==0.7.2
@@ -60,6 +60,4 @@ dependencies:
     - trimesh==3.17.1
     - urllib3==1.26.13
     - virtualenv==20.17.1
-    - wfc-python==0.0.0
     - xxhash==3.2.0
-prefix: /home/takahiro/anaconda3/envs/wfc

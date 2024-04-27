@@ -214,7 +214,7 @@ class IndoorPatternLevels(MeshPattern):
 
 
 if __name__ == "__main__":
-    from utils import get_height_array_of_mesh
+    from terrain_generator.utils import get_height_array_of_mesh
 
     cfg = IndoorPatternLevels()
     # print(cfg)

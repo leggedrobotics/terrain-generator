@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 import trimesh
 import inspect
 
-from wfc.wfc import WFCSolver
+from terrain_generator.wfc.wfc import WFCSolver
 
-from trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
-from utils import visualize_mesh
-from trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPartsCfg, MeshPattern
+from terrain_generator.trimesh_tiles.mesh_parts.create_tiles import create_mesh_pattern
+from terrain_generator.utils import visualize_mesh
+from terrain_generator.trimesh_tiles.mesh_parts.mesh_parts_cfg import MeshPartsCfg, MeshPattern
 
 from configs.indoor_cfg import IndoorPattern, IndoorPatternLevels
 from configs.navigation_cfg import IndoorNavigationPatternLevels
 from alive_progress import alive_bar
 
-from trimesh_tiles.primitive_course.steps import *
+from terrain_generator.trimesh_tiles.primitive_course.steps import *
 
 
 def generate_tiles(
@@ -157,7 +157,6 @@ def generate_stepping(dim, level, mesh_dir):
     )
     cfg = MeshPattern(dim=dim, mesh_parts=cfgs)
     mesh_dir = os.path.join(mesh_dir, inspect.currentframe().f_code.co_name)
-    generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
     generate_tiles(cfg, mesh_name=f"mesh_{level:.1f}.obj", mesh_dir=mesh_dir)
 
 
