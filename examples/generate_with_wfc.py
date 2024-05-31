@@ -133,7 +133,7 @@ def create_mesh_from_cfg(
                     mesh += over_mesh
                 if enable_sdf:
                     # Compute SDF around the mesh
-                    mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=0.1)
+                    mesh_sdf = compute_sdf(mesh, dim=sdf_dim, resolution=sdf_resolution)
                     x_min = int(x * cfg.dim[0] / sdf_resolution)
                     y_min = int((wave.shape[0] - y - 1) * cfg.dim[1] / sdf_resolution)
                     x_max = int((x + 2 + 1) * cfg.dim[0] / sdf_resolution)
@@ -211,7 +211,7 @@ def create_mesh_from_cfg(
         if overhanging_cfg is None:
             result_terrain_mesh = result_mesh
         spawnable_locations = calc_spawnable_locations_with_sdf(
-            result_terrain_mesh, sdf_min, height_offset=0.5, sdf_resolution=0.1, sdf_threshold=0.4
+            result_terrain_mesh, sdf_min, height_offset=0.5, sdf_resolution=sdf_resolution, sdf_threshold=0.4
         )
         # locations_name = save_dir + "spawnable_locations.npy"
         locations_name = os.path.join(save_dir, "spawnable_locations.npy")
@@ -244,6 +244,8 @@ if __name__ == "__main__":
         "--mesh_dir", type=str, default="results/generated_terrain", help="Directory to save the generated mesh files"
     )
     parser.add_argument("--mesh_name", type=str, default="mesh", help="Base name of the generated mesh files")
+    parser.add_argument("--num_terrains", type=int, default=1, help="Number of terrains to generate")
+    parser.add_argument("--sdf_resolution", type=float, default=0.1, help="Resolution for generating SDF")
     args = parser.parse_args()
 
     if args.cfg == "indoor":
@@ -260,7 +262,7 @@ if __name__ == "__main__":
     else:
         over_cfg = None
 
-    for i in range(10):
+    for i in range(args.num_terrains):
         mesh_prefix = f"{args.mesh_name}_{i}"
         create_mesh_from_cfg(
             cfg,
@@ -271,4 +273,5 @@ if __name__ == "__main__":
             visualize=args.visualize,
             enable_history=args.enable_history,
             enable_sdf=args.enable_sdf,
+            sdf_resolution=args.sdf_resolution
         )
